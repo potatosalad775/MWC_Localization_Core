@@ -1,0 +1,184 @@
+using BepInEx.Logging;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using UnityEngine;
+
+namespace MWC_Localization_Core
+{
+    /// <summary>
+    /// Handles Yellow Pages magazine text translation
+    /// Manages comma-separated word lists and price/phone line formatting
+    /// </summary>
+    public class MagazineTextHandler
+    {
+        private Dictionary<string, string> magazineTranslations = new Dictionary<string, string>();
+        private ManualLogSource logger;
+
+        public MagazineTextHandler(ManualLogSource logger)
+        {
+            this.logger = logger;
+        }
+
+        /// <summary>
+        /// Load magazine-specific translations from separate file
+        /// </summary>
+        public void LoadMagazineTranslations(string translationPath)
+        {
+            if (!File.Exists(translationPath))
+            {
+                logger.LogWarning($"Magazine translation file not found: {translationPath}");
+                return;
+            }
+
+            try
+            {
+                string[] lines = File.ReadAllLines(translationPath, Encoding.UTF8);
+                magazineTranslations.Clear();
+
+                foreach (string line in lines)
+                {
+                    // Skip empty lines and comments
+                    if (string.IsNullOrEmpty(line) || string.IsNullOrEmpty(line.Trim()) || line.TrimStart().StartsWith("#"))
+                        continue;
+
+                    // Parse KEY=VALUE format
+                    int equalsIndex = line.IndexOf('=');
+                    if (equalsIndex > 0)
+                    {
+                        string key = line.Substring(0, equalsIndex).Trim();
+                        string value = line.Substring(equalsIndex + 1).Trim();
+
+                        // Normalize key (remove spaces, convert to uppercase)
+                        key = StringHelper.FormatUpperKey(key);
+
+                        // Handle escaped newlines in value
+                        value = value.Replace("\\n", "\n");
+
+                        if (!magazineTranslations.ContainsKey(key))
+                        {
+                            magazineTranslations[key] = value;
+                        }
+                    }
+                }
+
+                logger.LogInfo($"Loaded {magazineTranslations.Count} magazine translations");
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError($"Failed to load magazine translations: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check if path is a magazine text element
+        /// </summary>
+        public bool IsMagazineText(string path)
+        {
+            return path.Contains("Sheets/YellowPagesMagazine/Page") && path.EndsWith("/Lines/YellowLine");
+        }
+
+        /// <summary>
+        /// Handle magazine text translation
+        /// </summary>
+        public bool HandleMagazineText(TextMesh textMesh)
+        {
+            if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
+                return false;
+
+            // Skip if already translated to Korean
+            if (StringHelper.ContainsKorean(textMesh.text))
+                return true; // Already in Korean, skip
+
+            // Handling magazine random text with 3 words (comma-separated)
+            if (textMesh.text.Split(',').Length == 3)
+            {
+                TranslateCommaSeparatedWords(textMesh);
+                return true; // Handled
+            }
+
+            // Handling price and phone number line (format: "h.149,- puh.123456")
+            if (textMesh.text.StartsWith("h.") && textMesh.text.Contains(",- puh."))
+            {
+                TranslatePricePhoneLine(textMesh);
+                return true; // Handled
+            }
+
+            // Try updating rest of the magazine lines in standard way
+            string key = StringHelper.FormatUpperKey(textMesh.text);
+            if (magazineTranslations.TryGetValue(key, out string translation))
+            {
+                textMesh.text = translation;
+            }
+
+            return false; // Not handled
+        }
+
+        /// <summary>
+        /// Translate comma-separated words (e.g., "bucket, hydraulic, oil")
+        /// </summary>
+        private void TranslateCommaSeparatedWords(TextMesh textMesh)
+        {
+            string[] words = textMesh.text.Split(',');
+
+            for (int i = 0; i < words.Length; i++)
+            {
+                string word = words[i].Trim();
+                string key = StringHelper.FormatUpperKey(word);
+
+                // Translate each word if a translation exists
+                if (magazineTranslations.TryGetValue(key, out string translation))
+                {
+                    words[i] = translation;
+                }
+                else
+                {
+                    // Keep original if no translation found
+                    words[i] = word;
+                }
+            }
+
+            // Reconstruct the translated text
+            textMesh.text = string.Join(", ", words);
+        }
+
+        /// <summary>
+        /// Translate price and phone number line (e.g., "h.149,- puh.123456" -> "149 MK, PHONE - 123456")
+        /// Uses PHONE key from translate_magazine.txt for the phone label
+        /// </summary>
+        private void TranslatePricePhoneLine(TextMesh textMesh)
+        {
+            try
+            {
+                // Remove "h." prefix and split by ",- puh."
+                string withoutPrefix = textMesh.text.Substring(2);
+                string[] parts = withoutPrefix.Split(new string[] { ",- puh." }, System.StringSplitOptions.None);
+
+                if (parts.Length == 2)
+                {
+                    string pricePart = parts[0].Trim();
+                    string phonePart = parts[1].Trim();
+
+                    // Get phone label from translations (default to "PHONE" if not found)
+                    string phoneLabel = magazineTranslations.TryGetValue("PHONE", out string translation)
+                        ? translation
+                        : "PHONE";
+
+                    textMesh.text = $"{pricePart} MK, {phoneLabel} - {phonePart}";
+                }
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogWarning($"Failed to parse magazine price/phone line: {textMesh.text} - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Clear all magazine translations
+        /// </summary>
+        public void ClearTranslations()
+        {
+            magazineTranslations.Clear();
+        }
+    }
+}
