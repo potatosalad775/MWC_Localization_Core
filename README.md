@@ -21,7 +21,6 @@ dotnet build -c Release
 ## Features
 
 **Automatic Translation** - Scans TextMesh components and replaces text  
-**Dynamic UI Monitoring** - Handles UI elements created after scene load  
 **Configurable Fonts** - Map game fonts to localized custom fonts  
 **Position Adjustments** - Fine-tune text placement per language  
 **Live Reload** - Press F8 to test changes without restarting  
@@ -185,8 +184,8 @@ For non-Latin languages requiring special font support:
 3. **Build AssetBundle** - Name it "fonts.unity3d"
 4. **Match names** - Asset names must match config.txt [FONTS] section
 
-Unity 5.0.0f4 has broken License logic.  
-You need to install 5.6.7f1 version of Unity first, Activate Unity, then you'll be able to run 5.0.0f4. 
+The license logic in Unity 5.0.0f4 is currently broken.  
+First, you need to install the 5.6.7f1 version of Unity, activate it, and then you'll be able to run 5.0.0f4.
 
 ## Testing & Development
 
