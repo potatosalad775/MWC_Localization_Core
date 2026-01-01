@@ -1,0 +1,19 @@
+# My Winter Car - Localization Configuration Template
+# For Latin-based languages (Spanish, French, German, Italian, etc.)
+
+# Language metadata
+LANGUAGE_NAME = Spanish
+LANGUAGE_CODE = es-ES
+
+# Unicode character ranges for localized text detection
+# For Latin languages, leave this empty or commented out
+# This disables character detection and assumes all text needs translation
+# UNICODE_RANGES = 
+
+# Font mappings - Optional for Latin languages if default fonts work
+# Only map fonts if you need custom styling or better character support
+# The fonts must exist in fonts.unity3d asset bundle
+[FONTS]
+# Example: Use a custom font for better Spanish character support
+# FugazOne-Regular = MyCustomFont
+# Heebo-Black = AnotherCustomFont

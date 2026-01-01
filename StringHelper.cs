@@ -1,7 +1,7 @@
 namespace MWC_Localization_Core
 {
     /// <summary>
-    /// String normalization and Korean text detection utilities
+    /// String normalization utilities for localization
     /// </summary>
     public static class StringHelper
     {
@@ -24,6 +24,8 @@ namespace MWC_Localization_Core
 
         /// <summary>
         /// Check if text contains Korean characters (Hangul)
+        /// DEPRECATED: Use LocalizationConfig.ContainsLocalizedCharacters() instead
+        /// Kept for backwards compatibility
         /// </summary>
         public static bool ContainsKorean(string text)
         {

@@ -12,40 +12,43 @@ namespace MWC_Localization_Core
     public class TextMeshTranslator
     {
         private Dictionary<string, string> translations;
-        private Dictionary<string, Font> koreanFonts;
+        private Dictionary<string, Font> customFonts;
         private MagazineTextHandler magazineHandler;
+        private LocalizationConfig config;
         private ManualLogSource logger;
 
         public TextMeshTranslator(
             Dictionary<string, string> translations,
-            Dictionary<string, Font> koreanFonts,
+            Dictionary<string, Font> customFonts,
             MagazineTextHandler magazineHandler,
+            LocalizationConfig config,
             ManualLogSource logger)
         {
             this.translations = translations;
-            this.koreanFonts = koreanFonts;
+            this.customFonts = customFonts;
             this.magazineHandler = magazineHandler;
+            this.config = config;
             this.logger = logger;
         }
 
         /// <summary>
-        /// Translate TextMesh and apply Korean font + position adjustments
+        /// Translate TextMesh and apply custom font + position adjustments
         /// </summary>
-        /// <returns>True if text was translated or already in Korean</returns>
+        /// <returns>True if text was translated or already localized</returns>
         public bool TranslateAndApplyFont(TextMesh textMesh, string path)
         {
             if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
                 return false;
 
-            // Skip if already in Korean
-            if (StringHelper.ContainsKorean(textMesh.text))
+            // Skip if already localized (only if Unicode ranges configured)
+            if (config.ContainsLocalizedCharacters(textMesh.text))
                 return true;
 
             // Try complex text handling first (e.g., magazine text, cashier price)
             if (HandleComplexTextMesh(textMesh, path))
             {
                 // Complex text was handled, apply font and position
-                ApplyKoreanFont(textMesh, path);
+                ApplyCustomFont(textMesh, path);
                 return true;
             }
 
@@ -59,23 +62,23 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
-        /// Apply Korean font and position adjustment to TextMesh
+        /// Apply custom font and position adjustment to TextMesh
         /// </summary>
-        public void ApplyKoreanFont(TextMesh textMesh, string path)
+        public void ApplyCustomFont(TextMesh textMesh, string path)
         {
             if (textMesh == null)
                 return;
 
             string originalFontName = textMesh.font != null ? textMesh.font.name : "unknown";
-            Font koreanFont = GetKoreanFont(originalFontName);
+            Font customFont = GetCustomFont(originalFontName);
 
-            if (koreanFont != null)
+            if (customFont != null)
             {
-                textMesh.font = koreanFont;
+                textMesh.font = customFont;
                 MeshRenderer renderer = textMesh.GetComponent<MeshRenderer>();
-                if (renderer != null && koreanFont.material != null && koreanFont.material.mainTexture != null)
+                if (renderer != null && customFont.material != null && customFont.material.mainTexture != null)
                 {
-                    renderer.material.mainTexture = koreanFont.material.mainTexture;
+                    renderer.material.mainTexture = customFont.material.mainTexture;
                 }
                 AdjustTextPosition(textMesh, path);
             }
@@ -139,20 +142,20 @@ namespace MWC_Localization_Core
             // Apply translation
             textMesh.text = translation;
 
-            // Apply Korean font
-            Font koreanFont = GetKoreanFont(originalFontName);
-            if (koreanFont != null)
+            // Apply custom font
+            Font customFont = GetCustomFont(originalFontName);
+            if (customFont != null)
             {
-                textMesh.font = koreanFont;
+                textMesh.font = customFont;
 
                 // Update material texture
                 MeshRenderer renderer = textMesh.GetComponent<MeshRenderer>();
-                if (renderer != null && renderer.material != null && koreanFont.material != null && koreanFont.material.mainTexture != null)
+                if (renderer != null && renderer.material != null && customFont.material != null && customFont.material.mainTexture != null)
                 {
-                    renderer.material.mainTexture = koreanFont.material.mainTexture;
+                    renderer.material.mainTexture = customFont.material.mainTexture;
                 }
 
-                // Adjust position for Korean text
+                // Adjust position for localized text
                 AdjustTextPosition(textMesh, path);
             }
 
@@ -160,33 +163,33 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
-        /// Get Korean font for the given original font name
+        /// Get custom font for the given original font name
         /// </summary>
-        Font GetKoreanFont(string originalFontName)
+        Font GetCustomFont(string originalFontName)
         {
             // First try direct match
-            if (koreanFonts.ContainsKey(originalFontName))
+            if (customFonts.ContainsKey(originalFontName))
             {
-                return koreanFonts[originalFontName];
+                return customFonts[originalFontName];
             }
 
             // Use original if it exists in the dictionary as value
-            else if (koreanFonts.Values.Any(f => f.name == originalFontName))
+            else if (customFonts.Values.Any(f => f.name == originalFontName))
             {
-                return koreanFonts.Values.FirstOrDefault(f => f.name == originalFontName);
+                return customFonts.Values.FirstOrDefault(f => f.name == originalFontName);
             }
 
             // Return first loaded font as fallback
-            else if (koreanFonts.Count > 0)
+            else if (customFonts.Count > 0)
             {
-                return koreanFonts.Values.First();
+                return customFonts.Values.First();
             }
 
             return null;
         }
 
         /// <summary>
-        /// Adjust text position for Korean characters (per-element basis)
+        /// Adjust text position for localized characters (per-element basis)
         /// </summary>
         void AdjustTextPosition(TextMesh textMesh, string path)
         {

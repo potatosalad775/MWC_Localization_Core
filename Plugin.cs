@@ -1,5 +1,5 @@
-﻿// My Winter Car - Simple Localization Plugin
-// BepInEx Plugin for Korean translation support
+﻿// My Winter Car - Localization Plugin
+// BepInEx Plugin for multi-language translation support
 // Installation: Place compiled DLL in BepInEx/plugins/
 
 using BepInEx;
@@ -12,11 +12,11 @@ using UnityEngine;
 namespace MWC_Localization_Core
 {
     [BepInPlugin(GUID, PluginName, Version)]
-    public class SimpleLocalization : BaseUnityPlugin
+    public class LocalizationPlugin : BaseUnityPlugin
     {
         public const string GUID = "com.potatosalad.mwc_localization_core";
         public const string PluginName = "MWC Localization Core";
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         // Constants for dynamic element scanning
         private const float MAINMENU_SCAN_INTERVAL = 0.5f;
@@ -40,25 +40,10 @@ namespace MWC_Localization_Core
 
         // Font management
         private AssetBundle fontBundle;
-        private Dictionary<string, Font> koreanFonts = new Dictionary<string, Font>();
-        private bool usingAssetBundleFonts = false;
+        private Dictionary<string, Font> customFonts = new Dictionary<string, Font>();
 
-        private Dictionary<string, string> koreanFontPair = new Dictionary<string, string>
-        {
-            { "FugazOne-Regular", "NanumSquareRoundEB"},
-            { "Heebo-Black", "PaperlogyExtraBold"},
-            { "AlfaSlabOne-Regular", "ROKAFSlabSerifBold"},
-            { "ArchivoBlack-Regular", "PaperlogyExtraBold"},
-            { "Cour10Bd", "D2Coding"},
-            { "RAGE", "KyoboHandwriting2019"},
-            { "Dosis-SemiBold", "TmoneyRoundWindExtraBold"},
-            { "Dosis-SemiBold LowCase", "TmoneyRoundWindExtraBold"},
-            { "VT323-Regular", "GalmuriMono11"},
-            { "DroidSerif-Bold", "MaruBuri-Bold"},
-            { "PlayfairDisplay-Bold", "MaruBuri-Bold"},
-            { "WalterTurncoat-Regular", "MaruBuri-Bold"},
-            { "BLUEHIGD", "D2Coding"}
-        };
+        // Localization configuration
+        private LocalizationConfig config;
 
         // Dynamic UI element tracking
         private List<TextMesh> dynamicTextMeshes = new List<TextMesh>();
@@ -73,6 +58,11 @@ namespace MWC_Localization_Core
         {
             _logger = Logger;
             _logger.LogInfo($"{PluginName} v{Version} loaded!");
+
+            // Initialize configuration
+            config = new LocalizationConfig(_logger);
+            string configPath = Path.Combine(Path.Combine(Paths.PluginPath, "l10n_assets"), "config.txt");
+            config.LoadConfig(configPath);
 
             // Initialize magazine handler
             magazineHandler = new MagazineTextHandler(_logger);
@@ -92,14 +82,21 @@ namespace MWC_Localization_Core
             _logger.LogInfo("Start() - Loading fonts...");
 
             // Try asset bundle first, fallback to Default font
-            LoadKoreanFonts();
+            LoadCustomFonts();
 
             // Initialize translator after fonts are loaded
-            translator = new TextMeshTranslator(translations, koreanFonts, magazineHandler, _logger);
+            translator = new TextMeshTranslator(translations, customFonts, magazineHandler, config, _logger);
         }
 
-        bool LoadKoreanFonts()
+        bool LoadCustomFonts()
         {
+            // Skip font loading if no font mappings configured
+            if (config.FontMappings.Count == 0)
+            {
+                _logger.LogInfo("No font mappings configured - using default fonts");
+                return false;
+            }
+
             string bundlePath = Path.Combine(Path.Combine(Paths.PluginPath, "l10n_assets"), "fonts.unity3d");
 
             if (!File.Exists(bundlePath))
@@ -121,8 +118,8 @@ namespace MWC_Localization_Core
 
                 _logger.LogInfo($"AssetBundle loaded successfully");
 
-                // Load fonts for different original fonts
-                foreach (var pair in koreanFontPair)
+                // Load fonts from config mappings
+                foreach (var pair in config.FontMappings)
                 {
                     string originalFontName = pair.Key;
                     string assetFontName = pair.Value;
@@ -130,15 +127,14 @@ namespace MWC_Localization_Core
                     Font font = fontBundle.LoadAsset(assetFontName, typeof(Font)) as Font;
                     if (font != null)
                     {
-                        koreanFonts[originalFontName] = font;
+                        customFonts[originalFontName] = font;
                         _logger.LogInfo($"Loaded {assetFontName} for {originalFontName}");
                     }
                 }
 
-                if (koreanFonts.Count > 0)
+                if (customFonts.Count > 0)
                 {
-                    _logger.LogInfo($"Successfully loaded {koreanFonts.Count} Korean fonts from asset bundle");
-                    usingAssetBundleFonts = true;
+                    _logger.LogInfo($"Successfully loaded {customFonts.Count} custom fonts from asset bundle");
                     return true;
                 }
                 else
