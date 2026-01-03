@@ -48,40 +48,12 @@ BepInEx/plugins/dist/
 ```ini
 LANGUAGE_NAME = Your Language Name
 LANGUAGE_CODE = xx-XX
-UNICODE_RANGES = 
 ```
 
 | Setting | Purpose | Example |
 |---------|---------|---------|
 | `LANGUAGE_NAME` | Display name | `Korean`, `Español`, `日本語` |
 | `LANGUAGE_CODE` | ISO code | `ko-KR`, `es-ES`, `ja-JP` |
-| `UNICODE_RANGES` | Character detection | See below |
-
-### Unicode Ranges
-
-Controls when the plugin detects text as "already translated".
-
-**For Latin Languages** (English, Spanish, French, German, etc.):
-```ini
-# Leave empty - no character detection needed
-# UNICODE_RANGES = 
-```
-
-**For Non-Latin Languages:**
-```ini
-# Provide hex ranges (START-END,START-END)
-# Korean:
-UNICODE_RANGES = AC00-D7AF,1100-11FF,3130-318F
-
-# Japanese:
-UNICODE_RANGES = 3040-309F,30A0-30FF,4E00-9FFF
-
-# Chinese:
-UNICODE_RANGES = 4E00-9FFF,3400-4DBF
-
-# Russian/Cyrillic:
-UNICODE_RANGES = 0400-04FF
-```
 
 ### Font Mappings
 
@@ -177,7 +149,7 @@ X,Y,Z
 
 ## Creating Custom Fonts (Optional)
 
-For non-Latin languages requiring special font support:
+For languages requiring special font support (better readability, special characters, etc.):
 
 1. **Prepare fonts** - TrueType (.ttf) or OpenType (.otf)
 2. **Create Unity assets** - Use Unity 5.0.0f4 (same as My Summer Car / My Winter Car)

@@ -5,14 +5,6 @@
 LANGUAGE_NAME = Korean
 LANGUAGE_CODE = ko-KR
 
-# Unicode character ranges for localized text detection
-# Format: START-END,START-END (hexadecimal values)
-# Korean ranges: AC00-D7AF (Hangul Syllables), 1100-11FF (Hangul Jamo), 3130-318F (Hangul Compatibility Jamo)
-# 
-# For Latin-based languages (English, Spanish, French, etc.), leave this empty or comment it out
-# to skip character detection entirely
-UNICODE_RANGES = AC00-D7AF,1100-11FF,3130-318F
-
 # Font mappings - map original game fonts to localized font assets
 # Format: OriginalFontName = LocalizedFontAssetName
 # The localized fonts must exist in fonts.unity3d asset bundle

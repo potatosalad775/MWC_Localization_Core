@@ -16,10 +16,11 @@ namespace MWC_Localization_Core
     {
         public const string GUID = "com.potatosalad.mwc_localization_core";
         public const string PluginName = "MWC Localization Core";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
 
         // Constants for dynamic element scanning
-        private const float MAINMENU_SCAN_INTERVAL = 0.5f;
+        private const float MAINMENU_SCAN_INTERVAL = 2.0f;  // Reduced frequency: 0.5s -> 2.0s
+        private const float DYNAMIC_UPDATE_INTERVAL = 0.1f;  // Throttle dynamic updates to 10 FPS
 
         private static ManualLogSource _logger;
 
@@ -50,9 +51,19 @@ namespace MWC_Localization_Core
         private List<TextMesh> priorityTextMeshes = new List<TextMesh>();  // High-priority elements (checked every frame)
         private HashSet<string> translatedPaths = new HashSet<string>();
         private float lastMainMenuScanTime = 0f;
+        private float lastDynamicUpdateTime = 0f;
 
         // GameObject path cache for performance
         private Dictionary<GameObject, string> pathCache = new Dictionary<GameObject, string>();
+        
+        // Cached GameObject references for priority elements (avoid GameObject.Find)
+        private Dictionary<string, GameObject> priorityObjectCache = new Dictionary<string, GameObject>();
+        
+        // Track last text content to detect changes (dirty flag system)
+        private Dictionary<TextMesh, string> lastTextContent = new Dictionary<TextMesh, string>();
+        
+        // Track which TextMesh objects have been translated (language-agnostic detection)
+        private HashSet<TextMesh> translatedTextMeshes = new HashSet<TextMesh>();
 
         void Awake()
         {
@@ -233,11 +244,14 @@ namespace MWC_Localization_Core
             string magazinePath = Path.Combine(Path.Combine(Paths.PluginPath, "l10n_assets"), "translate_magazine.txt");
             magazineHandler.LoadMagazineTranslations(magazinePath);
 
-            // Clear caches to force re-translation
+            // Clear all caches to force re-translation
             translatedPaths.Clear();
             pathCache.Clear();
             dynamicTextMeshes.Clear();
             priorityTextMeshes.Clear();
+            priorityObjectCache.Clear();
+            lastTextContent.Clear();
+            translatedTextMeshes.Clear();
 
             // Reset scene translation flags
             hasTranslatedSplashScreen = false;
@@ -291,14 +305,20 @@ namespace MWC_Localization_Core
                 hasTranslatedGameScene = false;
                 dynamicTextMeshes.Clear();
                 priorityTextMeshes.Clear();
-                pathCache.Clear();  // Clear path cache on scene change
+                priorityObjectCache.Clear();  // Clear GameObject cache
+                lastTextContent.Clear();  // Clear text tracking
+                translatedTextMeshes.Clear();  // Clear translation tracking
+                // Keep pathCache - reuse across scenes for performance
             }
             else if (currentScene == "GAME")
             {
                 hasTranslatedMainMenu = false;
                 translatedPaths.Clear();
                 priorityTextMeshes.Clear();
-                pathCache.Clear();  // Clear path cache on scene change
+                priorityObjectCache.Clear();  // Clear GameObject cache
+                lastTextContent.Clear();  // Clear text tracking
+                translatedTextMeshes.Clear();  // Clear translation tracking
+                // Keep pathCache - reuse across scenes for performance
             }
         }
 
@@ -311,14 +331,24 @@ namespace MWC_Localization_Core
                 // Check priority elements every frame (no throttling)
                 UpdatePriorityTextMeshes();
 
-                // Scan for new dynamic UI elements and update existing ones
-                UpdateDynamicTextMeshes();
+                // Throttle dynamic updates to reduce CPU load
+                if (Time.time - lastDynamicUpdateTime >= DYNAMIC_UPDATE_INTERVAL)
+                {
+                    lastDynamicUpdateTime = Time.time;
+                    UpdateDynamicTextMeshes();
+                }
             }
             else if (currentScene == "MainMenu" && hasTranslatedMainMenu)
             {
                 // Handle late-loading MainMenu elements
                 ScanForNewMainMenuElements();
-                UpdateDynamicTextMeshes();
+                
+                // Throttle dynamic updates
+                if (Time.time - lastDynamicUpdateTime >= DYNAMIC_UPDATE_INTERVAL)
+                {
+                    lastDynamicUpdateTime = Time.time;
+                    UpdateDynamicTextMeshes();
+                }
             }
         }
 
@@ -345,7 +375,7 @@ namespace MWC_Localization_Core
                     continue;
 
                 // Try to translate
-                if (translator.TranslateAndApplyFont(textMesh, path))
+                if (translator.TranslateAndApplyFont(textMesh, path, translatedTextMeshes))
                 {
                     // Check if this element needs continuous monitoring
                     if (path.Contains("Interface/Songs/") && !dynamicTextMeshes.Contains(textMesh))
@@ -354,6 +384,7 @@ namespace MWC_Localization_Core
                     }
 
                     translatedPaths.Add(path);
+                    translatedTextMeshes.Add(textMesh);  // Mark as translated
                 }
             }
         }
@@ -361,7 +392,7 @@ namespace MWC_Localization_Core
         void UpdatePriorityTextMeshes()
         {
             // Check priority elements every frame - no throttling for instant response
-            // Use GameObject.Find for specific paths instead of scanning all TextMeshes (performance!)
+            // Use cached GameObject references to avoid expensive GameObject.Find calls
             string[] priorityPaths = new string[]
             {
                 "GUI/Indicators/Interaction",
@@ -375,20 +406,42 @@ namespace MWC_Localization_Core
 
             foreach (string path in priorityPaths)
             {
-                GameObject obj = GameObject.Find(path);
-                if (obj != null)
+                GameObject obj;
+                
+                // Try to get cached reference first
+                if (!priorityObjectCache.TryGetValue(path, out obj) || obj == null)
                 {
-                    TextMesh tm = obj.GetComponent<TextMesh>();
-                    if (tm != null)
+                    // Cache miss or destroyed - find and cache
+                    obj = GameObject.Find(path);
+                    if (obj != null)
                     {
-                        // Add to priority list if not already there
-                        if (!priorityTextMeshes.Contains(tm))
-                        {
-                            priorityTextMeshes.Add(tm);
-                        }
+                        priorityObjectCache[path] = obj;
+                    }
+                    else
+                    {
+                        continue;  // Object not found
+                    }
+                }
+                
+                TextMesh tm = obj.GetComponent<TextMesh>();
+                if (tm != null && !string.IsNullOrEmpty(tm.text))
+                {
+                    // Add to priority list if not already there
+                    if (!priorityTextMeshes.Contains(tm))
+                    {
+                        priorityTextMeshes.Add(tm);
+                    }
 
-                        // Translate if needed
-                        translator.TranslateAndApplyFont(tm, path);
+                    // Check if text changed (dirty flag)
+                    string currentText = tm.text;
+                    if (!lastTextContent.TryGetValue(tm, out string lastText) || lastText != currentText)
+                    {
+                        // Text changed - translate it
+                        if (translator.TranslateAndApplyFont(tm, path, translatedTextMeshes))
+                        {
+                            lastTextContent[tm] = tm.text;  // Update tracked content
+                            translatedTextMeshes.Add(tm);  // Mark as translated
+                        }
                     }
                 }
             }
@@ -405,6 +458,7 @@ namespace MWC_Localization_Core
                 if (textMesh == null)
                 {
                     dynamicTextMeshes.RemoveAt(i);
+                    lastTextContent.Remove(textMesh);
                     continue;
                 }
 
@@ -412,20 +466,39 @@ namespace MWC_Localization_Core
                     continue;
 
                 string path = GetGameObjectPath(textMesh.gameObject);
+                string currentText = textMesh.text;
 
                 // Check if this is magazine text that needs persistent monitoring
                 bool isMagazineText = magazineHandler.IsMagazineText(path);
 
-                // Skip if already in Korean - remove from monitoring UNLESS it's magazine text
+                // Skip if already translated - remove from monitoring UNLESS it's magazine text
                 // (magazine text can be regenerated by the game, so we need to keep monitoring it)
-                if (StringHelper.ContainsKorean(textMesh.text) && !isMagazineText)
+                if (translatedTextMeshes.Contains(textMesh) && !isMagazineText)
                 {
-                    dynamicTextMeshes.RemoveAt(i);
-                    continue;
+                    // Check if text changed (might have been reset by game)
+                    if (lastTextContent.TryGetValue(textMesh, out string prevText) && prevText == currentText)
+                    {
+                        // Still translated, no change
+                        dynamicTextMeshes.RemoveAt(i);
+                        continue;
+                    }
+                    else
+                    {
+                        // Text changed, needs re-translation
+                        translatedTextMeshes.Remove(textMesh);
+                    }
                 }
 
-                // Translate and apply font using unified helper
-                translator.TranslateAndApplyFont(textMesh, path);
+                // Only translate if text actually changed (dirty flag check)
+                if (!lastTextContent.TryGetValue(textMesh, out string lastText) || lastText != currentText || isMagazineText)
+                {
+                    // Translate and apply font using unified helper
+                    if (translator.TranslateAndApplyFont(textMesh, path, translatedTextMeshes))
+                    {
+                        lastTextContent[textMesh] = textMesh.text;  // Update tracked content
+                        translatedTextMeshes.Add(textMesh);  // Mark as translated
+                    }
+                }
             }
         }
 
@@ -455,10 +528,11 @@ namespace MWC_Localization_Core
                 }
 
                 // Translate and apply font using unified helper
-                if (translator.TranslateAndApplyFont(textMesh, path))
+                if (translator.TranslateAndApplyFont(textMesh, path, translatedTextMeshes))
                 {
                     translatedCount++;
                     translatedPaths.Add(path);
+                    translatedTextMeshes.Add(textMesh);  // Mark as translated
                 }
             }
 

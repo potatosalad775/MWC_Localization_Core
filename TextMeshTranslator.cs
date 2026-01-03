@@ -34,14 +34,15 @@ namespace MWC_Localization_Core
         /// <summary>
         /// Translate TextMesh and apply custom font + position adjustments
         /// </summary>
+        /// <param name="translatedTextMeshes">HashSet tracking which TextMesh objects have been translated</param>
         /// <returns>True if text was translated or already localized</returns>
-        public bool TranslateAndApplyFont(TextMesh textMesh, string path)
+        public bool TranslateAndApplyFont(TextMesh textMesh, string path, HashSet<TextMesh> translatedTextMeshes)
         {
             if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
                 return false;
 
-            // Skip if already localized (only if Unicode ranges configured)
-            if (config.ContainsLocalizedCharacters(textMesh.text))
+            // Skip if already translated (language-agnostic check)
+            if (translatedTextMeshes != null && translatedTextMeshes.Contains(textMesh))
                 return true;
 
             // Try complex text handling first (e.g., magazine text, cashier price)

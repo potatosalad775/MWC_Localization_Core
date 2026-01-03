@@ -239,6 +239,8 @@ namespace MWC_Localization_Core
 
         /// <summary>
         /// Check if text contains characters from configured Unicode ranges
+        /// DEPRECATED: Use HashSet-based TextMesh tracking instead for better performance
+        /// Kept for backwards compatibility with Unicode-based detection (Korean, Japanese, Chinese)
         /// Returns false if no ranges configured (for Latin languages)
         /// </summary>
         public bool ContainsLocalizedCharacters(string text)
@@ -250,6 +252,7 @@ namespace MWC_Localization_Core
             if (string.IsNullOrEmpty(text))
                 return false;
 
+            // Simple check without caching (rarely used now)
             foreach (char c in text)
             {
                 foreach (UnicodeRange range in UnicodeRanges)
