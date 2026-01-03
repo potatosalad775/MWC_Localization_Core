@@ -253,6 +253,9 @@ namespace MWC_Localization_Core
             lastTextContent.Clear();
             translatedTextMeshes.Clear();
 
+            // Clear position adjustment caches
+            config.ClearPositionAdjustmentCaches();
+
             // Reset scene translation flags
             hasTranslatedSplashScreen = false;
             hasTranslatedMainMenu = false;

@@ -81,7 +81,7 @@ namespace MWC_Localization_Core
                 {
                     renderer.material.mainTexture = customFont.material.mainTexture;
                 }
-                AdjustTextPosition(textMesh, path);
+                config.ApplyPositionAdjustment(textMesh, path);
             }
         }
 
@@ -157,7 +157,7 @@ namespace MWC_Localization_Core
                 }
 
                 // Adjust position for localized text
-                AdjustTextPosition(textMesh, path);
+                config.ApplyPositionAdjustment(textMesh, path);
             }
 
             return true;
@@ -187,25 +187,6 @@ namespace MWC_Localization_Core
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Adjust text position for localized characters (per-element basis)
-        /// Uses configurable position adjustments from config.txt
-        /// Falls back to hardcoded adjustments if no config matches
-        /// </summary>
-        void AdjustTextPosition(TextMesh textMesh, string path)
-        {
-            // Try configured position adjustments first
-            Vector3 configOffset = config.GetPositionOffset(path);
-
-            if (configOffset != Vector3.zero)
-            {
-                // Found a matching configuration
-                Vector3 pos = textMesh.transform.localPosition;
-                textMesh.transform.localPosition = pos + configOffset;
-                return;
-            }
         }
     }
 }

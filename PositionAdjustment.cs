@@ -13,10 +13,46 @@ namespace MWC_Localization_Core
         public List<PathCondition> Conditions { get; private set; } = new List<PathCondition>();
         public Vector3 Offset { get; private set; }
 
+        // Track which TextMesh objects have been adjusted to prevent duplicate adjustments
+        private HashSet<TextMesh> adjustedTextMeshes = new HashSet<TextMesh>();
+
         public PositionAdjustment(string conditionsString, Vector3 offset)
         {
             Offset = offset;
             ParseConditions(conditionsString);
+        }
+
+        /// <summary>
+        /// Apply position adjustment to TextMesh if not already adjusted
+        /// Uses HashSet to prevent duplicate adjustments
+        /// </summary>
+        /// <returns>True if adjustment was applied, false if already adjusted</returns>
+        public bool ApplyAdjustment(TextMesh textMesh)
+        {
+            if (textMesh == null)
+                return false;
+
+            // Skip if already adjusted
+            if (adjustedTextMeshes.Contains(textMesh))
+                return false;
+
+            // Apply the offset
+            Vector3 currentPosition = textMesh.transform.localPosition;
+            textMesh.transform.localPosition = currentPosition + Offset;
+
+            // Mark as adjusted
+            adjustedTextMeshes.Add(textMesh);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Clear the cache of adjusted TextMesh objects
+        /// Useful for F9 reload functionality
+        /// </summary>
+        public void ClearCache()
+        {
+            adjustedTextMeshes.Clear();
         }
 
         /// <summary>

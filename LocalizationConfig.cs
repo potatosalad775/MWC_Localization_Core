@@ -2,6 +2,7 @@ using BepInEx.Logging;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UnityEngine;
 
 namespace MWC_Localization_Core
 {
@@ -268,6 +269,7 @@ namespace MWC_Localization_Core
         /// <summary>
         /// Get position offset for the given path based on configured adjustments
         /// Returns Vector3.zero if no matching adjustment found
+        /// DEPRECATED: Use ApplyPositionAdjustment instead for HashSet-based caching
         /// </summary>
         public UnityEngine.Vector3 GetPositionOffset(string path)
         {
@@ -280,6 +282,40 @@ namespace MWC_Localization_Core
             }
 
             return UnityEngine.Vector3.zero;
+        }
+
+        /// <summary>
+        /// Apply position adjustment to TextMesh based on path matching
+        /// Uses HashSet-based caching to prevent duplicate adjustments
+        /// </summary>
+        /// <returns>True if adjustment was applied, false if no match or already adjusted</returns>
+        public bool ApplyPositionAdjustment(TextMesh textMesh, string path)
+        {
+            if (textMesh == null || string.IsNullOrEmpty(path))
+                return false;
+
+            // Find matching adjustment and apply it
+            foreach (PositionAdjustment adjustment in PositionAdjustments)
+            {
+                if (adjustment.Matches(path))
+                {
+                    return adjustment.ApplyAdjustment(textMesh);
+                }
+            }
+
+            return false; // No matching adjustment found
+        }
+
+        /// <summary>
+        /// Clear all position adjustment caches
+        /// Useful for F9 reload functionality to reapply adjustments
+        /// </summary>
+        public void ClearPositionAdjustmentCaches()
+        {
+            foreach (PositionAdjustment adjustment in PositionAdjustments)
+            {
+                adjustment.ClearCache();
+            }
         }
     }
 
