@@ -4,6 +4,8 @@ using MSCLoader;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System;
+using System.Text.RegularExpressions;
 
 namespace MWC_Localization_Core
 {
@@ -28,6 +30,147 @@ namespace MWC_Localization_Core
         /// </summary>
         private void InitializeBuiltInPatterns()
         {
+            // Fleetari services (helper)
+            AddFleetariService(
+            	"RimPolish",
+            	"Vanteiden kiilotus",
+            	"Rim polish",
+            	"RIMPOLISH"
+            );
+            
+            AddFleetariService(
+            	"TireJob",
+            	"Rengastyöt",
+            	"tire job",
+            	"TIREJOB"
+            );
+            
+            AddFleetariService(
+            	"CustomPaint",
+            	"Custom automaalaus",
+            	"Custom paint",
+            	"CUSTOMPAINT"
+            );
+            
+            AddFleetariService(
+            	"MetallicPaint",
+            	"Metalliväri",
+            	"Metallic color",
+            	"METALLICPAINT"
+            );
+            
+            AddFleetariService(
+            	"OriginalPaint",
+            	"Alkuperäisväri",
+            	"Original color",
+            	"ORIGINALPAINT"
+            );
+            
+            AddFleetariService(
+            	"FactorySpecialPaint",
+            	"Tehtaan erikoismaalaus",
+            	"Factory special paint",
+            	"FACTORYSPECIALPAINT"
+            );
+            
+            AddFleetariService(
+            	"RimMetallic",
+            	"Vanteet metalliväri",
+            	"Rim metallic",
+            	"RIMMETALLIC"
+            );
+            
+            AddFleetariService(
+            	"RimPaint",
+            	"Vanteet maalattuna",
+            	"Rim paint",
+            	"RIMPAINT"
+            );
+            
+            AddFleetariService(
+            	"EngineAdjust",
+            	"Moottorin säätö",
+            	"Engine adjust",
+            	"ENGINEADJUST"
+            );
+            
+            AddFleetariService(
+            	"ToeAdjust",
+            	"Aurauskulmien säätö",
+            	"Toe adjust",
+            	"TOEADJUST"
+            );
+            
+            AddFleetariService(
+            	"BrakeService",
+            	"Jarruhuolto",
+            	"brake service",
+            	"BRAKESERVICE"
+            );
+            
+            AddFleetariService(
+            	"EngineTune",
+            	"Moottorin viritys",
+            	"engine tune up",
+            	"ENGINETUNE"
+            );
+            
+            AddFleetariService(
+            	"SuspensionRepair",
+            	"Ripustusten suoristus",
+            	"Suspension repair",
+            	"SUSPENSIONREPAIR"
+            );
+            
+            AddFleetariService(
+            	"DoorSafetyNets",
+            	"Ovien turvaverkot",
+            	"door safety nets",
+            	"DOORSAFETYNETS"
+            );
+            
+            AddFleetariService(
+            	"RollCageInstall",
+            	"Turvakehikon asennus",
+            	"rollcage install",
+            	"ROLLCAGEINSTALL"
+            );
+            
+            AddFleetariService(
+            	"WindshieldReplacement",
+            	"Tuulilasin vaihto",
+            	"windshield replacement",
+            	"WINDSHIELDREPLACEMENT"
+            );
+            
+            AddFleetariService(
+            	"RatioChange",
+            	"Perävälityksen vaihto",
+            	"ratio change",
+            	"RATIOCHANGE"
+            );
+            
+            AddFleetariService(
+            	"RollcageRemoval",
+            	"Turvakehikon poisto",
+            	"rollcage removal",
+            	"ROLLCAGEREMOVAL"
+            );
+            
+            AddFleetariService(
+            	"SheetMetalWork",
+            	"Peltityöt",
+            	"sheet metal work",
+            	"SHEETMETALWORK"
+            );
+            
+            AddFleetariService(
+                "VinylRemoval",
+                "Vinyylikaton poisto",
+                "vinyl removal",
+                "VINYLREMOVAL"
+            );
+            
             // Price Total pattern (regex)
             var pricePattern = new TranslationPattern(
                 "PriceTotal",
@@ -68,6 +211,16 @@ namespace MWC_Localization_Core
             unpaidFinePattern.PathMatcher = path => path.Contains("GUI/Indicators/Interaction");
             patterns.Add(unpaidFinePattern);
 
+            // Scrap Payment pattern (regex)
+			var scrapPaymentPattern = new TranslationPattern(
+				"ScrapPayment",
+				TranslationMode.RegexExtract,
+				@"SCRAP PAYMENT,\s*([\d.]+)\s*MK",
+				"{SCRAPPAYMENT} {0} MK"
+			);
+			scrapPaymentPattern.PathMatcher = path => path.Contains("GUI/Indicators/Interaction");
+			patterns.Add(scrapPaymentPattern);
+            
             // TV Chat moderator pattern (regex)
             var tvChatModeratorPattern = new TranslationPattern(
                 "TVChatModerator",
@@ -185,6 +338,23 @@ namespace MWC_Localization_Core
             }
 
             return false;
+        }
+
+        private void AddFleetariService(
+            string id,
+            string finnish,
+            string english,
+            string tokenKey
+        )
+        {
+        	var pattern = new TranslationPattern(
+        		id,
+        		TranslationMode.RegexExtract,
+        		$@"(?i){System.Text.RegularExpressions.Regex.Escape(finnish)}\s*/.*?\s+(\d+)\s*,\s*[-–−]",
+        		$"{{{tokenKey}}}      {{0}},-"
+        	);
+        
+        	patterns.Add(pattern);
         }
 
         /// <summary>
