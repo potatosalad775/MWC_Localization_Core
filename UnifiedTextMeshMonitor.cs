@@ -68,6 +68,10 @@ namespace MWC_Localization_Core
         private float fastPollingTimer;
         private float slowPollingTimer;
 
+        // OPTIMIZATION: Budget-based processing to reduce per-frame cost
+        private const int TRANSLATIONS_PER_CYCLE = 5;  // Max translations per Update call
+        private int translationBudgetRemaining;
+
         // Path-based monitoring rules (pattern -> strategy mapping)
         private Dictionary<string, MonitoringStrategy> pathRules;
         
@@ -76,6 +80,9 @@ namespace MWC_Localization_Core
         private Dictionary<string, HashSet<int>> pathToInstances;  // path -> instanceIDs
         private Dictionary<MonitoringStrategy, HashSet<int>> strategyGroups;  // strategy -> instanceIDs
         private List<string> monitoredPaths = new List<string>();
+
+        // OPTIMIZATION: Reusable list to avoid allocations per frame
+        private List<int> toRemoveBuffer = new List<int>(128);
 
         public UnifiedTextMeshMonitor(TextMeshTranslator translator)
         {
@@ -110,6 +117,10 @@ namespace MWC_Localization_Core
             AddPathRule("GUI/HUD/Thrist/HUDLabel", MonitoringStrategy.EveryFrame);
             AddPathRule("GUI/HUD/Thrist/HUDLabel/Shadow", MonitoringStrategy.EveryFrame);
 
+            // Main Menu Radio/CD - every frame (to ensure fonts apply)
+            AddPathRule("Radio/Folk", MonitoringStrategy.EveryFrame);
+            AddPathRule("Radio/CD", MonitoringStrategy.EveryFrame);
+
             // Active HUD - fast polling (10 FPS)
             AddPathRule("GUI/HUD/Mortal/HUDValue", MonitoringStrategy.FastPolling);
             AddPathRule("GUI/HUD/Day/HUDValue", MonitoringStrategy.FastPolling);
@@ -124,20 +135,19 @@ namespace MWC_Localization_Core
             AddPathRule("GUI/HUD/Jailtime/HUDValue", MonitoringStrategy.FastPolling);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Day", MonitoringStrategy.FastPolling);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Moderator", MonitoringStrategy.FastPolling);
+            AddPathRule("Sheets/UnemployPaper", MonitoringStrategy.FastPolling);
 
             // Teletext/FSM - slow polling (1 FPS)
-            AddPathRule("Systems/TV/Teletext/VKTekstiTV/PAGES", MonitoringStrategy.SlowPolling);
-            AddPathRule("Systems/TV/TVGraphics/CHAT/Generated", MonitoringStrategy.SlowPolling);
-            //AddPathRule("COMPUTER/SYSTEM/POS", MonitoringStrategy.SlowPolling);
+            AddPathRule("Systems/TV/Teletext/VKTekstiTV", MonitoringStrategy.SlowPolling);
 
             // Magazine / Sheets - on visibility change
-            AddPathRule("Sheets/UnemployPaper", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("Sheets/ServiceBrochure", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("Sheets/ServicePayment", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("Sheets/YellowPagesMagazine/Page2", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("PERAPORTTI/ATMs/MoneyATM/Screen/Tapahtumat", MonitoringStrategy.OnVisibilityChange);
-            //AddPathRule("COMPUTER/SYSTEM/TELEBBS/Software", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("Sheets/TrafficTicket", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("COMPUTER", MonitoringStrategy.OnVisibilityChange);
         }
 
         public void AddPathRule(string pathPattern, MonitoringStrategy strategy)
@@ -179,10 +189,14 @@ namespace MWC_Localization_Core
             foreach (string parentPath in pathRules.Keys)
             {
                 MonitoringStrategy strategy = pathRules[parentPath];
-                if (strategy == MonitoringStrategy.LateTranslateOnce ||
+                
+                // Late-register sempre para Sheets/* (muitos papers spawnam depois)
+                if (parentPath.StartsWith("Sheets/") ||
+                    strategy == MonitoringStrategy.LateTranslateOnce ||
                     strategy == MonitoringStrategy.OnVisibilityChange)
                 {
-                    monitoredPaths.Add(parentPath);
+                    if (!monitoredPaths.Contains(parentPath))
+                        monitoredPaths.Add(parentPath);
                 }
 
                 Register(parentPath, strategy);
@@ -318,9 +332,15 @@ namespace MWC_Localization_Core
         /// </summary>
         public void Update(float deltaTime)
         {
+            // OPTIMIZATION: Reset budget each frame
+            translationBudgetRemaining = TRANSLATIONS_PER_CYCLE;
+
             // Always update EveryFrame and Persistent
             UpdateGroup(MonitoringStrategy.EveryFrame);
+            if (translationBudgetRemaining <= 0) return;
+            
             UpdateGroup(MonitoringStrategy.Persistent);
+            if (translationBudgetRemaining <= 0) return;
 
             // Throttled fast polling (0.1s)
             fastPollingTimer += deltaTime;
@@ -328,6 +348,7 @@ namespace MWC_Localization_Core
             {
                 UpdateGroup(MonitoringStrategy.FastPolling);
                 fastPollingTimer = 0f;
+                if (translationBudgetRemaining <= 0) return;
             }
 
             // Throttled slow polling (1.0s)
@@ -335,6 +356,8 @@ namespace MWC_Localization_Core
             if (slowPollingTimer >= LocalizationConstants.SLOW_POLLING_INTERVAL)
             {
                 UpdateGroup(MonitoringStrategy.SlowPolling);
+                if (translationBudgetRemaining <= 0) return;
+
                 MonitorLateRegister(); // Also check for late registrations
                 slowPollingTimer = 0f;
             }
@@ -346,28 +369,33 @@ namespace MWC_Localization_Core
         private void UpdateGroup(MonitoringStrategy strategy)
         {
             var instanceIDs = strategyGroups[strategy];
-            var toRemove = new List<int>();  // Track instances to remove
+            toRemoveBuffer.Clear();  // OPTIMIZATION: Reuse buffer instead of new List each call
 
             foreach (int instanceID in instanceIDs)
             {
-                if (!instanceEntries.ContainsKey(instanceID))
+                // OPTIMIZATION: Budget check to reduce per-frame cost
+                if (translationBudgetRemaining <= 0)
+                    break;
+
+                if (!instanceEntries.TryGetValue(instanceID, out var entry))
                 {
-                    toRemove.Add(instanceID);
+                    toRemoveBuffer.Add(instanceID);
                     continue;
                 }
-
-                var entry = instanceEntries[instanceID];
 
                 if (!entry.IsValid())
                 {
-                    toRemove.Add(instanceID);
+                    toRemoveBuffer.Add(instanceID);
                     continue;
                 }
 
+                // OPTIMIZATION: Avoid repeated property access
+                bool textChanged = entry.HasTextChanged();
+                bool wasTranslated = entry.WasTranslated;
+                
                 // Persistent strategy: Check regardless of status
                 // Other strategies: Only check if text changed
-                bool textChanged = entry.HasTextChanged();
-                bool shouldCheck = textChanged || !entry.WasTranslated || strategy == MonitoringStrategy.Persistent;
+                bool shouldCheck = textChanged || !wasTranslated || strategy == MonitoringStrategy.Persistent;
                 
                 if (shouldCheck)
                 {
@@ -376,20 +404,22 @@ namespace MWC_Localization_Core
                     {
                         entry.WasTranslated = true;
                         entry.UpdateLastText();
+                        
+                        translationBudgetRemaining--;  // OPTIMIZATION: Deduct from budget
 
                         // Mark for removal if TranslateOnce
                         if (strategy == MonitoringStrategy.TranslateOnce)
                         {
-                            toRemove.Add(instanceID);
+                            toRemoveBuffer.Add(instanceID);
                         }
                     }
                 }
             }
 
-            // Clean up removed instances
-            foreach (int instanceID in toRemove)
+            // OPTIMIZATION: Clean up removed instances
+            for (int i = 0; i < toRemoveBuffer.Count; i++)
             {
-                UnregisterInstance(instanceID);
+                UnregisterInstance(toRemoveBuffer[i]);
             }
         }
 

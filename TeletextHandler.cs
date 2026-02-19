@@ -49,6 +49,8 @@ namespace MWC_Localization_Core
         {
         }
 
+        
+
         /// <summary>
         /// Load teletext translations from INI-style file with category sections
         /// Supports both key-value pairs and index-based translations (in order)

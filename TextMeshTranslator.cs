@@ -1,13 +1,12 @@
 using MSCLoader;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace MWC_Localization_Core
 {
     /// <summary>
     /// Handles TextMesh translation, font application, and position adjustments
-    /// Centralizes all translation logic for better maintainability
+    /// OPTIMIZED: Cache, no LINQ, pre-computed keys, minimal allocations
     /// </summary>
     public class TextMeshTranslator
     {
@@ -17,6 +16,9 @@ namespace MWC_Localization_Core
         private PatternMatcher patternMatcher;
         private LocalizationConfig config;
 
+        // OPTIMIZATION: Cache for recently translated text (InstanceID -> last text)
+        private Dictionary<int, string> textCache = new Dictionary<int, string>();
+        
         private List<string> ExcludedPath = new List<string>
         {
             "HOMENEW/Functions/FunctionsDisable/Stereos/Player/Screen/Settings/Bass/LCD",
@@ -38,44 +40,70 @@ namespace MWC_Localization_Core
             this.magazineHandler = magazineHandler;
             this.config = config;
             
-            // Initialize unified pattern matcher
             this.patternMatcher = new PatternMatcher(translations);
         }
 
         /// <summary>
         /// Translate TextMesh and apply custom font + position adjustments
+        /// OPTIMIZED: Cache check, early exit on no-op
         /// </summary>
-        /// <param name="translatedTextMeshes">HashSet tracking which TextMesh objects have been translated</param>
-        /// <returns>True if text was translated or already localized</returns>
         public bool TranslateAndApplyFont(TextMesh textMesh, string path, HashSet<TextMesh> translatedTextMeshes)
         {
             if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
                 return false;
 
+            int instanceId = textMesh.GetInstanceID();
+            string currentText = textMesh.text;
+
+            // OPTIMIZATION: Skip if text hasn't changed since last translation
+            if (textCache.TryGetValue(instanceId, out string cachedText))
+            {
+                if (cachedText == currentText)
+                    return true; // Already translated this text
+            }
+
             // Skip if already translated (language-agnostic check)
             if (translatedTextMeshes != null && translatedTextMeshes.Contains(textMesh))
                 return true;
 
-            // Skip excluded paths
-            foreach(string excluded in ExcludedPath)
+            // OPTIMIZATION: Early exit for excluded paths using StartsWith
+            for (int i = 0; i < ExcludedPath.Count; i++)
             {
-                if (path.StartsWith(excluded))
+                if (path.StartsWith(ExcludedPath[i]))
                     return false;
             }
 
-            // Try complex text handling first (e.g., magazine text, cashier price)
+            // Try complex text handling first
             if (HandleComplexTextMesh(textMesh, path))
+            {
+                textCache[instanceId] = textMesh.text;
                 return true;
+            }
+
+            // If a custom font exists for this TextMesh, apply it even if there's no translation yet.
+            // This ensures glyphs (acentos) are available immediately for UI elements
+            // where the translation may be set via FSM or other means later.
+            string originalFontNameForApply = textMesh.font != null ? textMesh.font.name : "unknown";
+            if (GetCustomFont(originalFontNameForApply) != null)
+            {
+                ApplyCustomFont(textMesh, path);
+                // cache current text after applying font to avoid redundant work
+                textCache[instanceId] = textMesh.text;
+            }
 
             // Use standard translation
             if (ApplyTranslation(textMesh, path))
+            {
+                textCache[instanceId] = textMesh.text;
                 return true;
+            }
 
             return false;
         }
 
         /// <summary>
         /// Apply custom font and position adjustment to TextMesh
+        /// OPTIMIZED: Avoid MeshRenderer lookup if no custom font
         /// </summary>
         public void ApplyCustomFont(TextMesh textMesh, string path)
         {
@@ -84,73 +112,76 @@ namespace MWC_Localization_Core
 
             // Get custom font based on original font name
             string originalFontName = textMesh.font != null ? textMesh.font.name : "unknown";
-            Font customFont = GetCustomFont(originalFontName);
+            
+            // OPTIMIZATION: Direct dictionary lookup, no LINQ
+            if (!customFonts.TryGetValue(originalFontName, out Font customFont) || customFont == null)
+                return;
 
-            if (customFont != null)
-            {
+            // Assign font
+            if (textMesh.font != customFont)
                 textMesh.font = customFont;
+
+            // Only update renderer if material has texture
+            if (customFont.material != null && customFont.material.mainTexture != null)
+            {
                 MeshRenderer renderer = textMesh.GetComponent<MeshRenderer>();
-                if (renderer != null && customFont.material != null && customFont.material.mainTexture != null)
+                if (renderer != null && renderer.material != null)
                 {
                     renderer.material.mainTexture = customFont.material.mainTexture;
                 }
-                config.ApplyTextAdjustment(textMesh, path);
             }
+
+            config.ApplyTextAdjustment(textMesh, path);
         }
 
         /// <summary>
         /// Handle complex text patterns (magazine text, cashier price line)
-        /// Now uses unified pattern matcher for all pattern-based translations
         /// </summary>
         bool HandleComplexTextMesh(TextMesh textMesh, string path)
         {
-            // Check magazine text FIRST - it requires special handling (comma-separated words, price/phone format)
+            // Check magazine text FIRST
             if (magazineHandler.IsMagazineText(path))
             {
-                // Apply custom font first
                 ApplyCustomFont(textMesh, path);
-                // Apply Translation
                 return magazineHandler.HandleMagazineText(textMesh);
             }
             
-            // Try pattern matching for other complex texts (FSM, Price patterns)
+            // Try pattern matching for other complex texts
             string patternResult = patternMatcher.TryTranslateWithPattern(textMesh.text, path);
             if (patternResult != null)
             {
-                // Apply custom font first
                 ApplyCustomFont(textMesh, path);
-                // Apply Translation
                 textMesh.text = patternResult;
                 return true;
             }
 
-            return false; // Not handled, use standard translation
+            return false;
         }
 
         /// <summary>
         /// Apply standard translation to TextMesh
+        /// OPTIMIZED: Pre-normalize key, skip if already correct
         /// </summary>
-        /// <param name="forceUpdate">Force update even if text hasn't changed</param>
         public bool ApplyTranslation(TextMesh textMesh, string path, bool forceUpdate = false)
         {
             if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
                 return false;
 
-            // Normalize current text for lookup
             string currentText = textMesh.text;
+            
+            // OPTIMIZATION: Normalize key outside validation loop
             string normalizedKey = MLCUtils.FormatUpperKey(currentText);
 
             // Check if translation exists
             if (!translations.TryGetValue(normalizedKey, out string translation))
                 return false;
 
-            // Skip translation if already translated (unless forced)
+            // OPTIMIZATION: Skip if already correct
             if (!forceUpdate && currentText == translation)
                 return false;
 
             // Apply custom font first
             ApplyCustomFont(textMesh, path);
-            // Apply translation
             textMesh.text = translation;
 
             return true;
@@ -158,26 +189,13 @@ namespace MWC_Localization_Core
 
         /// <summary>
         /// Get custom font for the given original font name
+        /// OPTIMIZATION: Direct dict lookup instead of LINQ
         /// </summary>
         Font GetCustomFont(string originalFontName)
         {
-            // First try direct match
-            if (customFonts.ContainsKey(originalFontName))
-            {
-                return customFonts[originalFontName];
-            }
-
-            // Use original if it exists in the dictionary as value
-            else if (customFonts.Values.Any(f => f.name == originalFontName))
-            {
-                return customFonts.Values.FirstOrDefault(f => f.name == originalFontName);
-            }
-
-            // Return first loaded font as fallback
-            //else if (customFonts.Count > 0)
-            //{
-            //    return customFonts.Values.First();
-            //}
+            // Direct match first - fast path
+            if (customFonts.TryGetValue(originalFontName, out Font font))
+                return font;
 
             return null;
         }
@@ -193,24 +211,24 @@ namespace MWC_Localization_Core
             string originalFontName = textMesh.font != null ? textMesh.font.name : "unknown";
             Font customFont = GetCustomFont(originalFontName);
 
-            if (customFont != null)
-            {
+            if (customFont == null)
+                return false;
+
+            if (textMesh.font != customFont)
                 textMesh.font = customFont;
 
-                // Update material texture
+            // Update material texture if present
+            if (customFont.material != null && customFont.material.mainTexture != null)
+            {
                 MeshRenderer renderer = textMesh.GetComponent<MeshRenderer>();
-                if (renderer != null && renderer.material != null && customFont.material != null && customFont.material.mainTexture != null)
+                if (renderer != null && renderer.material != null)
                 {
                     renderer.material.mainTexture = customFont.material.mainTexture;
                 }
-
-                // Adjust position for better rendering with Korean font
-                config.ApplyTextAdjustment(textMesh, path);
-                
-                return true;
             }
 
-            return false;
+            config.ApplyTextAdjustment(textMesh, path);
+            return true;
         }
         
         /// <summary>
@@ -220,5 +238,14 @@ namespace MWC_Localization_Core
         {
             patternMatcher.LoadPatternsFromFile(filePath);
         }
+
+        /// <summary>
+        /// Clear text cache (useful when language changes)
+        /// </summary>
+        public void ClearCache()
+        {
+            textCache.Clear();
+        }
     }
 }
+

@@ -9,10 +9,10 @@ namespace MWC_Localization_Core
     public class MWC_Localization_Core : Mod
     {
         // Mod metadata
-        public override string ID => "MWC_Localization_Core_KR";
+        public override string ID => "MWC_Localization_Core_BR";
         public override string Name => "MWC_Localization_Core";
-        public override string Author => "potatosalad775";
-        public override string Version => "1.0.4";
+        public override string Author => "potatosalad775&LucasMonOficial";
+        public override string Version => "1.0.6";
         public override string Description => "Multi-language core localization framework for My Winter Car";
         public override Game SupportedGames => Game.MyWinterCar;
 
@@ -120,6 +120,9 @@ namespace MWC_Localization_Core
             CoreConsole.Print($"[{Name}] Translating Main Menu...");
             TranslateScene();
             sceneManager.MarkSceneTranslated("MainMenu");
+
+            // Initialize UpdateMainMenu for radio and CD translations
+            InitializeUpdateMainMenu();
         }
 
         // Game fully loaded - translate everything
@@ -178,18 +181,32 @@ namespace MWC_Localization_Core
             // Clear caches when entering a new scene
             if (sceneChanged)
             {
-                // Clear MonoBehaviour cache and destroy old monitor
+                // Clear MonoBehaviour cache. Do NOT destroy the GameObject to avoid
+                // unnecessary allocations and potential loss of monitoring. If the
+                // handler object is missing, recreate it so monitoring continues.
                 if (lateUpdateHandler != null)
                 {
                     lateUpdateHandler.ClearCache();
                 }
-                if (lateUpdateHandlerObject != null)
+
+                if (lateUpdateHandlerObject == null)
                 {
-                    Object.Destroy(lateUpdateHandlerObject);
-                    lateUpdateHandlerObject = null;
-                    lateUpdateHandler = null;
+                    // Recreate the late update handler only if core dependencies exist
+                    if (translator != null && textMeshMonitor != null && teletextHandler != null && arrayListHandler != null && sceneManager != null)
+                    {
+                        lateUpdateHandlerObject = new GameObject("MWC_LateUpdateHandler");
+                        lateUpdateHandler = lateUpdateHandlerObject.AddComponent<LateUpdateHandler>();
+                        lateUpdateHandler.Initialize(
+                            this,
+                            translator,
+                            textMeshMonitor,
+                            teletextHandler,
+                            arrayListHandler,
+                            sceneManager
+                        );
+                    }
                 }
-                
+
                 CoreConsole.Print($"[{Name}] Scene changed to '{currentScene}' - cleared caches");
             }
 
@@ -296,7 +313,21 @@ namespace MWC_Localization_Core
                     if (separatorIndex > 0)
                     {
                         string key = line.Substring(0, separatorIndex).Trim();
-                        string value = line.Substring(separatorIndex + 1).Trim();
+                        // Preserve leading spaces in the value (they may be significant for layout)
+                        // TrimEnd to remove accidental trailing whitespace but keep leading spaces after '='
+                        string value = line.Substring(separatorIndex + 1).TrimEnd();
+                        // If file authors used the common formatting "key = value" (exactly one space after '='),
+                        // remove that single separator space. If there are multiple spaces after '=', treat them as intentional
+                        // (do not remove), so authors can add leading spaces for layout.
+                        if (line.Length > separatorIndex + 1 && line[separatorIndex + 1] == ' ')
+                        {
+                            bool hasSecondSpace = (line.Length > separatorIndex + 2 && line[separatorIndex + 2] == ' ');
+                            if (!hasSecondSpace && value.Length > 0 && value[0] == ' ')
+                            {
+                                // only remove the single separator space
+                                value = value.Substring(1);
+                            }
+                        }
 
                         string normalizedKey = MLCUtils.FormatUpperKey(key);
                         string processedValue = value.Replace("\\n", "\n");
@@ -405,6 +436,23 @@ namespace MWC_Localization_Core
                     sceneManager
                 );
             }
+            else
+            {
+                // If the handler object was destroyed elsewhere, recreate it so monitoring continues
+                if (lateUpdateHandlerObject == null)
+                {
+                    lateUpdateHandlerObject = new GameObject("MWC_LateUpdateHandler");
+                    lateUpdateHandler = lateUpdateHandlerObject.AddComponent<LateUpdateHandler>();
+                    lateUpdateHandler.Initialize(
+                        this,
+                        translator,
+                        textMeshMonitor,
+                        teletextHandler,
+                        arrayListHandler,
+                        sceneManager
+                    );
+                }
+            }
 
             // Reset managers
             sceneManager.ResetAll();
@@ -434,7 +482,16 @@ namespace MWC_Localization_Core
         {
             textMeshMonitor.RegisterAllPathRuleElements();
 
-            // Find all TextMesh components in the scene
+            // If we have the LateUpdateHandler (MonoBehaviour), use its incremental scanner to
+            // avoid doing a large synchronous scan in a single frame. Otherwise fall back to
+            // immediate scanning (used during MainMenu initialization where coverage is small).
+            if (lateUpdateHandler != null)
+            {
+                lateUpdateHandler.StartSceneTranslationIncremental(LocalizationConstants.TRANSLATION_BATCH_SIZE);
+                return;
+            }
+
+            // Fallback synchronous scan (menu or no handler available)
             TextMesh[] allTextMeshes = Resources.FindObjectsOfTypeAll<TextMesh>();
             int translatedCount = 0;
 
@@ -443,14 +500,31 @@ namespace MWC_Localization_Core
                 if (tm == null || string.IsNullOrEmpty(tm.text))
                     continue;
 
-                // Get GameObject path
                 string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-
-                // Translate and apply font
-                translator.TranslateAndApplyFont(tm, path, null);
+                if (translator.TranslateAndApplyFont(tm, path, null))
+                    translatedCount++;
             }
 
             CoreConsole.Print($"[{Name}] Scene translation complete: {translatedCount}/{allTextMeshes.Length} TextMesh objects translated");
+        }
+
+        void InitializeUpdateMainMenu()
+        {
+            try
+            {
+                // Create a temporary GameObject to attach the UpdateMainMenu component
+                GameObject tempObject = new GameObject("UpdateMainMenuHost");
+                UpdateMainMenu updateMainMenu = tempObject.AddComponent<UpdateMainMenu>();
+                
+                // Initialize with translation dictionary
+                updateMainMenu.Initialize(translations);
+                
+                CoreConsole.Print($"[{Name}] UpdateMainMenu initialized successfully");
+            }
+            catch (System.Exception ex)
+            {
+                CoreConsole.Error($"[{Name}] Failed to initialize UpdateMainMenu: {ex.Message}");
+            }
         }
     }
 }

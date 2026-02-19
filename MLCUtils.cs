@@ -18,11 +18,17 @@ namespace MWC_Localization_Core
 
             // Trim whitespace
             original = original.Trim();
-            // Remove spaces, newlines, carriage returns
-            original = original.Replace(" ", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-            // Convert to uppercase
-            original = original.ToUpper();
-            return original;
+
+            // Normalize: keep only letters and digits (remove spaces, punctuation, apostrophes etc.)
+            var sb = new System.Text.StringBuilder(original.Length);
+            foreach (char c in original)
+            {
+                if (char.IsLetterOrDigit(c))
+                    sb.Append(c);
+            }
+
+            string result = sb.ToString().ToUpperInvariant();
+            return result;
         }
 
         // Cache for GameObject paths to improve performance

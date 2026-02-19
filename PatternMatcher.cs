@@ -96,8 +96,9 @@ namespace MWC_Localization_Core
                         continue;
                     }
 
-                    // Parse pattern - auto-detects FsmPattern vs FsmPatternWithTranslation
-                    if (TryParseFsmPattern(trimmed, out TranslationPattern pattern))
+                // Parse pattern - auto-detects FsmPattern vs FsmPatternWithTranslation
+                    // Pass original line (not trimmed) to preserve leading spaces in translation values
+                    if (TryParseFsmPattern(line, out TranslationPattern pattern))
                     {
                         patterns.Insert(0, pattern);  // Insert at beginning to override built-in patterns
                         loadedCount++;
@@ -121,7 +122,8 @@ namespace MWC_Localization_Core
                 return false;
 
             string original = line.Substring(0, equalsIndex).Trim().ToUpperInvariant();
-            string translation = line.Substring(equalsIndex + 1).Trim();
+            // Preserve leading spaces in translation values (they may be significant for layout)
+            string translation = line.Substring(equalsIndex + 1).TrimEnd();
 
             // Unescape special characters
             original = UnescapeString(original);

@@ -1,5 +1,6 @@
 using MSCLoader;
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace MWC_Localization_Core
@@ -20,20 +21,13 @@ namespace MWC_Localization_Core
         private ArrayListProxyHandler arrayListHandler;
         private SceneTranslationManager sceneManager;
         
-        // Cached references for critical UI (EveryFrame monitoring)
-        private class CriticalUIReference
-        {
-            public string Path;
-            public TextMesh TextMesh;
-            public int RetryCount;
-            public float NextRetryTime;
-            public bool IsRegistered;
-        }
-
         private bool isInitialized = false;
         
         // Throttling timers (MOVED from MWC_Localization_Core.cs)
         private float lastArrayCheckTime = 0f;
+        // Coroutine for incremental scene translation
+        private Coroutine translationCoroutine = null;
+        private int translationBatchSize = LocalizationConstants.TRANSLATION_BATCH_SIZE;
 
         public void Initialize(
             MWC_Localization_Core modInstance, 
@@ -51,6 +45,79 @@ namespace MWC_Localization_Core
             sceneManager = sceneManagerInstance;
             isInitialized = true;
             CoreConsole.Print($"[{mod.Name}] LateUpdateHandler initialized");
+        }
+
+        // ...no delayed teletext coroutine in original implementation...
+
+        /// <summary>
+        /// Coroutine that incrementally translates TextMesh objects in the scene.
+        /// Processes up to translationBatchSize items per frame.
+        /// </summary>
+        IEnumerator TranslateSceneIncremental()
+        {
+            if (translator == null)
+            {
+                CoreConsole.Warning($"[{mod.Name}] TranslateSceneIncremental: translator is null");
+                yield break;
+            }
+
+            // Register path/rule elements before scanning
+            if (textMeshMonitor != null)
+                textMeshMonitor.RegisterAllPathRuleElements();
+
+            TextMesh[] allTextMeshes = Resources.FindObjectsOfTypeAll<TextMesh>();
+            int translatedCount = 0;
+
+            for (int i = 0; i < allTextMeshes.Length; i++)
+            {
+                TextMesh tm = allTextMeshes[i];
+                if (tm == null || string.IsNullOrEmpty(tm.text))
+                    continue;
+
+                string path = MLCUtils.GetGameObjectPath(tm.gameObject);
+                bool translated = translator.TranslateAndApplyFont(tm, path, null);
+                if (translated)
+                    translatedCount++;
+
+                // Batch yield to avoid doing all work in one frame
+                if (i % translationBatchSize == 0)
+                    yield return null;
+            }
+
+            CoreConsole.Print($"[{mod.Name}] Incremental scene translation complete: {translatedCount}/{allTextMeshes.Length} TextMesh objects translated");
+            translationCoroutine = null;
+        }
+
+        /// <summary>
+        /// Start an incremental scene translation using a coroutine to process TextMesh objects
+        /// in batches over multiple frames to avoid stalls.
+        /// </summary>
+        public void StartSceneTranslationIncremental(int batchSize = LocalizationConstants.TRANSLATION_BATCH_SIZE)
+        {
+            if (!isInitialized)
+                return;
+
+            translationBatchSize = batchSize > 0 ? batchSize : LocalizationConstants.TRANSLATION_BATCH_SIZE;
+
+            if (translationCoroutine != null)
+            {
+                StopCoroutine(translationCoroutine);
+                translationCoroutine = null;
+            }
+
+            translationCoroutine = StartCoroutine(TranslateSceneIncremental());
+        }
+
+        /// <summary>
+        /// Stop any running incremental translation coroutine.
+        /// </summary>
+        public void StopSceneTranslationIncremental()
+        {
+            if (translationCoroutine != null)
+            {
+                StopCoroutine(translationCoroutine);
+                translationCoroutine = null;
+            }
         }
 
         /// <summary>
@@ -78,9 +145,11 @@ namespace MWC_Localization_Core
                     if (translated > 0)
                     {
                         CoreConsole.Print($"[{mod.Name}] [Runtime] Translated {translated} newly-loaded teletext items");
-                        // Apply Korean font to teletext display immediately after translation
+                        // Apply fonts/translations to teletext display immediately after translation
                         ApplyTeletextFonts();
                     }
+
+        
                     
                     // Monitor and disable FSM-driven Bottomlines (handles late initialization)
                     int fsmDisabled = teletextHandler.DisableTeletextFSMs(translator);
@@ -121,7 +190,6 @@ namespace MWC_Localization_Core
                 "Systems/TV/Teletext/VKTekstiTV/PAGES",
                 "Systems/TV/TVGraphics/CHAT/Generated/Lines"
             };
-
             int fontChangedCount = 0;
 
             foreach (string rootPath in teletextRootPaths)
@@ -149,27 +217,6 @@ namespace MWC_Localization_Core
             }
         }
         
-        /// <summary>
-        /// Helper method - Scan for new main menu elements
-        /// </summary>
-        private void ScanForNewMainMenuElements()
-        {
-            GameObject mainMenuRoot = GameObject.Find("MainMenu");
-            if (mainMenuRoot == null)
-                return;
-
-            TextMesh[] allTextMeshes = mainMenuRoot.GetComponentsInChildren<TextMesh>(true);
-            
-            foreach (TextMesh tm in allTextMeshes)
-            {
-                if (tm == null || string.IsNullOrEmpty(tm.text))
-                    continue;
-
-                string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-                translator.TranslateAndApplyFont(tm, path, null);
-            }
-        }
-
         /// <summary>
         /// Clear cache when scene changes
         /// </summary>
