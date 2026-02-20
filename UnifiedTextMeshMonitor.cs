@@ -69,7 +69,6 @@ namespace MWC_Localization_Core
         private float slowPollingTimer;
 
         // OPTIMIZATION: Budget-based processing to reduce per-frame cost
-        private const int TRANSLATIONS_PER_CYCLE = 5;  // Max translations per Update call
         private int translationBudgetRemaining;
 
         // Path-based monitoring rules (pattern -> strategy mapping)
@@ -333,7 +332,7 @@ namespace MWC_Localization_Core
         public void Update(float deltaTime)
         {
             // OPTIMIZATION: Reset budget each frame
-            translationBudgetRemaining = TRANSLATIONS_PER_CYCLE;
+            translationBudgetRemaining = LocalizationConstants.TRANSLATIONS_PER_CYCLE;
 
             // Always update EveryFrame and Persistent
             UpdateGroup(MonitoringStrategy.EveryFrame);

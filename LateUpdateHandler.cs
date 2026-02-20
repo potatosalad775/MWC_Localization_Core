@@ -67,6 +67,7 @@ namespace MWC_Localization_Core
 
             TextMesh[] allTextMeshes = Resources.FindObjectsOfTypeAll<TextMesh>();
             int translatedCount = 0;
+            int processedInBatch = 0;
 
             for (int i = 0; i < allTextMeshes.Length; i++)
             {
@@ -80,8 +81,12 @@ namespace MWC_Localization_Core
                     translatedCount++;
 
                 // Batch yield to avoid doing all work in one frame
-                if (i % translationBatchSize == 0)
+                processedInBatch++;
+                if (processedInBatch >= translationBatchSize)
+                {
+                    processedInBatch = 0;
                     yield return null;
+                }
             }
 
             CoreConsole.Print($"[{mod.Name}] Incremental scene translation complete: {translatedCount}/{allTextMeshes.Length} TextMesh objects translated");
