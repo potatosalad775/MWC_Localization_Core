@@ -127,23 +127,25 @@ namespace MWC_Localization_Core
             AddPathRule("Systems/TV/TVGraphics/CHAT/Day", MonitoringStrategy.FastPolling);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Moderator", MonitoringStrategy.FastPolling);
             AddPathRule("Systems/TV/Teletext/VKTekstiTV/HEADER/Texts/Status", MonitoringStrategy.FastPolling);
-			AddPathRule("COMPUTER/SYSTEM/POS/NoOS", MonitoringStrategy.FastPolling);
+            AddPathRule("COMPUTER/SYSTEM/POS/NoOS", MonitoringStrategy.FastPolling);
 
-			// Teletext/FSM displays are primarily translated at array/FSM source level.
-			// Use one-shot late registration to avoid scanning large TV trees every second.
-			AddPathRule("Systems/TV/Teletext/VKTekstiTV/PAGES", MonitoringStrategy.LateTranslateOnce);
+            // Teletext/FSM displays are primarily translated at array/FSM source level.
+            // Use one-shot late registration to avoid scanning large TV trees every second.
+            AddPathRule("Systems/TV/Teletext/VKTekstiTV/PAGES", MonitoringStrategy.LateTranslateOnce);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Generated", MonitoringStrategy.LateTranslateOnce);
 
-			// Magazine / Sheets - on visibility change
-			AddPathRule("Sheets/UnemployPaper", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("Sheets/ServiceBrochure", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("Sheets/ServicePayment", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("Sheets/TrafficTicket", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("Sheets/YellowPagesMagazine/Page2", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", MonitoringStrategy.OnVisibilityChange);
-			AddPathRule("COMPUTER/SYSTEM/TELEBBS/CONLINE/CommandLine", MonitoringStrategy.OnVisibilityChange);
-		}
+            // Magazine / Sheets - on visibility change
+            AddPathRule("Sheets/UnemployPaper", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("Sheets/ServiceBrochure", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("Sheets/ServicePayment", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("Sheets/TrafficTicket", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", MonitoringStrategy.OnVisibilityChange);
+            AddPathRule("COMPUTER/SYSTEM/TELEBBS/CONLINE/CommandLine", MonitoringStrategy.OnVisibilityChange);
+
+            // Magazine / Sheets - persistent monitoring due to dynamic content changes and rebuilds
+            AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.Persistent);
+            AddPathRule("Sheets/YellowPagesMagazine/Page2", MonitoringStrategy.Persistent);
+        }
 
         public void AddPathRule(string pathPattern, MonitoringStrategy strategy)
         {
@@ -185,13 +187,9 @@ namespace MWC_Localization_Core
             {
                 MonitoringStrategy strategy = pathRules[parentPath];
                 if (strategy == MonitoringStrategy.LateTranslateOnce ||
-                    strategy == MonitoringStrategy.OnVisibilityChange)
-                {
-                    monitoredPaths.Add(parentPath);
-                }
-
-                // FastPolling paths with dynamic TextMesh creation need continuous re-registration
-                if (strategy == MonitoringStrategy.FastPolling && parentPath == "COMPUTER/SYSTEM/POS/NoOS")
+                    strategy == MonitoringStrategy.OnVisibilityChange ||
+                    strategy == MonitoringStrategy.Persistent ||
+                    strategy == MonitoringStrategy.FastPolling)
                 {
                     monitoredPaths.Add(parentPath);
                 }
@@ -212,8 +210,9 @@ namespace MWC_Localization_Core
 
                 int registered = Register(parentPath, strategy);
 
-                // Remove from monitoring list if successfully registered
-                if (registered > 0)
+                // Remove from monitoring list if successfully registered.
+                // Persistent paths stay in the scan because their child TextMeshes can be rebuilt.
+                if (registered > 0 && strategy != MonitoringStrategy.Persistent)
                 {
                     monitoredPaths.Remove(parentPath);
                 }
@@ -331,7 +330,6 @@ namespace MWC_Localization_Core
         {
             // Always update EveryFrame and Persistent
             UpdateGroup(MonitoringStrategy.EveryFrame);
-            UpdateGroup(MonitoringStrategy.Persistent);
 
             // Throttled fast polling (0.1s)
             fastPollingTimer += deltaTime;
@@ -347,6 +345,7 @@ namespace MWC_Localization_Core
             {
                 UpdateGroup(MonitoringStrategy.SlowPolling);
                 UpdateGroup(MonitoringStrategy.LateTranslateOnce);
+                UpdateGroup(MonitoringStrategy.Persistent);
                 MonitorLateRegister(); // Also check for late registrations
                 slowPollingTimer = 0f;
             }
@@ -368,32 +367,26 @@ namespace MWC_Localization_Core
             foreach (int instanceID in instanceIDs)
             {
                 if (!instanceEntries.ContainsKey(instanceID))
-                {
-                    removalBuffer.Add(instanceID);
                     continue;
-                }
 
                 var entry = instanceEntries[instanceID];
-
-                if (!entry.IsValid())
-                {
-                    removalBuffer.Add(instanceID);
-                    continue;
-                }
 
                 // Skip inactive entries for polling strategies.
                 // OnVisibilityChange has its own dedicated pass.
                 if (!entry.GameObject.activeInHierarchy)
+                    continue;
+
+                // Persistent strategy: Keep checking even if entry is not valid
+                // Other strategies: Remove if entry becomes invalid (e.g. destroyed)
+                if (!entry.IsValid() && strategy != MonitoringStrategy.Persistent)
                 {
+                    removalBuffer.Add(instanceID);
                     continue;
                 }
 
-                // Persistent strategy: Check regardless of status
-                // Other strategies: Only check if text changed
                 bool textChanged = entry.HasTextChanged();
-                bool shouldCheck = textChanged || !entry.WasTranslated || strategy == MonitoringStrategy.Persistent;
                 
-                if (shouldCheck)
+                if (textChanged || !entry.WasTranslated)
                 {
                     bool translated = translator.TranslateAndApplyFont(entry.TextMesh, entry.Path, null);
                     if (translated)
@@ -458,10 +451,12 @@ namespace MWC_Localization_Core
             }
             instanceEntries.Clear();
             pathToInstances.Clear();
+            pathRules.Clear();
             monitoredPaths.Clear();
             fastPollingTimer = 0f;
             slowPollingTimer = 0f;
             visibilityPollingTimer = 0f;
+            InitializeDefaultPathRules();
         }
     }
 }

@@ -17,8 +17,19 @@ namespace MWC_Localization_Core
         private UnifiedTextMeshMonitor textMeshMonitor;
         private TeletextHandler teletextHandler;
         private ArrayListProxyHandler arrayListHandler;
+        private HashTableProxyHandler hashTableHandler;
         private SceneTranslationManager sceneManager;
         
+        // Cached references for critical UI (EveryFrame monitoring)
+        private class CriticalUIReference
+        {
+            public string Path;
+            public TextMesh TextMesh;
+            public int RetryCount;
+            public float NextRetryTime;
+            public bool IsRegistered;
+        }
+
         private bool isInitialized = false;
         
         // Throttling timers (MOVED from MWC_Localization_Core.cs)
@@ -32,12 +43,14 @@ namespace MWC_Localization_Core
             UnifiedTextMeshMonitor textMeshMonitorInstance,
             TeletextHandler teletextHandlerInstance,
             ArrayListProxyHandler arrayListHandlerInstance,
+            HashTableProxyHandler hashTableHandlerInstance,
             SceneTranslationManager sceneManagerInstance)
         {
             translator = translatorInstance;
             textMeshMonitor = textMeshMonitorInstance;
             teletextHandler = teletextHandlerInstance;
             arrayListHandler = arrayListHandlerInstance;
+            hashTableHandler = hashTableHandlerInstance;
             sceneManager = sceneManagerInstance;
             isInitialized = true;
         }
@@ -81,6 +94,12 @@ namespace MWC_Localization_Core
                     if (arrayTranslated > 0)
                     {
                         CoreConsole.Print($"[LateUpdateHandler] Translated {arrayTranslated} newly-loaded array items");
+                    }
+
+                    int hashTableTranslated = hashTableHandler.MonitorAndTranslateHashTables();
+                    if (hashTableTranslated > 0)
+                    {
+                        CoreConsole.Print($"[LateUpdateHandler] Translated {hashTableTranslated} newly-loaded hash table items");
                     }
                     
                     // Monitor and apply fonts to late-initialized TextMesh components

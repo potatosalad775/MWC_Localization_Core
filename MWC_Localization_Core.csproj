@@ -72,6 +72,7 @@
     <Compile Include="LocalizationConstants.cs" />
     <Compile Include="MagazineTextHandler.cs" />
     <Compile Include="FsmTextHook.cs" />
+    <Compile Include="HashTableProxyHandler.cs" />
     <Compile Include="MonitoringStrategy.cs" />
     <Compile Include="MWC_Localization_Core.cs" />
     <Compile Include="PatternMatcher.cs" />

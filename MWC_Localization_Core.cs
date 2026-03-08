@@ -1,4 +1,4 @@
-﻿﻿using MSCLoader;
+﻿using MSCLoader;
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +12,7 @@ namespace MWC_Localization_Core
         public override string ID => "MWC_Localization_Core_BR";
         public override string Name => "MWC_Localization_Core";
         public override string Author => "potatosalad775&LucasMonOficial";
-        public override string Version => "1.1.4";
+        public override string Version => "1.1.5";
         public override string Description => "Multi-language core localization framework for My Winter Car";
         public override Game SupportedGames => Game.MyWinterCar;
 
@@ -31,6 +31,7 @@ namespace MWC_Localization_Core
         private MagazineTextHandler magazineHandler;
         private TeletextHandler teletextHandler;
         private ArrayListProxyHandler arrayListHandler;
+        private HashTableProxyHandler hashTableHandler;
         private TextMeshTranslator translator;
 
         // Unified managers
@@ -123,6 +124,8 @@ namespace MWC_Localization_Core
             // Initialize array handler with translation dictionaries and translator
             arrayListHandler = new ArrayListProxyHandler(translations, magazineHandler, translator);
             arrayListHandler.InitializeArrayPaths();
+            hashTableHandler = new HashTableProxyHandler(magazineHandler);
+            hashTableHandler.InitializeTargetPaths();
             
             // Initialize unified text mesh monitor
             textMeshMonitor = new UnifiedTextMeshMonitor(translator);
@@ -146,6 +149,7 @@ namespace MWC_Localization_Core
             // Reset handlers
             teletextHandler.Reset();
             arrayListHandler.Reset();
+            hashTableHandler.Reset();
 
             // Translate static arrays immediately
             int arrayTranslated = arrayListHandler.TranslateAllArrays();
@@ -153,6 +157,12 @@ namespace MWC_Localization_Core
             {
                 CoreConsole.Print($"[{Name}] Translated {arrayTranslated} array items");
                 arrayListHandler.ApplyFontsToArrayElements();
+            }
+
+            int hashTableTranslated = hashTableHandler.TranslateAllHashTables();
+            if (hashTableTranslated > 0)
+            {
+                CoreConsole.Print($"[{Name}] Translated {hashTableTranslated} hash table items");
             }
             
             // Create MonoBehaviour for LateUpdate monitoring
@@ -164,6 +174,7 @@ namespace MWC_Localization_Core
                 textMeshMonitor, 
                 teletextHandler, 
                 arrayListHandler, 
+                hashTableHandler,
                 sceneManager
             );
         }
@@ -238,6 +249,7 @@ namespace MWC_Localization_Core
                 // Reset teletext handler and retry tracking for new scene
                 teletextHandler.Reset();
                 arrayListHandler.Reset();
+                hashTableHandler.Reset();
                 
                 // Translate static arrays immediately (HUD, menus, etc.)
                 int arrayTranslated = arrayListHandler.TranslateAllArrays();
@@ -246,6 +258,12 @@ namespace MWC_Localization_Core
                     CoreConsole.Print($"[{Name}] [Arrays] Initial translation: {arrayTranslated} items");
                     // Apply Korean fonts to TextMesh components using array data
                     arrayListHandler.ApplyFontsToArrayElements();
+                }
+
+                int hashTableTranslated = hashTableHandler.TranslateAllHashTables();
+                if (hashTableTranslated > 0)
+                {
+                    CoreConsole.Print($"[{Name}] [HashTables] Initial translation: {hashTableTranslated} items");
                 }
             }
         }
@@ -426,6 +444,7 @@ namespace MWC_Localization_Core
             translations.Clear();
             magazineHandler.ClearTranslations();
             arrayListHandler.ClearTranslations();
+            hashTableHandler.ClearTranslations();
             translator.ClearRuntimeCaches();
             translator.ResetPatterns();
             MLCUtils.ClearCaches();
@@ -463,6 +482,7 @@ namespace MWC_Localization_Core
                     textMeshMonitor, 
                     teletextHandler, 
                     arrayListHandler, 
+                    hashTableHandler,
                     sceneManager
                 );
             }
@@ -474,6 +494,7 @@ namespace MWC_Localization_Core
             // Reset teletext handler
             teletextHandler.Reset();
             arrayListHandler.Reset();
+            hashTableHandler.Reset();
 
             // Reapply fonts and adjustments to all TextMeshes (after restore)
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
