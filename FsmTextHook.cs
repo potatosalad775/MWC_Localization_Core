@@ -199,6 +199,17 @@ namespace MWC_Localization_Core
             StartCoroutine(ApplyWhenReady());
         }
 
+        private static bool LooksLikeUserCommand(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return false;
+            string v = value.Trim();
+            if (v.Length < 1 || v.Length > 24 || v.IndexOfAny(new char[] { ' ', '\t', '\n', '\r', ':', '.' }) >= 0) return false;
+            if (v.Contains("...")) return false;
+            for (int i = 0; i < v.Length; i++)
+                if (!(char.IsLetterOrDigit(v[i]) || v[i] == '-' || v[i] == '_' || v[i] == '/' || v[i] == '#')) return false;
+            return true;
+        }
+
         private IEnumerator ApplyWhenReady()
         {
             while (!isApplied)
@@ -822,7 +833,7 @@ namespace MWC_Localization_Core
             string original = action.stringValue.Value;
             
             // PROTECTION: Block user commands only when processing POS context
-            if (isProcessingPosContext && MLCUtils.LooksLikeUserCommand(original))
+            if (isProcessingPosContext && LooksLikeUserCommand(original))
                 return false;
             
             string translated = GetTranslation(original, original);
@@ -861,7 +872,7 @@ namespace MWC_Localization_Core
             string original = fsmString.Value;
             
             // PROTECTION: Block user commands only when processing POS context
-            if (isProcessingPosContext && MLCUtils.LooksLikeUserCommand(original))
+            if (isProcessingPosContext && LooksLikeUserCommand(original))
                 return false;
             
             string translated = GetTranslation(original, original);
@@ -892,7 +903,7 @@ namespace MWC_Localization_Core
             string original = part.Value;
             
             // PROTECTION: Block user commands only when processing POS context
-            if (isProcessingPosContext && MLCUtils.LooksLikeUserCommand(original))
+            if (isProcessingPosContext && LooksLikeUserCommand(original))
                 return false;
             
             string translated = GetTranslation(original, original);
