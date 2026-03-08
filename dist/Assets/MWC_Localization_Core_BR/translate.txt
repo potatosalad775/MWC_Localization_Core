@@ -630,9 +630,10 @@ Volume in drive C is C = Volume na unidade C
 Volume in drive A is A = Volume na unidade A
 CCC   CC    CCC     C     C   CCC  CCCC     CCC   CCC    CCC  ////////////////   C     C  C  C  C     C     C  C  C  C        C  C  C  C  C     // /C - Chat  //  C     C  C  C  C  C  C     C  C  C  CCCC     CCC   CCC   CCCC  // /F - Files // C     C  C  C  C     C     C  C  C  C        C  C  C  C     C  // /R - Ranks // CCC   CC   C  C     CCCC  C  C  C  CCCC     CCC   CCC   CCC   //////////////// =     CCC   CC    CCC     C     C   CCC  CCCC     CCC   CCC    CCC  ////////////////\n   C     C  C  C  C     C     C  C  C  C        C  C  C  C  C     // /C - Chat   /\n  C     C  C  C  C  C  C     C  C  C  CCCC     CCC   CCC   CCCC  // /F - Arqui  /\n C     C  C  C  C     C     C  C  C  C        C  C  C  C     C  // /R - Classi /\n CCC   CC   C  C     CCCC  C  C  C  CCCC     CCC   CCC   CCC   ////////////////
 TELEBBS v2.73h RoyalSoft 1992 = TELEBBS v2.73h RoyalSoft 1992
-Copying... {0}% = Copiando... {0}%
-Formatting... {0}% = Formatação... {0}%
-Sending... {0}% = Enviando... {0}%
+Formatting...  = Formatando... 
+Copying...  = Copiando... 
+EN JOY! ING UR 'PUTER? DIS IS SPE77ER SPOOKING! = APROVEITANDO SEU COMPUTADOR? AQUI É O SPE77ER FALANDO!
+:::::FUCK UR P0RN MAKE YA MOMMA BUY U NEW 'PUTER:::: HA HA:::: SPE77ER DA NAME! = :::::FODA-SE SEU P0RN, FAZ SUA MÃE COMPRAR UM COMPUTADOR NOVO PRA VOCÊ:::: HA HA:::: SPE77ER É O NOME!
 
 //Phone Call
 "I tried to call everybody. Please can you pick me up from the Pub and drive me home?" = "Tentei ligar para todo mundo. Você pode me buscar no bar e me levar para casa?"
