@@ -630,6 +630,7 @@ Volume in drive C is C = Volume na unidade C
 Volume in drive A is A = Volume na unidade A
 CCC   CC    CCC     C     C   CCC  CCCC     CCC   CCC    CCC  ////////////////   C     C  C  C  C     C     C  C  C  C        C  C  C  C  C     // /C - Chat  //  C     C  C  C  C  C  C     C  C  C  CCCC     CCC   CCC   CCCC  // /F - Files // C     C  C  C  C     C     C  C  C  C        C  C  C  C     C  // /R - Ranks // CCC   CC   C  C     CCCC  C  C  C  CCCC     CCC   CCC   CCC   //////////////// =     CCC   CC    CCC     C     C   CCC  CCCC     CCC   CCC    CCC  ////////////////\n   C     C  C  C  C     C     C  C  C  C        C  C  C  C  C     // /C - Chat   /\n  C     C  C  C  C  C  C     C  C  C  CCCC     CCC   CCC   CCCC  // /F - Arqui  /\n C     C  C  C  C     C     C  C  C  C        C  C  C  C     C  // /R - Classi /\n CCC   CC   C  C     CCCC  C  C  C  CCCC     CCC   CCC   CCC   ////////////////
 TELEBBS v2.73h RoyalSoft 1992 = TELEBBS v2.73h RoyalSoft 1992
+Formatting... 0% = Formatando...0%
 Formatting...  = Formatando... 
 Copying...  = Copiando... 
 EN JOY! ING UR 'PUTER? DIS IS SPE77ER SPOOKING! = APROVEITANDO SEU COMPUTADOR? AQUI É O SPE77ER FALANDO!
