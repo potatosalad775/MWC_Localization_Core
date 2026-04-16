@@ -1099,6 +1099,9 @@ namespace MWC_Localization_Core
 
         private bool ApplyConlineNestedTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
         {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
             HutongGames.PlayMaker.FsmState state = null;
             for (int i = 0; i < fsm.FsmStates.Length; i++)
             {
