@@ -51,7 +51,8 @@ namespace MWC_Localization_Core
             PosTyper,
             TeletextBuildStringPattern,
             TeletextWeatherUpdaterTokens,
-            UnemployPaperButtonVariables
+            UnemployPaperButtonVariables,
+            ConlineChatStatus
         }
 
         private sealed class FsmStrategyTarget
@@ -202,6 +203,20 @@ namespace MWC_Localization_Core
             return targets.ToArray();
         }
 
+        private static readonly FsmStrategyTarget[] GameConlineTargets = new FsmStrategyTarget[]
+        {
+            new FsmStrategyTarget(
+                "COMPUTER/SYSTEM/TELEBBS/CONLINE/CHAT",
+                "Type",
+                FsmStrategyType.ConlineChatStatus,
+                "GAME CONLINE",
+                "CONLINE_CHAT_READY",
+                "[FsmTextHook] CONLINE chat FSM targets are ready.",
+                null,
+                -1)
+        };
+
+
         public void Initialize(Dictionary<string, string> translations, GameObject hostObject, string[] patternFiles)
         {
             this.translations = translations;
@@ -265,6 +280,7 @@ namespace MWC_Localization_Core
             anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
             anyChanged |= TryApplyGameTeletextWeatherUpdaterFsmTranslations();
             anyChanged |= TryApplyGameUnemployPaperFsmTranslations();
+            anyChanged |= TryApplyGameConlineChatFsmTranslations();
 
             if (anyChanged)
             {
@@ -380,6 +396,22 @@ namespace MWC_Localization_Core
             return anyChanged || hasAnyTarget;
         }
 
+
+        private bool TryApplyGameConlineChatFsmTranslations()
+        {
+            bool anyChanged = false;
+            bool hasAnyTarget = false;
+
+            ApplyStrategyTargets(GameConlineTargets, ref anyChanged, ref hasAnyTarget);
+
+            if (anyChanged)
+            {
+                appliedTarget = "GAME CONLINE";
+            }
+
+            return anyChanged || hasAnyTarget;
+        }
+
         private void ApplyStrategyTargets(FsmStrategyTarget[] targets, ref bool anyChanged, ref bool hasAnyTarget)
         {
             if (targets == null || targets.Length == 0)
@@ -449,6 +481,11 @@ namespace MWC_Localization_Core
 
                 case FsmStrategyType.TeletextWeatherUpdaterTokens:
                     ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
+                    break;
+
+                case FsmStrategyType.ConlineChatStatus:
+                    anyChanged |= ApplyConlineChatStatusTranslations(fsm);
+                    hasAnyTarget = true;
                     break;
 
                 case FsmStrategyType.UnemployPaperButtonVariables:
@@ -1044,6 +1081,61 @@ namespace MWC_Localization_Core
                 return value;
 
             return fallback;
+        }
+
+
+        private bool ApplyConlineChatStatusTranslations(PlayMakerFSM fsm)
+        {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
+            bool changed = false;
+
+            changed |= ApplyConlineNestedTranslation(fsm, "Download", 1);
+            changed |= ApplyConlineNestedTranslation(fsm, "Fail", 0);
+
+            return changed;
+        }
+
+        private bool ApplyConlineNestedTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
+        {
+            HutongGames.PlayMaker.FsmState state = null;
+            for (int i = 0; i < fsm.FsmStates.Length; i++)
+            {
+                if (fsm.FsmStates[i] != null && fsm.FsmStates[i].Name == stateName)
+                {
+                    state = fsm.FsmStates[i];
+                    break;
+                }
+            }
+
+            if (state == null || state.Actions == null || actionIndex < 0 || actionIndex >= state.Actions.Length)
+                return false;
+
+            object action = state.Actions[actionIndex];
+            if (action == null)
+                return false;
+
+            var targetProperty = GetCachedField(action.GetType(), "targetProperty")?.GetValue(action);
+            if (targetProperty == null)
+                return false;
+
+            var fsmString = GetCachedField(targetProperty.GetType(), "StringParameter")?
+                .GetValue(targetProperty) as HutongGames.PlayMaker.FsmString;
+
+            if (fsmString == null || string.IsNullOrEmpty(fsmString.Value))
+                return false;
+
+            string original = fsmString.Value;
+            string translated = GetTranslation(original, original);
+
+            if (translated != original)
+            {
+                fsmString.Value = translated;
+                return true;
+            }
+
+            return false;
         }
 
         private void Cleanup()
