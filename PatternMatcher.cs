@@ -117,7 +117,7 @@ namespace MWC_Localization_Core
                     }
                 }
 
-                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from file");
+                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from {Path.GetFileName(filePath)}");
             }
             catch (System.Exception ex)
             {
@@ -129,16 +129,17 @@ namespace MWC_Localization_Core
         {
             pattern = null;
             
-            int equalsIndex = FindUnescapedEquals(line);
+            int equalsIndex = TranslationFileParser.FindKeyValueSeparator(line);
             if (equalsIndex <= 0)
                 return false;
 
-            string original = line.Substring(0, equalsIndex).Trim().ToUpperInvariant();
+            string original = line.Substring(0, equalsIndex).Trim();
             string translation = line.Substring(equalsIndex + 1).Trim();
 
-            // Unescape special characters
-            original = UnescapeString(original);
-            translation = UnescapeString(translation);
+            // Unescape special characters first, then uppercase original only
+            original = TranslationFileParser.UnescapeValue(original);
+            translation = TranslationFileParser.UnescapeValue(translation);
+            original = original.ToUpperInvariant();
 
             if (string.IsNullOrEmpty(original) || string.IsNullOrEmpty(translation))
                 return false;
@@ -326,30 +327,6 @@ namespace MWC_Localization_Core
             }
 
             return new TranslationPattern.CustomHandlerResult(false, null);
-        }
-
-        // Utility methods from TeletextHandler
-        private int FindUnescapedEquals(string line)
-        {
-            for (int i = 0; i < line.Length; i++)
-            {
-                if (line[i] == '=')
-                {
-                    // Check if escaped
-                    if (i > 0 && line[i - 1] == '\\')
-                        continue;
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        private string UnescapeString(string str)
-        {
-            if (string.IsNullOrEmpty(str))
-                return str;
-            
-            return str.Replace("\\=", "=").Replace("\\n", "\n");
         }
     }
 }
