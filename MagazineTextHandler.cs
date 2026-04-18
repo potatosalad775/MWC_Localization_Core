@@ -21,49 +21,10 @@ namespace MWC_Localization_Core
         /// </summary>
         public void LoadMagazineTranslations(string translationPath)
         {
-            if (!File.Exists(translationPath))
-            {
-                CoreConsole.Warning($"[MagazineTextHandler] Magazine translation file not found: {translationPath}");
-                return;
-            }
-
-            try
-            {
-                string[] lines = File.ReadAllLines(translationPath, Encoding.UTF8);
-                magazineTranslations.Clear();
-
-                foreach (string line in lines)
-                {
-                    // Skip empty lines and comments
-                    if (string.IsNullOrEmpty(line) || string.IsNullOrEmpty(line.Trim()) || line.TrimStart().StartsWith("#"))
-                        continue;
-
-                    // Parse KEY=VALUE format
-                    int equalsIndex = line.IndexOf('=');
-                    if (equalsIndex > 0)
-                    {
-                        string key = line.Substring(0, equalsIndex).Trim();
-                        string value = line.Substring(equalsIndex + 1).Trim();
-
-                        // Normalize key (remove spaces, convert to uppercase)
-                        key = MLCUtils.FormatUpperKey(key);
-
-                        // Handle escaped newlines in value
-                        value = value.Replace("\\n", "\n");
-
-                        if (!magazineTranslations.ContainsKey(key))
-                        {
-                            magazineTranslations[key] = value;
-                        }
-                    }
-                }
-
+            // Use unified parser - eliminates duplicate parsing logic
+            magazineTranslations = TranslationFileParser.ParseKeyValueFile(translationPath);
+            if (magazineTranslations.Count > 0)
                 CoreConsole.Print($"[MagazineTextHandler] Loaded {magazineTranslations.Count} magazine translations");
-            }
-            catch (System.Exception ex)
-            {
-                CoreConsole.Error($"[MagazineTextHandler] Failed to load magazine translations: {ex.Message}");
-            }
         }
 
         /// <summary>
@@ -96,7 +57,7 @@ namespace MWC_Localization_Core
 
             // Try updating rest of the magazine lines in standard way
             string key = MLCUtils.FormatUpperKey(textMesh.text);
-            if (magazineTranslations.TryGetValue(key, out string translation))
+            if (!string.IsNullOrEmpty(key) && magazineTranslations.TryGetValue(key, out string translation))
             {
                 textMesh.text = translation;
                 return true; // Handled
