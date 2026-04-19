@@ -208,19 +208,15 @@ namespace MWC_Localization_Core
                 {
                     if (!mainMenuTranslated)
                     {
-<<<<<<< Updated upstream
-
-=======
                         if (TryApplyMainMenuTranslations())
                         {
                             mainMenuTranslated = true;
-                            appliedTarget = "MainMenu";
+                            string appliedTarget = "MainMenu";
                             string targetLabel = string.IsNullOrEmpty(appliedTarget) ? "Unknown" : appliedTarget;
                             CoreConsole.Print("[FsmTextHook] FSM text translations applied (" + targetLabel + ")");
                             Cleanup();
                             yield break;
                         }
->>>>>>> Stashed changes
                     }
 
                     yield return BootstrapPollDelay;
