@@ -384,18 +384,8 @@ namespace MWC_Localization_Core
             string configPath = Path.Combine(ModLoader.GetModAssetsFolder(this), "config.txt");
             config.LoadConfig(configPath);
 
-            // Reload all translation files using unified helper
-            string mscTranslationPath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_msc.txt");
-            LoadTranslationFile(mscTranslationPath);
-            translator.LoadFsmPatterns(mscTranslationPath);
-
-            string translationPath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate.txt");
-            LoadTranslationFile(translationPath);
-            translator.LoadFsmPatterns(translationPath);
-
-            string modTranslationPath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_mod.txt");
-            LoadTranslationFile(modTranslationPath);
-            translator.LoadFsmPatterns(modTranslationPath);
+            // Reload core translations using unified helper
+            LoadTranslations();
 
             // Reload magazine translations
             string magazinePath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_magazine.txt");
