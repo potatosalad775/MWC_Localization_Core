@@ -632,6 +632,7 @@ Pe: = 금:
 La: = 토:
 Su: = 일:
 se \= selkeää pi \= pilvistä Ls \= lumisadetta = 맑음 \= 맑은 날씨\n흐림 \= 구름 많음\n눈 \= 눈
+KLO  = ~에게 
 
 //// Computer POS
 Copying... 0% = 복사 중... 0%

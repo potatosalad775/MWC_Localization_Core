@@ -50,6 +50,7 @@ namespace MWC_Localization_Core
             PosUse,
             PosTyper,
             TeletextBuildStringPattern,
+            TeletextBuildStringSimple,
             TeletextWeatherUpdaterTokens,
             UnemployPaperButtonVariables
         }
@@ -148,7 +149,16 @@ namespace MWC_Localization_Core
                 "TTX_DATA_READY",
                 "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
                 "State 1",
-                3)
+                3),
+            new FsmStrategyTarget(
+                "Systems/TV/TVGraphics/CHAT/Day/Time",
+                "Clock",
+                FsmStrategyType.TeletextBuildStringSimple,
+                "GAME Clock",
+                "CLOCK_READY",
+                "[FsmTextHook] Clock FSM is ready for translation.",
+                "State 3",
+                2)
         };
 
         private static readonly string TeletextEnnusteUpdaterPrefix = "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste/";
@@ -447,6 +457,12 @@ namespace MWC_Localization_Core
                     hasAnyTarget |= HasState(fsm, target.StateName);
                     break;
 
+                case FsmStrategyType.TeletextBuildStringSimple:
+                    // For simple translations like KLO->Ás, just translate part[0] without pattern matching
+                    anyChanged |= ApplyBuildStringActionStringPartsTranslation(fsm, target.StateName, target.ActionIndex, false, 1, 2);
+                    hasAnyTarget |= HasState(fsm, target.StateName);
+                    break;
+
                 case FsmStrategyType.TeletextWeatherUpdaterTokens:
                     ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
                     break;
@@ -723,12 +739,17 @@ namespace MWC_Localization_Core
                 changed = ApplyBuildStringFastPatternTranslation(fsm, stateName, actionIndex, parts);
             }
 
-            for (int i = 0; i < parts.Length; i++)
+            // CRITICAL: If pattern matching was applied, DON'T translate individual parts
+            // Otherwise the loop below will corrupt the already-translated parts
+            if (!changed)
             {
-                if (ShouldSkipIndex(i, skipPartIndexes))
-                    continue;
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (ShouldSkipIndex(i, skipPartIndexes))
+                        continue;
 
-                changed |= TranslateStringPart(parts[i]);
+                    changed |= TranslateStringPart(parts[i]);
+                }
             }
 
             return changed;
@@ -765,6 +786,13 @@ namespace MWC_Localization_Core
 
             string newPrefix = translatedCombined.Substring(0, middleIndex);
             string newSuffix = translatedCombined.Substring(middleIndex + middleValue.Length);
+            
+            // PROTECTION: Don't reapply translation if already done in previous frame
+            // Check if part0 already matches the translation (avoid redundant updates)
+            string currentPart0 = part0.Value ?? string.Empty;
+            if (currentPart0 == newPrefix && (part2.Value ?? string.Empty) == newSuffix)
+                return false;  // Already translated, skip
+
             bool changed = false;
 
             if (part0.Value != newPrefix)
