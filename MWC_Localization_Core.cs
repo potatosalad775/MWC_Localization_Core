@@ -432,6 +432,12 @@ namespace MWC_Localization_Core
                 InsertTranslationLines(modTranslationPath);
                 translator.LoadFsmPatterns(modTranslationPath);
             }
+
+            // Log total translations loaded (use ModConsole to always show)
+            if (translations.Count > 0)
+            {
+                ModConsole.Print($"[{Name}] Translations loaded: {translations.Count} entries");
+            }
         }
 
         void ReloadTranslations()
@@ -476,7 +482,6 @@ namespace MWC_Localization_Core
                 lateUpdateHandler.ClearCache();
                 // Re-initialize to find critical UI components again
                 lateUpdateHandler.Initialize(
-                    translator, 
                     textMeshMonitor, 
                     teletextHandler, 
                     arrayListHandler, 
@@ -494,7 +499,8 @@ namespace MWC_Localization_Core
             arrayListHandler.Reset();
             hashTableHandler.Reset();
 
-            // Reapply fonts and adjustments to all TextMeshes (after restore)
+            // Reapply translations and fonts only to TextMeshes with actual translations
+            // Pass null to translatedTextMeshes to force retranslation during reload
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
             int reappliedCount = 0;
             foreach (TextMesh tm in allTextMeshes)
@@ -502,8 +508,26 @@ namespace MWC_Localization_Core
                 if (tm != null && !string.IsNullOrEmpty(tm.text))
                 {
                     string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-                    translator.ApplyCustomFont(tm, path);
-                    reappliedCount++;
+                    // Only apply font if there's actually a translation - prevents FSM/game text corruption
+                    if (translator.TranslateAndApplyFont(tm, path, null))
+                    {
+                        reappliedCount++;
+                    }
+                }
+            }
+
+            // Reapply position/size adjustments to ALL TextMeshes (even those without translations)
+            // This ensures config.txt changes are properly applied during reload
+            int adjustmentCount = 0;
+            foreach (TextMesh tm in allTextMeshes)
+            {
+                if (tm != null && !string.IsNullOrEmpty(tm.text))
+                {
+                    string path = MLCUtils.GetGameObjectPath(tm.gameObject);
+                    if (config.ApplyTextAdjustment(tm, path))
+                    {
+                        adjustmentCount++;
+                    }
                 }
             }
 
@@ -517,7 +541,7 @@ namespace MWC_Localization_Core
                 InitializeFsmTextHook();
             }
 
-            CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts/adjustments to {reappliedCount} TextMeshes.");
+            CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts to {reappliedCount} TextMeshes, {adjustmentCount} position/size adjustments applied.");
         }
 
         void InitializeFsmTextHook()

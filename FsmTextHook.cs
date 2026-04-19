@@ -19,7 +19,6 @@ namespace MWC_Localization_Core
         private HashSet<int> completedEnnusteFsmInstances = new HashSet<int>();
         private List<PlayMakerFSM> cachedEnnusteDataFsms = new List<PlayMakerFSM>();
         private float lastEnnusteDataFsmScanTime = -10f;
-        private bool mainMenuTranslated = false;  // Ensure main menu only translates once
 
         private static readonly WaitForSeconds BootstrapPollDelay = new WaitForSeconds(0.5f);
         private static readonly WaitForSeconds MaintenancePollDelay = new WaitForSeconds(3.0f);
@@ -49,6 +48,7 @@ namespace MWC_Localization_Core
             PosUse,
             PosTyper,
             TeletextBuildStringPattern,
+            TeletextBuildStringSimple,
             TeletextWeatherUpdaterTokens,
             UnemployPaperButtonVariables,
             ConlineChatStatus
@@ -121,7 +121,13 @@ namespace MWC_Localization_Core
                 "Data",
                 FsmStrategyType.TeletextBuildStringPattern,
                 "State 1",
-                3)
+                3),
+            new FsmStrategyTarget(
+                "Systems/TV/TVGraphics/CHAT/Day/Time",
+                "Clock",
+                FsmStrategyType.TeletextBuildStringSimple,
+                "State 3",
+                2)
         };
 
         private static readonly string TeletextEnnusteUpdaterPrefix = "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste/";
@@ -176,7 +182,6 @@ namespace MWC_Localization_Core
                 -1)
         };
 
-
         public void Initialize(Dictionary<string, string> translations, GameObject hostObject, string[] patternFiles)
         {
             this.translations = translations;
@@ -206,17 +211,9 @@ namespace MWC_Localization_Core
 
                 if (currentScene == "MainMenu")
                 {
-                    if (!mainMenuTranslated)
+                    if (TryApplyMainMenuTranslations())
                     {
-                        if (TryApplyMainMenuTranslations())
-                        {
-                            mainMenuTranslated = true;
-                            string appliedTarget = "MainMenu";
-                            string targetLabel = string.IsNullOrEmpty(appliedTarget) ? "Unknown" : appliedTarget;
-                            CoreConsole.Print("[FsmTextHook] FSM text translations applied (" + targetLabel + ")");
-                            Cleanup();
-                            yield break;
-                        }
+                        yield break;
                     }
 
                     yield return BootstrapPollDelay;
@@ -239,17 +236,11 @@ namespace MWC_Localization_Core
             if (translations == null)
                 return;
 
-            bool anyChanged = false;
-            anyChanged |= TryApplyGamePosFsmTranslations();
-            anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
-            anyChanged |= TryApplyGameTeletextWeatherUpdaterFsmTranslations();
-            anyChanged |= TryApplyGameUnemployPaperFsmTranslations();
-            anyChanged |= TryApplyGameConlineChatFsmTranslations();
-
-            if (anyChanged)
-            {
-                // FSM translations applied
-            }
+            TryApplyGamePosFsmTranslations();
+            TryApplyGameTeletextBottomlineFsmTranslations();
+            TryApplyGameTeletextWeatherUpdaterFsmTranslations();
+            TryApplyGameUnemployPaperFsmTranslations();
+            TryApplyGameConlineChatFsmTranslations();
         }
 
         private bool TryApplyMainMenuTranslations()
@@ -290,6 +281,7 @@ namespace MWC_Localization_Core
             bool anyChanged = false;
             bool hasAnyTarget = false;
             ApplyStrategyTargets(GamePosTargets, ref anyChanged, ref hasAnyTarget);
+
             return anyChanged || hasAnyTarget;
         }
 
@@ -298,6 +290,7 @@ namespace MWC_Localization_Core
             bool anyChanged = false;
             bool hasAnyTarget = false;
             ApplyStrategyTargets(GameTeletextTargets, ref anyChanged, ref hasAnyTarget);
+
             return anyChanged || hasAnyTarget;
         }
 
@@ -332,9 +325,9 @@ namespace MWC_Localization_Core
             bool hasAnyTarget = false;
 
             ApplyStrategyTargets(GameUnemployPaperTargets, ref anyChanged, ref hasAnyTarget);
+
             return anyChanged || hasAnyTarget;
         }
-
 
         private bool TryApplyGameConlineChatFsmTranslations()
         {
@@ -342,6 +335,7 @@ namespace MWC_Localization_Core
             bool hasAnyTarget = false;
 
             ApplyStrategyTargets(GameConlineTargets, ref anyChanged, ref hasAnyTarget);
+
             return anyChanged || hasAnyTarget;
         }
 
@@ -411,17 +405,23 @@ namespace MWC_Localization_Core
                     hasAnyTarget |= HasState(fsm, target.StateName);
                     break;
 
+                case FsmStrategyType.TeletextBuildStringSimple:
+                    // For simple translations like KLO->Ás, just translate part[0] without pattern matching
+                    anyChanged |= ApplyBuildStringActionStringPartsTranslation(fsm, target.StateName, target.ActionIndex, false, 1, 2);
+                    hasAnyTarget |= HasState(fsm, target.StateName);
+                    break;
+
                 case FsmStrategyType.TeletextWeatherUpdaterTokens:
                     ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
                     break;
 
-                case FsmStrategyType.ConlineChatStatus:
-                    anyChanged |= ApplyConlineChatStatusTranslations(fsm);
+                case FsmStrategyType.UnemployPaperButtonVariables:
+                    anyChanged |= ApplyUnemployPaperButtonVariableTranslations(fsm);
                     hasAnyTarget = true;
                     break;
 
-                case FsmStrategyType.UnemployPaperButtonVariables:
-                    anyChanged |= ApplyUnemployPaperButtonVariableTranslations(fsm);
+                case FsmStrategyType.ConlineChatStatus:
+                    anyChanged |= ApplyConlineChatStatusTranslations(fsm);
                     hasAnyTarget = true;
                     break;
             }
@@ -456,6 +456,63 @@ namespace MWC_Localization_Core
             changed |= TranslateFsmStringVariableExact(fsm, "JobYes");
 
             return changed;
+        }
+
+        private bool ApplyConlineChatStatusTranslations(PlayMakerFSM fsm)
+        {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
+            bool changed = false;
+
+            changed |= ApplyConlineNestedTranslation(fsm, "Download", 1);
+            changed |= ApplyConlineNestedTranslation(fsm, "Fail", 0);
+
+            return changed;
+        }
+
+        private bool ApplyConlineNestedTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
+        {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmState state = null;
+            for (int i = 0; i < fsm.FsmStates.Length; i++)
+            {
+                if (fsm.FsmStates[i] != null && fsm.FsmStates[i].Name == stateName)
+                {
+                    state = fsm.FsmStates[i];
+                    break;
+                }
+            }
+
+            if (state == null || state.Actions == null || actionIndex < 0 || actionIndex >= state.Actions.Length)
+                return false;
+
+            object action = state.Actions[actionIndex];
+            if (action == null)
+                return false;
+
+            var targetProperty = GetCachedField(action.GetType(), "targetProperty")?.GetValue(action);
+            if (targetProperty == null)
+                return false;
+
+            var fsmString = GetCachedField(targetProperty.GetType(), "StringParameter")?
+                .GetValue(targetProperty) as HutongGames.PlayMaker.FsmString;
+
+            if (fsmString == null || string.IsNullOrEmpty(fsmString.Value))
+                return false;
+
+            string original = fsmString.Value;
+            string translated = GetTranslation(original, original);
+
+            if (translated != original)
+            {
+                fsmString.Value = translated;
+                return true;
+            }
+
+            return false;
         }
 
         private bool TranslateFsmStringVariableExact(PlayMakerFSM fsm, string variableName)
@@ -675,12 +732,17 @@ namespace MWC_Localization_Core
                 changed = ApplyBuildStringFastPatternTranslation(fsm, stateName, actionIndex, parts);
             }
 
-            for (int i = 0; i < parts.Length; i++)
+            // CRITICAL: If pattern matching was applied, DON'T translate individual parts
+            // Otherwise the loop below will corrupt the already-translated parts
+            if (!changed)
             {
-                if (ShouldSkipIndex(i, skipPartIndexes))
-                    continue;
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (ShouldSkipIndex(i, skipPartIndexes))
+                        continue;
 
-                changed |= TranslateStringPart(parts[i]);
+                    changed |= TranslateStringPart(parts[i]);
+                }
             }
 
             return changed;
@@ -717,6 +779,13 @@ namespace MWC_Localization_Core
 
             string newPrefix = translatedCombined.Substring(0, middleIndex);
             string newSuffix = translatedCombined.Substring(middleIndex + middleValue.Length);
+            
+            // PROTECTION: Don't reapply translation if already done in previous frame
+            // Check if part0 already matches the translation (avoid redundant updates)
+            string currentPart0 = part0.Value ?? string.Empty;
+            if (currentPart0 == newPrefix && (part2.Value ?? string.Empty) == newSuffix)
+                return false;  // Already translated, skip
+
             bool changed = false;
 
             if (part0.Value != newPrefix)
@@ -996,64 +1065,6 @@ namespace MWC_Localization_Core
                 return value;
 
             return fallback;
-        }
-
-
-        private bool ApplyConlineChatStatusTranslations(PlayMakerFSM fsm)
-        {
-            if (fsm == null || fsm.FsmStates == null)
-                return false;
-
-            bool changed = false;
-
-            changed |= ApplyConlineNestedTranslation(fsm, "Download", 1);
-            changed |= ApplyConlineNestedTranslation(fsm, "Fail", 0);
-
-            return changed;
-        }
-
-        private bool ApplyConlineNestedTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
-        {
-            if (fsm == null || fsm.FsmStates == null)
-                return false;
-
-            HutongGames.PlayMaker.FsmState state = null;
-            for (int i = 0; i < fsm.FsmStates.Length; i++)
-            {
-                if (fsm.FsmStates[i] != null && fsm.FsmStates[i].Name == stateName)
-                {
-                    state = fsm.FsmStates[i];
-                    break;
-                }
-            }
-
-            if (state == null || state.Actions == null || actionIndex < 0 || actionIndex >= state.Actions.Length)
-                return false;
-
-            object action = state.Actions[actionIndex];
-            if (action == null)
-                return false;
-
-            var targetProperty = GetCachedField(action.GetType(), "targetProperty")?.GetValue(action);
-            if (targetProperty == null)
-                return false;
-
-            var fsmString = GetCachedField(targetProperty.GetType(), "StringParameter")?
-                .GetValue(targetProperty) as HutongGames.PlayMaker.FsmString;
-
-            if (fsmString == null || string.IsNullOrEmpty(fsmString.Value))
-                return false;
-
-            string original = fsmString.Value;
-            string translated = GetTranslation(original, original);
-
-            if (translated != original)
-            {
-                fsmString.Value = translated;
-                return true;
-            }
-
-            return false;
         }
 
         private void Cleanup()

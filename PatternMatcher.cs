@@ -117,7 +117,7 @@ namespace MWC_Localization_Core
                     }
                 }
 
-                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from file");
+                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from {Path.GetFileName(filePath)}");
             }
             catch (System.Exception ex)
             {
