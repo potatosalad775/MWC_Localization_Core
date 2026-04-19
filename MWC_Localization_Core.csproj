@@ -83,6 +83,7 @@
     <Compile Include="MLCUtils.cs" />
     <Compile Include="TeletextHandler.cs" />
     <Compile Include="TextMeshTranslator.cs" />
+    <Compile Include="TranslationFileParser.cs" />
     <Compile Include="TranslationPattern.cs" />
     <Compile Include="UnifiedTextMeshMonitor.cs" />
   </ItemGroup>
