@@ -19,6 +19,7 @@ namespace MWC_Localization_Core
         private HashSet<int> completedEnnusteFsmInstances = new HashSet<int>();
         private List<PlayMakerFSM> cachedEnnusteDataFsms = new List<PlayMakerFSM>();
         private float lastEnnusteDataFsmScanTime = -10f;
+        private bool mainMenuTranslated = false;  // Ensure main menu only translates once
 
         private static readonly WaitForSeconds BootstrapPollDelay = new WaitForSeconds(0.5f);
         private static readonly WaitForSeconds MaintenancePollDelay = new WaitForSeconds(3.0f);
@@ -205,9 +206,21 @@ namespace MWC_Localization_Core
 
                 if (currentScene == "MainMenu")
                 {
-                    if (TryApplyMainMenuTranslations())
+                    if (!mainMenuTranslated)
                     {
+<<<<<<< Updated upstream
 
+=======
+                        if (TryApplyMainMenuTranslations())
+                        {
+                            mainMenuTranslated = true;
+                            appliedTarget = "MainMenu";
+                            string targetLabel = string.IsNullOrEmpty(appliedTarget) ? "Unknown" : appliedTarget;
+                            CoreConsole.Print("[FsmTextHook] FSM text translations applied (" + targetLabel + ")");
+                            Cleanup();
+                            yield break;
+                        }
+>>>>>>> Stashed changes
                     }
 
                     yield return BootstrapPollDelay;
