@@ -426,7 +426,8 @@ namespace MWC_Localization_Core
             arrayListHandler.Reset();
             hashTableHandler.Reset();
 
-            // Reapply fonts and adjustments to all TextMeshes (after restore)
+            // Reapply translations and fonts only to TextMeshes with actual translations
+            // Pass null to translatedTextMeshes to force retranslation during reload
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
             int reappliedCount = 0;
             foreach (TextMesh tm in allTextMeshes)
@@ -434,8 +435,11 @@ namespace MWC_Localization_Core
                 if (tm != null && !string.IsNullOrEmpty(tm.text))
                 {
                     string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-                    translator.ApplyCustomFont(tm, path);
-                    reappliedCount++;
+                    // Only apply font if there's actually a translation - prevents FSM/game text corruption
+                    if (translator.TranslateAndApplyFont(tm, path, null))
+                    {
+                        reappliedCount++;
+                    }
                 }
             }
 
