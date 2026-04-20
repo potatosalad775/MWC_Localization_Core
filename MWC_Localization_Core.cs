@@ -499,19 +499,22 @@ namespace MWC_Localization_Core
             // Use stored original text to enable re-translation of already-localized meshes
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
             int reappliedCount = 0;
+            HashSet<TextMesh> tempMeshSet = new HashSet<TextMesh>();  // Reusable set for tracking
+            
             foreach (TextMesh tm in allTextMeshes)
             {
                 if (tm != null && !string.IsNullOrEmpty(tm.text))
                 {
                     string path = MLCUtils.GetGameObjectPath(tm.gameObject);
                     
-                    // Lookup original text for this mesh to enable re-translation
-                    string originalText = null;
-                    if (originalMeshText.TryGetValue(path, out originalText))
+                    // Only process meshes that were previously translated (have original stored)
+                    if (originalMeshText.TryGetValue(path, out string originalText))
                     {
                         // Found original - use it for retranslation
-                        // Pass as a HashSet containing just this mesh for tracking
-                        bool translated = translator.TranslateAndApplyFont(tm, path, new HashSet<TextMesh> { tm });
+                        // Reuse tempMeshSet to avoid per-iteration allocation
+                        tempMeshSet.Clear();
+                        tempMeshSet.Add(tm);
+                        bool translated = translator.TranslateAndApplyFont(tm, path, tempMeshSet);
                         if (translated)
                         {
                             reappliedCount++;
@@ -522,11 +525,7 @@ namespace MWC_Localization_Core
                             translator.ApplyFontOnly(tm, path);
                         }
                     }
-                    else
-                    {
-                        // No original stored - just apply font for already-localized meshes
-                        translator.ApplyFontOnly(tm, path);
-                    }
+                    // If no original stored: mesh was never translated, so skip it (don't modify fonts)
                 }
             }
 
