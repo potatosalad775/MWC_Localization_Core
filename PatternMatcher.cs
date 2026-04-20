@@ -88,6 +88,7 @@ namespace MWC_Localization_Core
 
             try
             {
+                string fileName = Path.GetFileName(filePath);
                 string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
                 string currentSection = null;
                 int loadedCount = 0;
@@ -117,7 +118,7 @@ namespace MWC_Localization_Core
                     }
                 }
 
-                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from file");
+                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from {fileName}");
             }
             catch (System.Exception ex)
             {

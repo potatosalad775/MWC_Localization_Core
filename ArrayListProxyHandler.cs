@@ -82,6 +82,8 @@ namespace MWC_Localization_Core
                 "Sheets/YellowPagesMagazine/Page1/Row2",  // Magazine Page 1 Row 2
                 "Sheets/YellowPagesMagazine/Page2/Row3",  // Magazine Page 2 Row 3
                 "Sheets/YellowPagesMagazine/Page2/Row4",  // Magazine Page 2 Row 4
+                "Systems/TV/TVGraphics/CHAT/Generated/Lines",  // Chat TV messages
+                "Systems/TV/TVGraphics/CHAT/Day/Time",  // Chat TV Day/Time display
                 // Add more parent paths as needed
             };
         }

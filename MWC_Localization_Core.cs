@@ -469,7 +469,6 @@ namespace MWC_Localization_Core
                 lateUpdateHandler.ClearCache();
                 // Re-initialize to find critical UI components again
                 lateUpdateHandler.Initialize(
-                    translator, 
                     textMeshMonitor, 
                     teletextHandler, 
                     arrayListHandler, 

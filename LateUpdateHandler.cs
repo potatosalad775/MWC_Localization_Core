@@ -17,16 +17,6 @@ namespace MWC_Localization_Core
         private ArrayListProxyHandler arrayListHandler;
         private HashTableProxyHandler hashTableHandler;
         private SceneTranslationManager sceneManager;
-        
-        // Cached references for critical UI (EveryFrame monitoring)
-        private class CriticalUIReference
-        {
-            public string Path;
-            public TextMesh TextMesh;
-            public int RetryCount;
-            public float NextRetryTime;
-            public bool IsRegistered;
-        }
 
         private bool isInitialized = false;
         
