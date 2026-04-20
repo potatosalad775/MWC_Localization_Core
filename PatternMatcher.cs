@@ -117,7 +117,7 @@ namespace MWC_Localization_Core
                     }
                 }
 
-                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from file");
+                CoreConsole.Print($"[PatternMatcher] Loaded {loadedCount} patterns from {Path.GetFileName(filePath)}");
             }
             catch (System.Exception ex)
             {
@@ -129,7 +129,7 @@ namespace MWC_Localization_Core
         {
             pattern = null;
             
-            int equalsIndex = FindUnescapedEquals(line);
+            int equalsIndex = TranslationFileParser.FindKeyValueSeparator(line);
             if (equalsIndex <= 0)
                 return false;
 
@@ -137,8 +137,8 @@ namespace MWC_Localization_Core
             string translation = line.Substring(equalsIndex + 1).Trim();
 
             // Unescape special characters
-            original = UnescapeString(original);
-            translation = UnescapeString(translation);
+            original = TranslationFileParser.UnescapeString(original);
+            translation = TranslationFileParser.UnescapeString(translation);
 
             if (string.IsNullOrEmpty(original) || string.IsNullOrEmpty(translation))
                 return false;
@@ -205,15 +205,6 @@ namespace MWC_Localization_Core
         public void AddPattern(TranslationPattern pattern)
         {
             AddPatternInternal(pattern, false);
-        }
-
-        /// <summary>
-        /// Clear all patterns
-        /// </summary>
-        public void ClearPatterns()
-        {
-            patterns.Clear();
-            patternSignatures.Clear();
         }
 
         private bool AddPatternInternal(TranslationPattern pattern, bool appendToEnd)
@@ -329,27 +320,6 @@ namespace MWC_Localization_Core
         }
 
         // Utility methods from TeletextHandler
-        private int FindUnescapedEquals(string line)
-        {
-            for (int i = 0; i < line.Length; i++)
-            {
-                if (line[i] == '=')
-                {
-                    // Check if escaped
-                    if (i > 0 && line[i - 1] == '\\')
-                        continue;
-                    return i;
-                }
-            }
-            return -1;
-        }
 
-        private string UnescapeString(string str)
-        {
-            if (string.IsNullOrEmpty(str))
-                return str;
-            
-            return str.Replace("\\=", "=").Replace("\\n", "\n");
-        }
     }
 }

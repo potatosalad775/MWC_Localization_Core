@@ -142,12 +142,16 @@ namespace MWC_Localization_Core
             List<object> keys = new List<object>();
             foreach (object key in hashTable.Keys)
             {
+                if (key == null)
+                    continue;
                 keys.Add(key);
             }
 
             for (int i = 0; i < keys.Count; i++)
             {
                 object key = keys[i];
+                if (key == null)
+                    continue;
                 string original = hashTable[key] as string;
                 if (string.IsNullOrEmpty(original))
                     continue;

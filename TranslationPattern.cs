@@ -118,7 +118,7 @@ namespace MWC_Localization_Core
         {
             try
             {
-                regexPattern = new Regex(OriginalPattern, RegexOptions.IgnoreCase);
+                regexPattern = new Regex(OriginalPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
             }
             catch (Exception ex)
             {

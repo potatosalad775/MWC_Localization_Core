@@ -17,7 +17,6 @@ namespace MWC_Localization_Core
         private LocalizationConfig config;
         private Dictionary<int, string> appliedFontCache = new Dictionary<int, string>();
         private Dictionary<int, Texture> appliedRuntimeTextureCache = new Dictionary<int, Texture>();
-        private Dictionary<string, Font> fontNameToFont;  // Reverse lookup: font.name -> Font
 
         private static readonly string[] ExcludedPath = new string[]
         {
@@ -42,20 +41,6 @@ namespace MWC_Localization_Core
 
             // Initialize unified pattern matcher
             this.patternMatcher = new PatternMatcher(translations);
-
-            // Build reverse font lookup for O(1) access by font.name
-            RebuildFontNameLookup();
-        }
-
-        private void RebuildFontNameLookup()
-        {
-            fontNameToFont = new Dictionary<string, Font>();
-            if (customFonts == null) return;
-            foreach (var kvp in customFonts)
-            {
-                if (kvp.Value != null && !fontNameToFont.ContainsKey(kvp.Value.name))
-                    fontNameToFont[kvp.Value.name] = kvp.Value;
-            }
         }
 
         /// <summary>
@@ -270,13 +255,9 @@ namespace MWC_Localization_Core
         /// </summary>
         Font GetCustomFont(string originalFontName)
         {
-            // First try direct match by mapping key
+            // Try direct match by mapping key
             if (customFonts.TryGetValue(originalFontName, out Font font))
                 return font;
-
-            // Reverse lookup: font already has a custom font name (e.g. after reload)
-            if (fontNameToFont != null && fontNameToFont.TryGetValue(originalFontName, out Font reverseFont))
-                return reverseFont;
 
             return null;
         }
@@ -318,6 +299,7 @@ namespace MWC_Localization_Core
         {
             appliedFontCache.Clear();
             appliedRuntimeTextureCache.Clear();
+            MLCUtils.ClearFormatKeyCache();
         }
     }
 }

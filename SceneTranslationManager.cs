@@ -63,6 +63,9 @@ namespace MWC_Localization_Core
         /// </summary>
         public bool UpdateScene(string newScene)
         {
+            if (string.IsNullOrEmpty(newScene))
+                return false;
+
             if (currentScene != newScene)
             {
                 previousScene = currentScene;

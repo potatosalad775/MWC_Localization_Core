@@ -8,13 +8,22 @@ namespace MWC_Localization_Core
     /// </summary>
     public static class MLCUtils
     {
+        // LRU cache for FormatUpperKey to reduce allocations in hot path
+        private static Dictionary<string, string> formatKeyCache = new Dictionary<string, string>();
+        private const int FORMAT_KEY_CACHE_MAX = 256;
+
         /// <summary>
         /// Format string for use as translation key (uppercase, no spaces/newlines)
+        /// Cached to reduce allocations in hot path
         /// </summary>
         public static string FormatUpperKey(string original)
         {
             if (string.IsNullOrEmpty(original))
                 return original;
+
+            // Check cache first
+            if (formatKeyCache.TryGetValue(original, out string cached))
+                return cached;
 
             // Single-pass: skip whitespace chars and uppercase in one allocation
             char[] buffer = new char[original.Length];
@@ -30,7 +39,13 @@ namespace MWC_Localization_Core
             if (len == 0)
                 return string.Empty;
 
-            return new string(buffer, 0, len);
+            string result = new string(buffer, 0, len);
+            
+            // Cache result (with limit to prevent unbounded growth)
+            if (formatKeyCache.Count < FORMAT_KEY_CACHE_MAX)
+                formatKeyCache[original] = result;
+
+            return result;
         }
 
         // Cache for GameObject paths to improve performance
@@ -155,6 +170,16 @@ namespace MWC_Localization_Core
             pathCache.Clear();
             gameObjectFindCache.Clear();
             inactiveFsmPathNameCache.Clear();
+            ClearFormatKeyCache();
+        }
+
+        /// <summary>
+        /// Clear FormatUpperKey cache.
+        /// Call this on scene changes to prevent memory bloat.
+        /// </summary>
+        public static void ClearFormatKeyCache()
+        {
+            formatKeyCache.Clear();
         }
     }
 }

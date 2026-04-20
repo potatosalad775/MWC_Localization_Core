@@ -15,8 +15,6 @@ namespace MWC_Localization_Core
         private Dictionary<string, string> translations;
         private GameObject hostObject;
         private PatternMatcher patternMatcher;
-        private string appliedTarget;
-        private HashSet<string> loggedReadyTargets = new HashSet<string>();
         private HashSet<string> completedStrategyTargets = new HashSet<string>();
         private HashSet<int> completedEnnusteFsmInstances = new HashSet<int>();
         private List<PlayMakerFSM> cachedEnnusteDataFsms = new List<PlayMakerFSM>();
@@ -50,8 +48,10 @@ namespace MWC_Localization_Core
             PosUse,
             PosTyper,
             TeletextBuildStringPattern,
+            TeletextBuildStringSimple,
             TeletextWeatherUpdaterTokens,
-            UnemployPaperButtonVariables
+            UnemployPaperButtonVariables,
+            ConlineChatStatus
         }
 
         private sealed class FsmStrategyTarget
@@ -59,9 +59,6 @@ namespace MWC_Localization_Core
             public string ObjectPath;
             public string FsmName;
             public FsmStrategyType Strategy;
-            public string AppliedLabel;
-            public string ReadyLogKey;
-            public string ReadyLogMessage;
             public string StateName;
             public int ActionIndex;
 
@@ -69,18 +66,12 @@ namespace MWC_Localization_Core
                 string objectPath,
                 string fsmName,
                 FsmStrategyType strategy,
-                string appliedLabel,
-                string readyLogKey,
-                string readyLogMessage,
                 string stateName,
                 int actionIndex)
             {
                 ObjectPath = objectPath;
                 FsmName = fsmName;
                 Strategy = strategy;
-                AppliedLabel = appliedLabel;
-                ReadyLogKey = readyLogKey;
-                ReadyLogMessage = readyLogMessage;
                 StateName = stateName;
                 ActionIndex = actionIndex;
             }
@@ -95,18 +86,12 @@ namespace MWC_Localization_Core
                 "COMPUTER/SYSTEM/POS/BootSequence",
                 "Use",
                 FsmStrategyType.PosUse,
-                "GAME POS",
-                "POS_USE_READY",
-                "[FsmTextHook] Use FSM is initialized and ready.",
                 null,
                 -1),
             new FsmStrategyTarget(
                 "COMPUTER/SYSTEM/POS/Command",
                 "Typer",
                 FsmStrategyType.PosTyper,
-                "GAME POS",
-                "POS_TYPER_READY",
-                "[FsmTextHook] Typer FSM is initialized and ready.",
                 null,
                 -1)
         };
@@ -117,38 +102,32 @@ namespace MWC_Localization_Core
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/240/Texts/Data/Bottomline 1",
                 "Data",
                 FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
                 "State 1",
                 2),
             new FsmStrategyTarget(
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/241/Texts/Data/Bottomline 1",
                 "Data",
                 FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
                 "State 1",
                 2),
             new FsmStrategyTarget(
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data/Bottomline 1",
                 "Data",
                 FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
                 "State 1",
                 2),
             new FsmStrategyTarget(
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data 1/Bottomline 1",
                 "Data",
                 FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
                 "State 1",
-                3)
+                3),
+            new FsmStrategyTarget(
+                "Systems/TV/TVGraphics/CHAT/Day/Time",
+                "Clock",
+                FsmStrategyType.TeletextBuildStringSimple,
+                "State 3",
+                2)
         };
 
         private static readonly string TeletextEnnusteUpdaterPrefix = "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste/";
@@ -159,18 +138,12 @@ namespace MWC_Localization_Core
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt",
                 "Logic",
                 FsmStrategyType.TeletextWeatherUpdaterTokens,
-                "GAME Teletext Weather",
-                "TTX_WX_READY",
-                "[FsmTextHook] Teletext weather updater FSM targets are ready.",
                 null,
                 -1),
             new FsmStrategyTarget(
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste",
                 "Logic",
                 FsmStrategyType.TeletextWeatherUpdaterTokens,
-                "GAME Teletext Weather",
-                "TTX_WX_READY",
-                "[FsmTextHook] Teletext weather updater FSM targets are ready.",
                 null,
                 -1)
         };
@@ -191,9 +164,6 @@ namespace MWC_Localization_Core
                         path,
                         "Button",
                         FsmStrategyType.UnemployPaperButtonVariables,
-                        "GAME UnemployPaper",
-                        "UNEMPLOY_READY",
-                        "[FsmTextHook] UnemployPaper Button FSM targets are ready.",
                         null,
                         -1));
                 }
@@ -201,6 +171,16 @@ namespace MWC_Localization_Core
 
             return targets.ToArray();
         }
+
+        private static readonly FsmStrategyTarget[] GameConlineTargets = new FsmStrategyTarget[]
+        {
+            new FsmStrategyTarget(
+                "COMPUTER/SYSTEM/TELEBBS/CONLINE/CHAT",
+                "Type",
+                FsmStrategyType.ConlineChatStatus,
+                null,
+                -1)
+        };
 
         public void Initialize(Dictionary<string, string> translations, GameObject hostObject, string[] patternFiles)
         {
@@ -233,10 +213,6 @@ namespace MWC_Localization_Core
                 {
                     if (TryApplyMainMenuTranslations())
                     {
-                        appliedTarget = "MainMenu";
-                        string targetLabel = string.IsNullOrEmpty(appliedTarget) ? "Unknown" : appliedTarget;
-                        CoreConsole.Print("[FsmTextHook] FSM text translations applied (" + targetLabel + ")");
-                        Cleanup();
                         yield break;
                     }
 
@@ -260,17 +236,11 @@ namespace MWC_Localization_Core
             if (translations == null)
                 return;
 
-            bool anyChanged = false;
-            anyChanged |= TryApplyGamePosFsmTranslations();
-            anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
-            anyChanged |= TryApplyGameTeletextWeatherUpdaterFsmTranslations();
-            anyChanged |= TryApplyGameUnemployPaperFsmTranslations();
-
-            if (anyChanged)
-            {
-                string targetLabel = string.IsNullOrEmpty(appliedTarget) ? "GAME" : appliedTarget;
-                CoreConsole.Print("[FsmTextHook] FSM text translations applied (" + targetLabel + ")");
-            }
+            TryApplyGamePosFsmTranslations();
+            TryApplyGameTeletextBottomlineFsmTranslations();
+            TryApplyGameTeletextWeatherUpdaterFsmTranslations();
+            TryApplyGameUnemployPaperFsmTranslations();
+            TryApplyGameConlineChatFsmTranslations();
         }
 
         private bool TryApplyMainMenuTranslations()
@@ -312,11 +282,6 @@ namespace MWC_Localization_Core
             bool hasAnyTarget = false;
             ApplyStrategyTargets(GamePosTargets, ref anyChanged, ref hasAnyTarget);
 
-            if (anyChanged)
-            {
-                appliedTarget = "GAME POS";
-            }
-
             return anyChanged || hasAnyTarget;
         }
 
@@ -325,11 +290,6 @@ namespace MWC_Localization_Core
             bool anyChanged = false;
             bool hasAnyTarget = false;
             ApplyStrategyTargets(GameTeletextTargets, ref anyChanged, ref hasAnyTarget);
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME Teletext Bottomline";
-            }
 
             return anyChanged || hasAnyTarget;
         }
@@ -352,14 +312,8 @@ namespace MWC_Localization_Core
                 if (completedEnnusteFsmInstances.Contains(instanceID))
                     continue;
 
-                LogReadyOnce("TTX_WX_READY", "[FsmTextHook] Teletext weather updater FSM targets are ready.");
                 ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
                 completedEnnusteFsmInstances.Add(instanceID);
-            }
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME Teletext Weather";
             }
 
             return anyChanged || hasAnyTarget;
@@ -372,10 +326,15 @@ namespace MWC_Localization_Core
 
             ApplyStrategyTargets(GameUnemployPaperTargets, ref anyChanged, ref hasAnyTarget);
 
-            if (anyChanged)
-            {
-                appliedTarget = "GAME UnemployPaper";
-            }
+            return anyChanged || hasAnyTarget;
+        }
+
+        private bool TryApplyGameConlineChatFsmTranslations()
+        {
+            bool anyChanged = false;
+            bool hasAnyTarget = false;
+
+            ApplyStrategyTargets(GameConlineTargets, ref anyChanged, ref hasAnyTarget);
 
             return anyChanged || hasAnyTarget;
         }
@@ -399,7 +358,6 @@ namespace MWC_Localization_Core
                 if (!IsFsmReady(fsm))
                     continue;
 
-                LogReadyOnce(target.ReadyLogKey, target.ReadyLogMessage);
                 ApplyStrategyForTarget(target, fsm, ref anyChanged, ref hasAnyTarget);
                 completedStrategyTargets.Add(targetKey);
             }
@@ -447,6 +405,12 @@ namespace MWC_Localization_Core
                     hasAnyTarget |= HasState(fsm, target.StateName);
                     break;
 
+                case FsmStrategyType.TeletextBuildStringSimple:
+                    // For simple translations like KLO->Ás, just translate part[0] without pattern matching
+                    anyChanged |= ApplyBuildStringActionStringPartsTranslation(fsm, target.StateName, target.ActionIndex, false, 1, 2);
+                    hasAnyTarget |= HasState(fsm, target.StateName);
+                    break;
+
                 case FsmStrategyType.TeletextWeatherUpdaterTokens:
                     ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
                     break;
@@ -455,24 +419,12 @@ namespace MWC_Localization_Core
                     anyChanged |= ApplyUnemployPaperButtonVariableTranslations(fsm);
                     hasAnyTarget = true;
                     break;
+
+                case FsmStrategyType.ConlineChatStatus:
+                    anyChanged |= ApplyConlineChatStatusTranslations(fsm);
+                    hasAnyTarget = true;
+                    break;
             }
-
-            if (anyChanged && !string.IsNullOrEmpty(target.AppliedLabel))
-            {
-                appliedTarget = target.AppliedLabel;
-            }
-        }
-
-        private void LogReadyOnce(string key, string message)
-        {
-            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(message))
-                return;
-
-            if (loggedReadyTargets.Contains(key))
-                return;
-
-            loggedReadyTargets.Add(key);
-            CoreConsole.Print(message);
         }
 
         private bool IsFsmReady(PlayMakerFSM fsm)
@@ -504,6 +456,63 @@ namespace MWC_Localization_Core
             changed |= TranslateFsmStringVariableExact(fsm, "JobYes");
 
             return changed;
+        }
+
+        private bool ApplyConlineChatStatusTranslations(PlayMakerFSM fsm)
+        {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
+            bool changed = false;
+
+            changed |= ApplyConlineNestedTranslation(fsm, "Download", 1);
+            changed |= ApplyConlineNestedTranslation(fsm, "Fail", 0);
+
+            return changed;
+        }
+
+        private bool ApplyConlineNestedTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
+        {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmState state = null;
+            for (int i = 0; i < fsm.FsmStates.Length; i++)
+            {
+                if (fsm.FsmStates[i] != null && fsm.FsmStates[i].Name == stateName)
+                {
+                    state = fsm.FsmStates[i];
+                    break;
+                }
+            }
+
+            if (state == null || state.Actions == null || actionIndex < 0 || actionIndex >= state.Actions.Length)
+                return false;
+
+            object action = state.Actions[actionIndex];
+            if (action == null)
+                return false;
+
+            var targetProperty = GetCachedField(action.GetType(), "targetProperty")?.GetValue(action);
+            if (targetProperty == null)
+                return false;
+
+            var fsmString = GetCachedField(targetProperty.GetType(), "StringParameter")?
+                .GetValue(targetProperty) as HutongGames.PlayMaker.FsmString;
+
+            if (fsmString == null || string.IsNullOrEmpty(fsmString.Value))
+                return false;
+
+            string original = fsmString.Value;
+            string translated = GetTranslation(original, original);
+
+            if (translated != original)
+            {
+                fsmString.Value = translated;
+                return true;
+            }
+
+            return false;
         }
 
         private bool TranslateFsmStringVariableExact(PlayMakerFSM fsm, string variableName)
@@ -718,17 +727,25 @@ namespace MWC_Localization_Core
                 return false;
 
             bool changed = false;
+            bool patternResolved = false;
+            
             if (allowPatternSplit && isBuildStringFast)
             {
-                changed = ApplyBuildStringFastPatternTranslation(fsm, stateName, actionIndex, parts);
+                patternResolved = ApplyBuildStringFastPatternTranslation(fsm, stateName, actionIndex, parts);
+                changed = patternResolved;
             }
 
-            for (int i = 0; i < parts.Length; i++)
+            // CRITICAL: If pattern matching was applied, DON'T translate individual parts
+            // Otherwise the loop below will corrupt the already-translated parts
+            if (!patternResolved)
             {
-                if (ShouldSkipIndex(i, skipPartIndexes))
-                    continue;
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (ShouldSkipIndex(i, skipPartIndexes))
+                        continue;
 
-                changed |= TranslateStringPart(parts[i]);
+                    changed |= TranslateStringPart(parts[i]);
+                }
             }
 
             return changed;
@@ -765,6 +782,13 @@ namespace MWC_Localization_Core
 
             string newPrefix = translatedCombined.Substring(0, middleIndex);
             string newSuffix = translatedCombined.Substring(middleIndex + middleValue.Length);
+            
+            // PROTECTION: Don't reapply translation if already done in previous frame
+            // Check if part0 already matches the translation (avoid redundant updates)
+            string currentPart0 = part0.Value ?? string.Empty;
+            if (currentPart0 == newPrefix && (part2.Value ?? string.Empty) == newSuffix)
+                return false;  // Already translated, skip
+
             bool changed = false;
 
             if (part0.Value != newPrefix)
@@ -829,7 +853,9 @@ namespace MWC_Localization_Core
                 }
             }
 
-            return sb.ToString();
+            string result = sb.ToString();
+            sb.Length = 0;  // NET 3.5 compatible: reset StringBuilder for reuse
+            return result;
         }
 
         private bool ApplyAllStateSetStringValueTranslation(PlayMakerFSM fsm, params string[] skipStateNames)
@@ -1050,6 +1076,12 @@ namespace MWC_Localization_Core
         {
             if (hostObject != null)
                 Object.Destroy(hostObject);
+        }
+
+        private void OnDestroy()
+        {
+            StopCoroutine(ApplyWhenReady());
+            hostObject = null;
         }
     }
 }

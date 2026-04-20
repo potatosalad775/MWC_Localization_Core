@@ -120,6 +120,9 @@ namespace MWC_Localization_Core
             string teletextPath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_teletext.txt");
             teletextHandler.LoadTeletextTranslations(teletextPath);
             translator.LoadFsmPatterns(teletextPath); // Load additional FSM patterns
+
+            // Clear format key cache to prevent memory buildup from old scene
+            MLCUtils.ClearFormatKeyCache();
             
             // Initialize array handler with translation dictionaries and translator
             arrayListHandler = new ArrayListProxyHandler(translations, magazineHandler, translator);
@@ -294,6 +297,9 @@ namespace MWC_Localization_Core
 
                 foreach (var pair in config.FontMappings)
                 {
+                    if (string.IsNullOrEmpty(pair.Key) || string.IsNullOrEmpty(pair.Value))
+                        continue;
+
                     Font font = fontBundle.LoadAsset(pair.Value, typeof(Font)) as Font;
                     if (font != null)
                     {
@@ -335,7 +341,7 @@ namespace MWC_Localization_Core
                     if (string.IsNullOrEmpty(line) || line.TrimStart().StartsWith("#"))
                         continue;
 
-                    int separatorIndex = FindKeyValueSeparatorIndex(line);
+                    int separatorIndex = TranslationFileParser.FindKeyValueSeparator(line);
                     if (separatorIndex > 0)
                     {
                         string key = line.Substring(0, separatorIndex).Trim().Replace("\\=", "=");
@@ -371,26 +377,7 @@ namespace MWC_Localization_Core
             }
         }
 
-        private static int FindKeyValueSeparatorIndex(string line)
-        {
-            for (int i = 0; i < line.Length; i++)
-            {
-                if (line[i] != '=')
-                    continue;
 
-                int backslashCount = 0;
-                for (int j = i - 1; j >= 0 && line[j] == '\\'; j--)
-                {
-                    backslashCount++;
-                }
-
-                bool isEscaped = (backslashCount % 2) == 1;
-                if (!isEscaped)
-                    return i;
-            }
-
-            return -1;
-        }
 
         void LoadTranslations()
         {
@@ -431,6 +418,12 @@ namespace MWC_Localization_Core
             {
                 InsertTranslationLines(modTranslationPath);
                 translator.LoadFsmPatterns(modTranslationPath);
+            }
+
+            // Log total translations loaded (use ModConsole to always show)
+            if (translations.Count > 0)
+            {
+                ModConsole.Print($"[{Name}] Translations loaded: {translations.Count} entries");
             }
         }
 
@@ -476,7 +469,6 @@ namespace MWC_Localization_Core
                 lateUpdateHandler.ClearCache();
                 // Re-initialize to find critical UI components again
                 lateUpdateHandler.Initialize(
-                    translator, 
                     textMeshMonitor, 
                     teletextHandler, 
                     arrayListHandler, 
@@ -494,7 +486,8 @@ namespace MWC_Localization_Core
             arrayListHandler.Reset();
             hashTableHandler.Reset();
 
-            // Reapply fonts and adjustments to all TextMeshes (after restore)
+            // Reapply translations and fonts only to TextMeshes with actual translations
+            // Pass null to translatedTextMeshes to force retranslation during reload
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
             int reappliedCount = 0;
             foreach (TextMesh tm in allTextMeshes)
@@ -502,8 +495,26 @@ namespace MWC_Localization_Core
                 if (tm != null && !string.IsNullOrEmpty(tm.text))
                 {
                     string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-                    translator.ApplyCustomFont(tm, path);
-                    reappliedCount++;
+                    // Only apply font if there's actually a translation - prevents FSM/game text corruption
+                    if (translator.TranslateAndApplyFont(tm, path, null))
+                    {
+                        reappliedCount++;
+                    }
+                }
+            }
+
+            // Reapply position/size adjustments to ALL TextMeshes (even those without translations)
+            // This ensures config.txt changes are properly applied during reload
+            int adjustmentCount = 0;
+            foreach (TextMesh tm in allTextMeshes)
+            {
+                if (tm != null)
+                {
+                    string path = MLCUtils.GetGameObjectPath(tm.gameObject);
+                    if (config.ApplyTextAdjustment(tm, path))
+                    {
+                        adjustmentCount++;
+                    }
                 }
             }
 
@@ -517,7 +528,7 @@ namespace MWC_Localization_Core
                 InitializeFsmTextHook();
             }
 
-            CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts/adjustments to {reappliedCount} TextMeshes.");
+            CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts to {reappliedCount} TextMeshes, {adjustmentCount} position/size adjustments applied.");
         }
 
         void InitializeFsmTextHook()
