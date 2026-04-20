@@ -486,6 +486,10 @@ namespace MWC_Localization_Core
             sceneManager.ResetAll();
             textMeshMonitor.Clear();
             
+            // CRITICAL: Clear originalMeshText to prevent stale originals from reload
+            // Otherwise RegisterOriginalMeshText will overwrite with already-translated text
+            originalMeshText.Clear();
+            
             // Reset teletext handler
             teletextHandler.Reset();
             arrayListHandler.Reset();
@@ -511,13 +515,19 @@ namespace MWC_Localization_Core
                     if (originalMeshText.TryGetValue(path, out string originalText))
                     {
                         // Found original - use it for retranslation
+                        // CRITICAL: Reset tm.text to originalText BEFORE calling TranslateAndApplyFont
+                        // Otherwise translator.ApplyTranslation() looks up the already-translated text instead
+                        tm.text = originalText;
+                        
                         // Reuse tempMeshSet to avoid per-iteration allocation
+                        // CRITICAL: Do NOT pre-add tm to tempMeshSet - that causes TranslateAndApplyFont to skip processing
                         tempMeshSet.Clear();
-                        tempMeshSet.Add(tm);
                         bool translated = translator.TranslateAndApplyFont(tm, path, tempMeshSet);
                         if (translated)
                         {
                             reappliedCount++;
+                            // Add to set AFTER successful translation
+                            tempMeshSet.Add(tm);
                         }
                         // Even if not translated, apply custom font if one exists for this path
                         else if (!string.IsNullOrEmpty(tm.text))
@@ -560,11 +570,13 @@ namespace MWC_Localization_Core
         /// <summary>
         /// Register original text for a mesh path to enable re-translation on reload
         /// Called by UnifiedTextMeshMonitor before translating a new mesh
+        /// CRITICAL: Allows updating existing keys to handle mesh recreation/refresh scenarios
         /// </summary>
         public void RegisterOriginalMeshText(string meshPath, string originalText)
         {
-            if (!string.IsNullOrEmpty(meshPath) && !originalMeshText.ContainsKey(meshPath))
+            if (!string.IsNullOrEmpty(meshPath))
             {
+                // Allow updating existing keys - meshes may be recreated or need refresh
                 originalMeshText[meshPath] = originalText;
             }
         }
