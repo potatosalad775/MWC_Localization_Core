@@ -74,10 +74,13 @@ namespace MWC_Localization_Core
         /// <summary>
         /// Find the index of the first unescaped '=' character
         /// Public utility for other components that need to parse KEY=VALUE format
-        /// Returns -1 if no unescaped '=' is found
+        /// Returns -1 if no unescaped '=' is found or if line is null/empty
         /// </summary>
         public static int FindKeyValueSeparator(string line)
         {
+            if (string.IsNullOrEmpty(line))
+                return -1;
+                
             return FindKeyValueSeparatorIndex(line);
         }
 

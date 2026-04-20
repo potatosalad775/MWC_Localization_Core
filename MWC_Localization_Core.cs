@@ -344,26 +344,27 @@ namespace MWC_Localization_Core
                     int separatorIndex = TranslationFileParser.FindKeyValueSeparator(line);
                     if (separatorIndex > 0)
                     {
-                        string key = line.Substring(0, separatorIndex).Trim().Replace("\\=", "=");
-                        // Preserve intentional leading AND trailing spaces in translation values.
-                        // Spaces are needed for proper formatting in concatenated strings
-                        string value = line.Substring(separatorIndex + 1).Replace("\\=", "=");
-
-                        // Common authoring style is: "key = value".
-                        // In that specific case, drop only the single separator space.
+                        // Use centralized parsing to extract raw key and value
+                        string rawKey = line.Substring(0, separatorIndex).Trim();
+                        string rawValue = line.Substring(separatorIndex + 1);
+                        
+                        // Apply unescape and common spacing rules (drop single separator space)
+                        string unescapedKey = rawKey.Replace("\\=", "=");
+                        string unescapedValue = TranslationFileParser.UnescapeValue(rawValue);
+                        
+                        // Drop the single space after "=" only if authored as "key = value"
                         if (line.Length > separatorIndex + 1 && line[separatorIndex + 1] == ' ')
                         {
                             bool hasSecondSpace = (line.Length > separatorIndex + 2 && line[separatorIndex + 2] == ' ');
-                            if (!hasSecondSpace && value.Length > 0 && value[0] == ' ')
-                                value = value.Substring(1);
+                            if (!hasSecondSpace && unescapedValue.Length > 0 && unescapedValue[0] == ' ')
+                                unescapedValue = unescapedValue.Substring(1);
                         }
 
-                        string normalizedKey = MLCUtils.FormatUpperKey(key);
-                        string processedValue = value.Replace("\\n", "\n");
+                        string normalizedKey = MLCUtils.FormatUpperKey(unescapedKey);
 
                         if (!string.IsNullOrEmpty(normalizedKey))
                         {
-                            translations[normalizedKey] = processedValue;
+                            translations[normalizedKey] = unescapedValue;
                         }
                     }
                 }
@@ -486,6 +487,10 @@ namespace MWC_Localization_Core
             arrayListHandler.Reset();
             hashTableHandler.Reset();
 
+            // Reload custom font mappings from config before reapplying fonts
+            customFonts.Clear();
+            LoadCustomFonts();
+            
             // Reapply translations and fonts only to TextMeshes with actual translations
             // Pass null to translatedTextMeshes to force retranslation during reload
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();

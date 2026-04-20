@@ -251,13 +251,21 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
-        /// Get custom font for the given original font name
+        /// Get custom font for the given original font name (idempotent)
         /// </summary>
         Font GetCustomFont(string originalFontName)
         {
             // Try direct match by mapping key
             if (customFonts.TryGetValue(originalFontName, out Font font))
                 return font;
+
+            // Fallback: scan all entries to find one whose mapped font has this name
+            // This handles the case where textMesh.font.name is already the localized name
+            foreach (var kvp in customFonts)
+            {
+                if (kvp.Value != null && kvp.Value.name == originalFontName)
+                    return kvp.Value;
+            }
 
             return null;
         }

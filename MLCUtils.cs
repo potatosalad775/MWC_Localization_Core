@@ -8,7 +8,9 @@ namespace MWC_Localization_Core
     /// </summary>
     public static class MLCUtils
     {
-        // LRU cache for FormatUpperKey to reduce allocations in hot path
+        // Fixed-size cache for FormatUpperKey to reduce allocations in hot path
+        // Note: This is a bounded cache, not LRU. Once full (256 entries),
+        // new entries are not cached. If LRU behavior is needed, use a different structure.
         private static Dictionary<string, string> formatKeyCache = new Dictionary<string, string>();
         private const int FORMAT_KEY_CACHE_MAX = 256;
 

@@ -305,12 +305,17 @@ namespace MWC_Localization_Core
                     }
                 }
 
-                // Mark this parent path as complete if we found the parent and processed all its TextMeshes
-                // (If anyNewFonts is false, it means all TextMeshes were already processed)
-                if (!anyNewFonts)
+                // IMPORTANT: Don't mark as complete just because no new fonts were found this call.
+                // TextMeshes may not exist yet (lazy-loaded by game).
+                // Only mark complete if we found the parent and it had TextMeshes to process.
+                // This ensures we retry when child objects are created at runtime.
+                if (textMeshes.Length > 0 && !anyNewFonts)
                 {
+                    // Parent exists and has TextMeshes but no new fonts - truly complete
                     completedParentPaths.Add(parentPath);
                 }
+                // If textMeshes.Length == 0: parent exists but has no children yet, retry later
+                // If anyNewFonts == true: we processed something, keep trying for more
             }
 
             if (fontsApplied > 0)

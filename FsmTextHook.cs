@@ -14,6 +14,7 @@ namespace MWC_Localization_Core
     {
         private Dictionary<string, string> translations;
         private GameObject hostObject;
+        private Coroutine applyWhenReadyCoroutine;
         private PatternMatcher patternMatcher;
         private HashSet<string> completedStrategyTargets = new HashSet<string>();
         private HashSet<int> completedEnnusteFsmInstances = new HashSet<int>();
@@ -854,7 +855,6 @@ namespace MWC_Localization_Core
             }
 
             string result = sb.ToString();
-            sb.Length = 0;  // NET 3.5 compatible: reset StringBuilder for reuse
             return result;
         }
 
@@ -1080,8 +1080,18 @@ namespace MWC_Localization_Core
 
         private void OnDestroy()
         {
-            StopCoroutine(ApplyWhenReady());
-            hostObject = null;
+            // Stop the actual running coroutine using the stored reference
+            if (applyWhenReadyCoroutine != null)
+            {
+                StopCoroutine(applyWhenReadyCoroutine);
+                applyWhenReadyCoroutine = null;
+            }
+            
+            if (hostObject != null)
+            {
+                Object.Destroy(hostObject);
+                hostObject = null;
+            }
         }
     }
 }
