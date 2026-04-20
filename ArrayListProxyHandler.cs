@@ -262,15 +262,28 @@ namespace MWC_Localization_Core
             return null;
         }
 
-        // Apply localized fonts to TextMesh components displaying array data
-        // Call this once during scene initialization, then periodically until all paths are complete
         public int ApplyFontsToArrayElements()
         {
             if (translator == null)
                 return 0;
 
-            // Early exit if all parent paths have been fully processed
-            if (completedParentPaths.Count >= parentSearchPaths.Count)
+            // Count completable paths (excluding dynamic ones that never mark complete)
+            int completablePathCount = 0;
+            foreach (string path in parentSearchPaths)
+            {
+                if (!dynamicParentPaths.Contains(path))
+                    completablePathCount++;
+            }
+
+            // Early exit if all completable parent paths have been fully processed
+            int completedNonDynamicCount = 0;
+            foreach (string path in completedParentPaths)
+            {
+                if (!dynamicParentPaths.Contains(path))
+                    completedNonDynamicCount++;
+            }
+            
+            if (completablePathCount > 0 && completedNonDynamicCount >= completablePathCount)
                 return 0;
 
             int fontsApplied = 0;
@@ -279,7 +292,8 @@ namespace MWC_Localization_Core
             foreach (string parentPath in parentSearchPaths)
             {
                 // Skip already completed parent paths (huge performance boost)
-                if (completedParentPaths.Contains(parentPath))
+                // But always process dynamic paths as they're never marked complete
+                if (completedParentPaths.Contains(parentPath) && !dynamicParentPaths.Contains(parentPath))
                     continue;
 
                 GameObject parent = MLCUtils.FindGameObjectCached(parentPath);
@@ -330,7 +344,7 @@ namespace MWC_Localization_Core
 
             if (fontsApplied > 0)
             {
-                CoreConsole.Print($"[ArrayListProxyHandler] Applied Custom font to {fontsApplied} TextMesh components ({completedParentPaths.Count}/{parentSearchPaths.Count} paths complete)");
+                CoreConsole.Print($"[ArrayListProxyHandler] Applied Custom font to {fontsApplied} TextMesh components ({completedNonDynamicCount}/{completablePathCount} paths complete)");
             }
 
             return fontsApplied;

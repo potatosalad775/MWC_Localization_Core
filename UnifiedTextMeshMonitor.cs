@@ -62,6 +62,7 @@ namespace MWC_Localization_Core
     public class UnifiedTextMeshMonitor
     {
         private TextMeshTranslator translator;
+        private MWC_Localization_Core plugin;  // Reference to plugin for registering original text
 
         // Throttling timers
         private float fastPollingTimer;
@@ -79,9 +80,10 @@ namespace MWC_Localization_Core
         private List<int> removalBuffer = new List<int>(64);
         private List<string> stringRemovalBuffer = new List<string>(16);
 
-        public UnifiedTextMeshMonitor(TextMeshTranslator translator)
+        public UnifiedTextMeshMonitor(TextMeshTranslator translator, MWC_Localization_Core plugin = null)
         {
             this.translator = translator;
+            this.plugin = plugin;
             pathRules = new Dictionary<string, MonitoringStrategy>();
             instanceEntries = new Dictionary<int, TextMeshEntry>();
             pathToInstances = new Dictionary<string, HashSet<int>>();
@@ -228,6 +230,12 @@ namespace MWC_Localization_Core
 
                 string textMeshPath = MLCUtils.GetGameObjectPath(textMesh.gameObject);
                 
+                // Register original text before translation for reload support
+                if (plugin != null && !string.IsNullOrEmpty(textMesh.text))
+                {
+                    plugin.RegisterOriginalMeshText(textMeshPath, textMesh.text);
+                }
+                
                 // Translate first to reduce visible unlocalized text
                 bool translated = translator.TranslateAndApplyFont(textMesh, textMeshPath, null);
 
@@ -348,6 +356,12 @@ namespace MWC_Localization_Core
                 
                 if (textChanged || !entry.WasTranslated)
                 {
+                    // Register original text if this is first translation attempt
+                    if (!entry.WasTranslated && plugin != null && !string.IsNullOrEmpty(entry.TextMesh.text))
+                    {
+                        plugin.RegisterOriginalMeshText(entry.Path, entry.TextMesh.text);
+                    }
+                    
                     bool translated = translator.TranslateAndApplyFont(entry.TextMesh, entry.Path, null);
                     if (translated)
                     {
@@ -389,6 +403,12 @@ namespace MWC_Localization_Core
                 // Only translate when visibility changes from hidden to visible
                 if (!wasVisible && entry.IsVisible)
                 {
+                    // Register original text if this is first translation attempt
+                    if (!entry.WasTranslated && plugin != null && !string.IsNullOrEmpty(entry.TextMesh.text))
+                    {
+                        plugin.RegisterOriginalMeshText(entry.Path, entry.TextMesh.text);
+                    }
+                    
                     bool translated = translator.TranslateAndApplyFont(entry.TextMesh, entry.Path, null);
                     if (translated)
                     {

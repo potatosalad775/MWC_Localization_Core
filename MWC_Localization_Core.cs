@@ -48,6 +48,10 @@ namespace MWC_Localization_Core
         // Font management
         private static AssetBundle fontBundle;  // Static to persist across MSCLoader instance recreation
         private Dictionary<string, Font> customFonts = new Dictionary<string, Font>();
+        
+        // Store original text for each TextMesh to enable re-translation on config reload
+        // Key: GameObject path, Value: original text before translation
+        private Dictionary<string, string> originalMeshText = new Dictionary<string, string>();
 
         // Localization configuration
         private LocalizationConfig config;
@@ -130,8 +134,8 @@ namespace MWC_Localization_Core
             hashTableHandler = new HashTableProxyHandler(magazineHandler);
             hashTableHandler.InitializeTargetPaths();
             
-            // Initialize unified text mesh monitor
-            textMeshMonitor = new UnifiedTextMeshMonitor(translator);
+            // Initialize unified text mesh monitor with reference to plugin for registering original text
+            textMeshMonitor = new UnifiedTextMeshMonitor(translator, this);
 
             // Translate main menu
             CoreConsole.Print($"[{Name}] Translating Main Menu...");
@@ -492,7 +496,7 @@ namespace MWC_Localization_Core
             LoadCustomFonts();
             
             // Reapply translations and fonts only to TextMeshes with actual translations
-            // Pass null to translatedTextMeshes to force retranslation during reload
+            // Use stored original text to enable re-translation of already-localized meshes
             TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
             int reappliedCount = 0;
             foreach (TextMesh tm in allTextMeshes)
@@ -500,16 +504,27 @@ namespace MWC_Localization_Core
                 if (tm != null && !string.IsNullOrEmpty(tm.text))
                 {
                     string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-                    // Try to translate and apply font
-                    bool translated = translator.TranslateAndApplyFont(tm, path, null);
-                    if (translated)
+                    
+                    // Lookup original text for this mesh to enable re-translation
+                    string originalText = null;
+                    if (originalMeshText.TryGetValue(path, out originalText))
                     {
-                        reappliedCount++;
+                        // Found original - use it for retranslation
+                        // Pass as a HashSet containing just this mesh for tracking
+                        bool translated = translator.TranslateAndApplyFont(tm, path, new HashSet<TextMesh> { tm });
+                        if (translated)
+                        {
+                            reappliedCount++;
+                        }
+                        // Even if not translated, apply custom font if one exists for this path
+                        else if (!string.IsNullOrEmpty(tm.text))
+                        {
+                            translator.ApplyFontOnly(tm, path);
+                        }
                     }
-                    // Even if not translated, apply custom font if one exists for this path
-                    // This ensures fonts updated in config.txt are applied to already-localized meshes
-                    else if (!string.IsNullOrEmpty(tm.text))
+                    else
                     {
+                        // No original stored - just apply font for already-localized meshes
                         translator.ApplyFontOnly(tm, path);
                     }
                 }
@@ -541,6 +556,18 @@ namespace MWC_Localization_Core
             }
 
             CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts to {reappliedCount} TextMeshes, {adjustmentCount} position/size adjustments applied.");
+        }
+
+        /// <summary>
+        /// Register original text for a mesh path to enable re-translation on reload
+        /// Called by UnifiedTextMeshMonitor before translating a new mesh
+        /// </summary>
+        public void RegisterOriginalMeshText(string meshPath, string originalText)
+        {
+            if (!string.IsNullOrEmpty(meshPath) && !originalMeshText.ContainsKey(meshPath))
+            {
+                originalMeshText[meshPath] = originalText;
+            }
         }
 
         void InitializeFsmTextHook()
