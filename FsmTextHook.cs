@@ -201,7 +201,7 @@ namespace MWC_Localization_Core
                 }
             }
 
-            StartCoroutine(ApplyWhenReady());
+            applyWhenReadyCoroutine = StartCoroutine(ApplyWhenReady());
         }
 
         private IEnumerator ApplyWhenReady()
@@ -359,8 +359,16 @@ namespace MWC_Localization_Core
                 if (!IsFsmReady(fsm))
                     continue;
 
-                ApplyStrategyForTarget(target, fsm, ref anyChanged, ref hasAnyTarget);
-                completedStrategyTargets.Add(targetKey);
+                // Track if this strategy makes any changes
+                bool strategyChanged = false;
+                ApplyStrategyForTarget(target, fsm, ref anyChanged, ref hasAnyTarget, out strategyChanged);
+                
+                // Only mark as complete if the strategy actually made a change
+                // This ensures ConlineChatStatus and similar one-shot strategies retry until they succeed
+                if (strategyChanged || target.Strategy != FsmStrategyType.ConlineChatStatus)
+                {
+                    completedStrategyTargets.Add(targetKey);
+                }
             }
         }
 
@@ -369,10 +377,13 @@ namespace MWC_Localization_Core
             return target.ObjectPath + "|" + target.FsmName + "|" + target.Strategy.ToString() + "|" + target.StateName + "|" + target.ActionIndex.ToString();
         }
 
-        private void ApplyStrategyForTarget(FsmStrategyTarget target, PlayMakerFSM fsm, ref bool anyChanged, ref bool hasAnyTarget)
+        private void ApplyStrategyForTarget(FsmStrategyTarget target, PlayMakerFSM fsm, ref bool anyChanged, ref bool hasAnyTarget, out bool strategyChanged)
         {
+            strategyChanged = false;
             if (target == null || fsm == null)
                 return;
+
+            bool beforeChanged = anyChanged;
 
             switch (target.Strategy)
             {
@@ -426,6 +437,9 @@ namespace MWC_Localization_Core
                     hasAnyTarget = true;
                     break;
             }
+            
+            // Set strategyChanged to indicate if this strategy made any modifications
+            strategyChanged = (anyChanged != beforeChanged);
         }
 
         private bool IsFsmReady(PlayMakerFSM fsm)

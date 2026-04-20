@@ -33,6 +33,13 @@ namespace MWC_Localization_Core
         // Apply fonts to ALL TextMeshes under these paths
         private List<string> parentSearchPaths;
         
+        // Known dynamic roots that may gain TextMesh children at runtime - never mark these complete
+        private static readonly HashSet<string> dynamicParentPaths = new HashSet<string>
+        {
+            "Systems/TV/TVGraphics/CHAT/Generated/Lines",
+            "Systems/TV/TVGraphics/CHAT/Day/Time"
+        };
+        
         // Cache for array proxies to avoid repeated lookups
         private Dictionary<string, PlayMakerArrayListProxy> arrayProxyCache 
             = new Dictionary<string, PlayMakerArrayListProxy>();
@@ -309,13 +316,16 @@ namespace MWC_Localization_Core
                 // TextMeshes may not exist yet (lazy-loaded by game).
                 // Only mark complete if we found the parent and it had TextMeshes to process.
                 // This ensures we retry when child objects are created at runtime.
-                if (textMeshes.Length > 0 && !anyNewFonts)
+                // Never mark dynamic paths as complete since they may gain children later.
+                if (textMeshes.Length > 0 && !anyNewFonts && !dynamicParentPaths.Contains(parentPath))
                 {
                     // Parent exists and has TextMeshes but no new fonts - truly complete
+                    // (unless it's a known dynamic path that may gain children later)
                     completedParentPaths.Add(parentPath);
                 }
                 // If textMeshes.Length == 0: parent exists but has no children yet, retry later
                 // If anyNewFonts == true: we processed something, keep trying for more
+                // If dynamic path: never mark complete to catch late-added TextMeshes
             }
 
             if (fontsApplied > 0)

@@ -210,11 +210,9 @@ namespace MWC_Localization_Core
                     // Try exact key match first
                     if (translations.TryGetValue(normalizedOriginal, out string translation))
                     {
-                        if (!string.IsNullOrEmpty(translation))
-                        {
-                            arrayList[i] = translation;
-                            translatedCount++;
-                        }
+                        // Apply translation even if empty string - user may have intentionally translated to empty
+                        arrayList[i] = translation;
+                        translatedCount++;
                     }
                     // Fallback: Use index-based translation if available
                     else if (hasIndexFallback && nonEmptySourceIndex < indexBasedTranslations[categoryName].Count)

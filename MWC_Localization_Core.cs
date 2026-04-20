@@ -500,10 +500,17 @@ namespace MWC_Localization_Core
                 if (tm != null && !string.IsNullOrEmpty(tm.text))
                 {
                     string path = MLCUtils.GetGameObjectPath(tm.gameObject);
-                    // Only apply font if there's actually a translation - prevents FSM/game text corruption
-                    if (translator.TranslateAndApplyFont(tm, path, null))
+                    // Try to translate and apply font
+                    bool translated = translator.TranslateAndApplyFont(tm, path, null);
+                    if (translated)
                     {
                         reappliedCount++;
+                    }
+                    // Even if not translated, apply custom font if one exists for this path
+                    // This ensures fonts updated in config.txt are applied to already-localized meshes
+                    else if (!string.IsNullOrEmpty(tm.text))
+                    {
+                        translator.ApplyFontOnly(tm, path);
                     }
                 }
             }
