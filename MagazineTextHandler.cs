@@ -29,6 +29,14 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
+        /// Get total count of loaded magazine translations
+        /// </summary>
+        public int GetTranslationCount()
+        {
+            return magazineTranslations.Count;
+        }
+
+        /// <summary>
         /// Check if path is a magazine text element
         /// </summary>
         public bool IsMagazineText(string path)

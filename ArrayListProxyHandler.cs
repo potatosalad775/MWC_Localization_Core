@@ -44,6 +44,10 @@ namespace MWC_Localization_Core
         private Dictionary<string, PlayMakerArrayListProxy> arrayProxyCache 
             = new Dictionary<string, PlayMakerArrayListProxy>();
 
+        // Cache for GetComponentsInChildren results to avoid repeated expensive calls
+        private Dictionary<string, TextMesh[]> textMeshCache
+            = new Dictionary<string, TextMesh[]>();
+
         public ArrayListProxyHandler(
             Dictionary<string, string> translations, 
             MagazineTextHandler magazineHandler, 
@@ -100,6 +104,7 @@ namespace MWC_Localization_Core
             arrayProxyCache.Clear();
             fontAppliedInstances.Clear();
             completedParentPaths.Clear();
+            textMeshCache.Clear();
         }
 
         public void Reset()
@@ -108,6 +113,7 @@ namespace MWC_Localization_Core
             arrayProxyCache.Clear();
             fontAppliedInstances.Clear();
             completedParentPaths.Clear();
+            textMeshCache.Clear();
         }
 
         // Translate all configured arrays (call once per scene)
@@ -301,7 +307,13 @@ namespace MWC_Localization_Core
                     continue; // Not loaded yet - will try again later
 
                 // Get all TextMesh components under this parent and apply fonts to ALL of them
-                TextMesh[] textMeshes = parent.GetComponentsInChildren<TextMesh>(true);
+                // Cache results to avoid expensive GetComponentsInChildren calls every frame
+                TextMesh[] textMeshes;
+                if (!textMeshCache.TryGetValue(parentPath, out textMeshes))
+                {
+                    textMeshes = parent.GetComponentsInChildren<TextMesh>(true);
+                    textMeshCache[parentPath] = textMeshes;
+                }
                 
                 bool anyNewFonts = false;
 

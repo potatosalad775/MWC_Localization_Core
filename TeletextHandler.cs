@@ -30,6 +30,9 @@ namespace MWC_Localization_Core
         // Track which arrays have been translated already
         private HashSet<string> translatedArrays = new HashSet<string>();
         
+        // Store count of loaded translations for reporting
+        private int lastLoadedTranslationCount = 0;
+        
         // GameObject path to category mapping
         private Dictionary<string, string> pathPrefixes = new Dictionary<string, string>
         {
@@ -76,13 +79,21 @@ namespace MWC_Localization_Core
             }
 
             // Count total loaded translations
-            int loadedCount = 0;
+            lastLoadedTranslationCount = 0;
             foreach (var category in categoryTranslations.Values)
             {
-                loadedCount += category.Count;
+                lastLoadedTranslationCount += category.Count;
             }
 
-            CoreConsole.Print($"[TeletextHandler] Loaded {loadedCount} teletext translations across {categoryTranslations.Count} categories");
+            CoreConsole.Print($"[TeletextHandler] Loaded {lastLoadedTranslationCount} teletext translations across {categoryTranslations.Count} categories");
+        }
+
+        /// <summary>
+        /// Get total count of loaded teletext translations
+        /// </summary>
+        public int GetTranslationCount()
+        {
+            return lastLoadedTranslationCount;
         }
 
 

@@ -224,6 +224,14 @@ namespace MWC_Localization_Core
                     lateUpdateHandlerObject = null;
                     lateUpdateHandler = null;
                 }
+                
+                // Destroy FSM hook when leaving both MainMenu and GAME (stops coroutine and clears reflection cache)
+                if (currentScene != "MainMenu" && currentScene != "GAME" && fsmTextHookObject != null)
+                {
+                    Object.Destroy(fsmTextHookObject);
+                    fsmTextHookObject = null;
+                }
+                
                 CoreConsole.Print($"[{Name}] Scene changed to '{currentScene}' - cleared caches");
             }
 
@@ -374,7 +382,6 @@ namespace MWC_Localization_Core
                 }
 
                 hasLoadedTranslations = true;
-                CoreConsole.Print($"[{Name}] Loaded {translations.Count} translations from {Path.GetFileName(translationPath)}");
             }
             catch (System.Exception ex)
             {
@@ -425,11 +432,7 @@ namespace MWC_Localization_Core
                 translator.LoadFsmPatterns(modTranslationPath);
             }
 
-            // Log total translations loaded (use ModConsole to always show)
-            if (translations.Count > 0)
-            {
-                ModConsole.Print($"[{Name}] Translations loaded: {translations.Count} entries");
-            }
+
         }
 
         void ReloadTranslations()
@@ -452,14 +455,17 @@ namespace MWC_Localization_Core
 
             // Reload from file
             LoadTranslations();
+            int totalTranslationsReloaded = translations.Count;
 
             // Reload magazine translations
             string magazinePath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_magazine.txt");
             magazineHandler.LoadMagazineTranslations(magazinePath);
+            totalTranslationsReloaded += magazineHandler.GetTranslationCount();
             
             // Reload teletext translations
             string teletextPath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_teletext.txt");
             teletextHandler.LoadTeletextTranslations(teletextPath);
+            totalTranslationsReloaded += teletextHandler.GetTranslationCount();
             
             // Reload FSM patterns from main file first
             string mainTranslatePath = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate.txt");
@@ -564,7 +570,7 @@ namespace MWC_Localization_Core
                 InitializeFsmTextHook();
             }
 
-            CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts to {reappliedCount} TextMeshes, {adjustmentCount} position/size adjustments applied.");
+            CoreConsole.Print($"[{Name}] [F8] Reloaded {totalTranslationsReloaded} translations. Reapplied fonts to {reappliedCount} TextMeshes, {adjustmentCount} position/size adjustments applied.");
         }
 
         /// <summary>

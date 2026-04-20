@@ -1106,6 +1106,9 @@ namespace MWC_Localization_Core
                 Object.Destroy(hostObject);
                 hostObject = null;
             }
+
+            // Clear static reflection cache to prevent memory bloat from accumulated FieldInfo objects
+            reflectionCache.Clear();
         }
     }
 }
