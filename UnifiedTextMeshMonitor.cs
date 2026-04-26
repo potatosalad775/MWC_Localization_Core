@@ -287,12 +287,6 @@ namespace MWC_Localization_Core
                     entry.UpdateLastText();
                 }
 
-                if (finalStrategy == MonitoringStrategy.LateTranslateOnce && entry.WasTranslated)
-                {
-                    registeredCount++;
-                    continue;
-                }
-
                 // Register instance
                 instanceEntries[instanceID] = entry;
                 
@@ -368,12 +362,6 @@ namespace MWC_Localization_Core
 
                 // Check validity first to avoid NullReferenceException on destroyed objects
                 if (!entry.IsValid())
-                {
-                    removalBuffer.Add(instanceID);
-                    continue;
-                }
-
-                if (strategy == MonitoringStrategy.LateTranslateOnce && entry.WasTranslated)
                 {
                     removalBuffer.Add(instanceID);
                     continue;
