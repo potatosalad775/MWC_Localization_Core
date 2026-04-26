@@ -207,7 +207,7 @@ namespace MWC_Localization_Core
                     string normalizedOriginal = original.Trim();
                     if (string.IsNullOrEmpty(normalizedOriginal))
                         continue;
-                    string translationKey = TranslationFileParser.NormalizeCategoryKey(normalizedOriginal);
+                    string translationKey = TranslationFileParser.UnescapeString(normalizedOriginal);
 
                     // Keep fallback alignment based on non-empty source entries only.
                     nonEmptySourceIndex++;

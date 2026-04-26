@@ -213,10 +213,11 @@ namespace MWC_Localization_Core
                         // concatenation fragments do, and the lookup side (TranslateArrayListProxy)
                         // trims the game-provided original before dict lookup, so preserving
                         // trailing whitespace here would cause keys to silently miss.
-                        string key = NormalizeCategoryKey(line.Substring(0, equalsIndex));
+                        string key = line.Substring(0, equalsIndex).Trim();
                         string value = line.Substring(equalsIndex + 1).Trim();
 
                         // Unescape special characters
+                        key = UnescapeString(key);
                         value = UnescapeString(value);
 
                         if (!string.IsNullOrEmpty(key) && currentDict != null)
@@ -271,17 +272,6 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
-        /// Normalize keys used by category-based translation files (e.g. teletext).
-        /// </summary>
-        public static string NormalizeCategoryKey(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-                return input;
-
-            return UnescapeString(input.Trim());
-        }
-
-        /// <summary>
         /// Helper method to save a multi-line entry
         /// </summary>
         private static void SaveEntry(Dictionary<string, string> dict, List<string> indexList, List<string> keyLines, List<string> valueLines, ref int count)
@@ -297,10 +287,11 @@ namespace MWC_Localization_Core
             // "=" on its own line). The lookup side (TranslateArrayListProxy) trims the
             // game-provided original before dict lookup, so keys must be trimmed here to
             // match; values get trimmed for consistency.
-            key = NormalizeCategoryKey(key);
+            key = key.Trim();
             value = value.Trim();
 
             // Unescape special characters in both key and value
+            key = UnescapeString(key);
             value = UnescapeString(value);
 
             if (!string.IsNullOrEmpty(key))
