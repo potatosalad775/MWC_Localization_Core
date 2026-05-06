@@ -24,6 +24,12 @@ namespace MWC_Localization_Core
         Persistent,
 
         /// <summary>
+        /// Keep font and layout adjustments enforced for content whose transform is rebuilt by the game.
+        /// Use only for small, known text groups.
+        /// </summary>
+        PersistentLayout,
+
+        /// <summary>
         /// Translate only when a GameObject becomes active in the hierarchy.
         /// Use for menus, dialogs, and other show/hide UI panels.
         /// </summary>

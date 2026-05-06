@@ -190,9 +190,13 @@ namespace MWC_Localization_Core
             if (!translations.TryGetValue(normalizedKey, out string translation))
                 return false;
 
-            // Skip translation if already translated (unless forced)
+            // If the text already equals its mapped value, still apply font/adjustments
+            // and report it as handled so one-shot monitors can stop cleanly.
             if (!forceUpdate && currentText == translation)
-                return false;
+            {
+                ApplyCustomFont(textMesh, path);
+                return true;
+            }
 
             // Apply custom font first
             ApplyCustomFont(textMesh, path);

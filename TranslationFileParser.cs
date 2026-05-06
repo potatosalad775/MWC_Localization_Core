@@ -85,15 +85,6 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
-        /// Unescape special characters: \= -> =, \n -> newline
-        /// Public utility for other components
-        /// </summary>
-        public static string UnescapeValue(string input)
-        {
-            return UnescapeString(input);
-        }
-
-        /// <summary>
         /// Find the index of the first unescaped '=' character
         /// Returns -1 if no unescaped '=' is found
         /// </summary>
