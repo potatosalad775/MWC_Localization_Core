@@ -45,7 +45,7 @@ namespace MWC_Localization_Core
                 "",
                 ""
             );
-            pcScreenPattern.PathMatcher = path => path.Contains("COMPUTER/SYSTEM/POS/Text");
+            pcScreenPattern.PathMatcher = path => path.Contains("COMPUTER/SYSTEM/POS/Command");
             pcScreenPattern.TextMatcher = text => text.Contains("\n");
             pcScreenPattern.CustomHandler = TranslateMultilineScreen;
             AddPatternInternal(pcScreenPattern, true);

@@ -29,6 +29,14 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
+        /// Print a user-invoked diagnostic message even when debug logs are disabled.
+        /// </summary>
+        public static void PrintAlways(string message)
+        {
+            ModConsole.Print("[MWC_LC] " + message);
+        }
+
+        /// <summary>
         /// Print a warning message to the ModConsole
         /// </summary>
         public static void Warning(string message)

@@ -14,6 +14,7 @@ namespace MWC_Localization_Core
         private TeletextHandler teletextHandler;
         private ArrayListProxyHandler arrayListHandler;
         private HashTableProxyHandler hashTableHandler;
+        private FsmTextHook fsmTextHook;
         private SceneTranslationManager sceneManager;
 
         private bool isInitialized = false;
@@ -26,12 +27,14 @@ namespace MWC_Localization_Core
             TeletextHandler teletextHandlerInstance,
             ArrayListProxyHandler arrayListHandlerInstance,
             HashTableProxyHandler hashTableHandlerInstance,
+            FsmTextHook fsmTextHookInstance,
             SceneTranslationManager sceneManagerInstance)
         {
             textMeshMonitor = textMeshMonitorInstance;
             teletextHandler = teletextHandlerInstance;
             arrayListHandler = arrayListHandlerInstance;
             hashTableHandler = hashTableHandlerInstance;
+            fsmTextHook = fsmTextHookInstance;
             sceneManager = sceneManagerInstance;
             isInitialized = true;
         }
@@ -52,6 +55,10 @@ namespace MWC_Localization_Core
             {
                 // Throttled monitoring for regular TextMesh elements
                 textMeshMonitor.Update(Time.deltaTime);
+                if (fsmTextHook != null)
+                {
+                    fsmTextHook.UpdateForScene(currentScene, false);
+                }
                 
                 // Throttled array monitoring (teletext, PlayMaker ArrayLists)
                 if (Time.time - lastArrayCheckTime >= LocalizationConstants.ARRAY_MONITOR_INTERVAL)
