@@ -10,12 +10,16 @@ namespace MWC_Localization_Core
         private const int MaxFsmSourceLogs = 30;
         private const int MaxSubsystemTextLogs = 80;
         private const int MaxSubsystemFsmStringLogs = 120;
+        private const int MaxNearbyFsmStringLogs = 160;
         private const int MaxTextPreviewLength = 140;
         private static readonly string[] SubsystemPathPrefixes = new string[]
         {
             "Systems/TV",
             "COMPUTER/SYSTEM",
-            "YARD/Building/BEDROOM1/COMPUTER/SYSTEM"
+            "YARD/Building/BEDROOM1/COMPUTER/SYSTEM",
+            "Sheets/TrafficTicket",
+            "Sheets/RallyResults",
+            "Sheets/RallyRegistration"
         };
 
         private sealed class TextCandidate
@@ -63,7 +67,7 @@ namespace MWC_Localization_Core
                         + "\" translatedKey=" + hasTranslation.ToString()
                         + " text=\"" + Preview(candidate.Text) + "\"");
 
-                    LogNearbyFsms(candidate.TextMesh);
+                    LogNearbyFsms(candidate.TextMesh, translations);
                 }
             }
 
@@ -180,7 +184,7 @@ namespace MWC_Localization_Core
                     + "\" translatedKey=" + hasTranslation.ToString()
                     + " text=\"" + Preview(candidate.Text) + "\"");
 
-                LogNearbyFsms(candidate.TextMesh);
+                LogNearbyFsms(candidate.TextMesh, translations);
             }
 
             if (subsystemTexts.Count > count)
@@ -212,12 +216,13 @@ namespace MWC_Localization_Core
             return string.Compare(leftPath, rightPath);
         }
 
-        private static void LogNearbyFsms(TextMesh textMesh)
+        private static void LogNearbyFsms(TextMesh textMesh, Dictionary<string, string> translations)
         {
             if (textMesh == null)
                 return;
 
             Transform current = textMesh.transform;
+            int stringLogs = 0;
             for (int depth = 0; depth < 4 && current != null; depth++)
             {
                 PlayMakerFSM[] fsms = current.GetComponents<PlayMakerFSM>();
@@ -230,10 +235,40 @@ namespace MWC_Localization_Core
                             continue;
 
                         CoreConsole.PrintAlways("[TextPathDebug] NearbyFSM path=\"" + path + "\" fsm=\"" + fsms[i].FsmName + "\"");
+                        LogNearbyFsmStringDetails(path, fsms[i], translations, ref stringLogs);
                     }
                 }
 
                 current = current.parent;
+            }
+        }
+
+        private static void LogNearbyFsmStringDetails(string path, PlayMakerFSM fsm, Dictionary<string, string> translations, ref int logged)
+        {
+            if (fsm == null || logged >= MaxNearbyFsmStringLogs)
+                return;
+
+            TryInitFsm(fsm);
+
+            LogFsmStringVariables(path, fsm, translations, ref logged, MaxNearbyFsmStringLogs, "NearbyFSMVar");
+
+            if (fsm.FsmStates == null)
+                return;
+
+            for (int stateIndex = 0; stateIndex < fsm.FsmStates.Length && logged < MaxNearbyFsmStringLogs; stateIndex++)
+            {
+                HutongGames.PlayMaker.FsmState state = fsm.FsmStates[stateIndex];
+                if (state == null || state.Actions == null)
+                    continue;
+
+                for (int actionIndex = 0; actionIndex < state.Actions.Length && logged < MaxNearbyFsmStringLogs; actionIndex++)
+                {
+                    object action = state.Actions[actionIndex];
+                    if (action == null)
+                        continue;
+
+                    ScanActionForAnyStrings(path, fsm.FsmName, state.Name, actionIndex, action, translations, ref logged, MaxNearbyFsmStringLogs, "NearbyFSMAction");
+                }
             }
         }
 
@@ -343,7 +378,7 @@ namespace MWC_Localization_Core
                         if (action == null)
                             continue;
 
-                        ScanActionForAnyStrings(path, fsm.FsmName, state.Name, actionIndex, action, translations, ref logged);
+                        ScanActionForAnyStrings(path, fsm.FsmName, state.Name, actionIndex, action, translations, ref logged, MaxSubsystemFsmStringLogs, "TVPCFSM");
                     }
                 }
             }
@@ -447,10 +482,12 @@ namespace MWC_Localization_Core
             int actionIndex,
             object action,
             Dictionary<string, string> translations,
-            ref int logged)
+            ref int logged,
+            int maxLogs,
+            string logLabel)
         {
             FieldInfo[] fields = action.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            for (int i = 0; i < fields.Length && logged < MaxSubsystemFsmStringLogs; i++)
+            for (int i = 0; i < fields.Length && logged < maxLogs; i++)
             {
                 FieldInfo field = fields[i];
                 object value = field.GetValue(action);
@@ -458,16 +495,16 @@ namespace MWC_Localization_Core
                 HutongGames.PlayMaker.FsmString fsmString = value as HutongGames.PlayMaker.FsmString;
                 if (fsmString != null)
                 {
-                    LogAnyFsmString(path, fsmName, stateName, actionIndex, action, field.Name, fsmString, translations, ref logged);
+                    LogAnyFsmString(path, fsmName, stateName, actionIndex, action, field.Name, fsmString, translations, ref logged, logLabel);
                     continue;
                 }
 
                 HutongGames.PlayMaker.FsmString[] fsmStrings = value as HutongGames.PlayMaker.FsmString[];
                 if (fsmStrings != null)
                 {
-                    for (int partIndex = 0; partIndex < fsmStrings.Length && logged < MaxSubsystemFsmStringLogs; partIndex++)
+                    for (int partIndex = 0; partIndex < fsmStrings.Length && logged < maxLogs; partIndex++)
                     {
-                        LogAnyFsmString(path, fsmName, stateName, actionIndex, action, field.Name + "[" + partIndex.ToString() + "]", fsmStrings[partIndex], translations, ref logged);
+                        LogAnyFsmString(path, fsmName, stateName, actionIndex, action, field.Name + "[" + partIndex.ToString() + "]", fsmStrings[partIndex], translations, ref logged, logLabel);
                     }
 
                     continue;
@@ -475,7 +512,7 @@ namespace MWC_Localization_Core
 
                 if (value != null && ShouldScanNestedValue(value))
                 {
-                    ScanNestedObjectForAnyStrings(path, fsmName, stateName, actionIndex, action, field.Name, value, translations, ref logged);
+                    ScanNestedObjectForAnyStrings(path, fsmName, stateName, actionIndex, action, field.Name, value, translations, ref logged, maxLogs, logLabel, 0);
                 }
             }
         }
@@ -514,10 +551,16 @@ namespace MWC_Localization_Core
             string parentFieldName,
             object value,
             Dictionary<string, string> translations,
-            ref int logged)
+            ref int logged,
+            int maxLogs,
+            string logLabel,
+            int depth)
         {
+            if (value == null || depth > 3)
+                return;
+
             FieldInfo[] fields = value.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            for (int i = 0; i < fields.Length && logged < MaxSubsystemFsmStringLogs; i++)
+            for (int i = 0; i < fields.Length && logged < maxLogs; i++)
             {
                 FieldInfo field = fields[i];
                 object nestedValue = field.GetValue(value);
@@ -525,15 +568,42 @@ namespace MWC_Localization_Core
                 HutongGames.PlayMaker.FsmString fsmString = nestedValue as HutongGames.PlayMaker.FsmString;
                 if (fsmString != null)
                 {
-                    LogAnyFsmString(path, fsmName, stateName, actionIndex, action, parentFieldName + "." + field.Name, fsmString, translations, ref logged);
+                    LogAnyFsmString(path, fsmName, stateName, actionIndex, action, parentFieldName + "." + field.Name, fsmString, translations, ref logged, logLabel);
+                    continue;
+                }
+
+                HutongGames.PlayMaker.FsmString[] fsmStrings = nestedValue as HutongGames.PlayMaker.FsmString[];
+                if (fsmStrings != null)
+                {
+                    for (int partIndex = 0; partIndex < fsmStrings.Length && logged < maxLogs; partIndex++)
+                    {
+                        LogAnyFsmString(path, fsmName, stateName, actionIndex, action, parentFieldName + "." + field.Name + "[" + partIndex.ToString() + "]", fsmStrings[partIndex], translations, ref logged, logLabel);
+                    }
+
+                    continue;
+                }
+
+                if (nestedValue != null && ShouldScanNestedValue(nestedValue))
+                {
+                    ScanNestedObjectForAnyStrings(path, fsmName, stateName, actionIndex, action, parentFieldName + "." + field.Name, nestedValue, translations, ref logged, maxLogs, logLabel, depth + 1);
                 }
             }
         }
 
         private static bool ShouldScanNestedValue(object value)
         {
+            if (value == null)
+                return false;
+
+            System.Type type = value.GetType();
+            if (type.IsPrimitive || type == typeof(string) || typeof(UnityEngine.Object).IsAssignableFrom(type))
+                return false;
+
             string typeName = value.GetType().Name;
-            return typeName.IndexOf("Property") >= 0 || typeName.IndexOf("FsmVar") >= 0;
+            return typeName.IndexOf("Property") >= 0
+                || typeName.IndexOf("FsmVar") >= 0
+                || typeName.IndexOf("Fsm") >= 0
+                || typeName.IndexOf("String") >= 0;
         }
 
         private static void LogFsmStringIfMatch(
@@ -574,7 +644,8 @@ namespace MWC_Localization_Core
             string fieldPath,
             HutongGames.PlayMaker.FsmString fsmString,
             Dictionary<string, string> translations,
-            ref int logged)
+            ref int logged,
+            string logLabel)
         {
             if (fsmString == null || string.IsNullOrEmpty(fsmString.Value))
                 return;
@@ -583,7 +654,7 @@ namespace MWC_Localization_Core
             bool hasTranslation = translations != null && translations.ContainsKey(normalized);
 
             CoreConsole.PrintAlways(
-                "[TextPathDebug] TVPCFSM path=\"" + path
+                "[TextPathDebug] " + logLabel + " path=\"" + path
                 + "\" fsm=\"" + fsmName
                 + "\" state=\"" + stateName
                 + "\" actionIndex=" + actionIndex.ToString()
@@ -593,6 +664,39 @@ namespace MWC_Localization_Core
                 + "\" translatedKey=" + hasTranslation.ToString()
                 + " text=\"" + Preview(fsmString.Value) + "\"");
             logged++;
+        }
+
+        private static void LogFsmStringVariables(
+            string path,
+            PlayMakerFSM fsm,
+            Dictionary<string, string> translations,
+            ref int logged,
+            int maxLogs,
+            string logLabel)
+        {
+            if (fsm == null || fsm.FsmVariables == null || fsm.FsmVariables.StringVariables == null)
+                return;
+
+            HutongGames.PlayMaker.FsmString[] variables = fsm.FsmVariables.StringVariables;
+            for (int i = 0; i < variables.Length && logged < maxLogs; i++)
+            {
+                HutongGames.PlayMaker.FsmString variable = variables[i];
+                if (variable == null || string.IsNullOrEmpty(variable.Value))
+                    continue;
+
+                string normalized = MLCUtils.FormatUpperKey(variable.Value);
+                bool hasTranslation = translations != null && translations.ContainsKey(normalized);
+                string variableName = string.IsNullOrEmpty(variable.Name) ? ("#" + i.ToString()) : variable.Name;
+
+                CoreConsole.PrintAlways(
+                    "[TextPathDebug] " + logLabel + " path=\"" + path
+                    + "\" fsm=\"" + fsm.FsmName
+                    + "\" variable=\"" + variableName
+                    + "\" key=\"" + normalized
+                    + "\" translatedKey=" + hasTranslation.ToString()
+                    + " text=\"" + Preview(variable.Value) + "\"");
+                logged++;
+            }
         }
 
         private static void TryInitFsm(PlayMakerFSM fsm)

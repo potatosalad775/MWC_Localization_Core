@@ -130,7 +130,6 @@ namespace MWC_Localization_Core
             AddPathRule("GUI/HUD/Jailtime/HUDValue", MonitoringStrategy.FastPolling);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Day", MonitoringStrategy.FastPolling);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Moderator", MonitoringStrategy.FastPolling);
-            AddPathRule("Systems/TV/Teletext/VKTekstiTV/HEADER/Texts/Status", MonitoringStrategy.FastPolling);
 
             // Teletext/FSM displays are primarily translated at array/FSM source level.
             // Use one-shot late registration to avoid rescanning large TV trees continuously.
@@ -145,10 +144,7 @@ namespace MWC_Localization_Core
             AddPathRule("Sheets/UnemployPaper", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("Sheets/ServiceBrochure", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("Sheets/ServicePayment", MonitoringStrategy.OnVisibilityChange);
-            AddPathRule("Sheets/TrafficTicket", MonitoringStrategy.OnVisibilityChange);
             AddPathRule("COMPUTER/SYSTEM/TELEBBS/CONLINE/CommandLine", MonitoringStrategy.OnVisibilityChange);
-            AddPathRule("Sheets/RallyResults", MonitoringStrategy.OnVisibilityChange);
-            AddPathRule("Sheets/RallyRegistration/Functions/Class", MonitoringStrategy.OnVisibilityChange);
 
             // Magazine / Sheets - persistent monitoring due to dynamic content changes and rebuilds
             AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.Persistent);

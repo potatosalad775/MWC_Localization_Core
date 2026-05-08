@@ -41,7 +41,19 @@ namespace MWC_Localization_Core
         private const float MaintenancePollInterval = 2.0f;
         private const float EnnusteDataRescanInterval = 2f;
         private const float ObjectPathCacheRefreshInterval = 10f;
-
+        private const string TvSchedulePathPrefix = "Systems/TV/TVGraphics/GFXTanaan";
+        private const string TvSchedulePrefixOriginal = "ohjelmat ";
+        private const string RallyPenaltyPath = "Sheets/RallyResults/PlayerPenalties";
+        private static readonly string[] TvScheduleOriginalDays =
+        {
+            "sunnuntai",
+            "maanantai",
+            "tiistai",
+            "keskiviikko",
+            "torstai",
+            "perjantai",
+            "lauantai"
+        };
         // Reflection cache: (Type, fieldName) -> FieldInfo to avoid repeated GetField calls
         private static readonly Dictionary<System.Type, Dictionary<string, FieldInfo>> reflectionCache
             = new Dictionary<System.Type, Dictionary<string, FieldInfo>>();
@@ -70,6 +82,15 @@ namespace MWC_Localization_Core
             TeletextWeatherUpdaterTokens,
             UnemployPaperButtonVariables,
             ConlineChatStatus
+        }
+
+        private enum FsmTextTargetKind
+        {
+            BuildStringPart,
+            FsmVariable,
+            TextMeshFromVariable,
+            TextMeshFromBuildString,
+            TranslateAllBuildStringAndDisplayStrings
         }
 
         private sealed class FsmStrategyTarget
@@ -126,6 +147,44 @@ namespace MWC_Localization_Core
                 StateName = stateName;
                 ActionIndex = actionIndex;
                 OriginalPattern = originalPattern;
+                AppliedLabel = appliedLabel;
+            }
+        }
+
+        private sealed class FsmTextTarget
+        {
+            public string ObjectPath;
+            public string FsmName;
+            public string StateName;
+            public int ActionIndex;
+            public FsmTextTargetKind Kind;
+            public int StringPartIndex;
+            public string VariableName;
+            public string OriginalKey;
+            public string TextMeshPath;
+            public string AppliedLabel;
+
+            public FsmTextTarget(
+                string objectPath,
+                string fsmName,
+                string stateName,
+                int actionIndex,
+                FsmTextTargetKind kind,
+                int stringPartIndex,
+                string variableName,
+                string originalKey,
+                string textMeshPath,
+                string appliedLabel)
+            {
+                ObjectPath = objectPath;
+                FsmName = fsmName;
+                StateName = stateName;
+                ActionIndex = actionIndex;
+                Kind = kind;
+                StringPartIndex = stringPartIndex;
+                VariableName = variableName;
+                OriginalKey = originalKey;
+                TextMeshPath = textMeshPath;
                 AppliedLabel = appliedLabel;
             }
         }
@@ -237,6 +296,217 @@ namespace MWC_Localization_Core
                 "Kierros {0} pelikohteet",
                 "GAME Teletext Sports")
         };
+
+        private static readonly FsmTextTarget[] GameRallyTargets = new FsmTextTarget[]
+        {
+            new FsmTextTarget(
+                "Sheets/RallyResults/PlayerResults",
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.FsmVariable,
+                -1,
+                "CurrentClass",
+                null,
+                null,
+                "GAME Rally class"),
+            new FsmTextTarget(
+                "Sheets/RallyRegistration/Functions/Class",
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.FsmVariable,
+                -1,
+                "CurrentClass",
+                null,
+                null,
+                "GAME Rally class"),
+            new FsmTextTarget(
+                "Sheets/RallyResults/PlayerResults",
+                "Data",
+                "State 1",
+                5,
+                FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings,
+                -1,
+                null,
+                null,
+                null,
+                "GAME Rally class"),
+            new FsmTextTarget(
+                "Sheets/RallyResults/PlayerResults",
+                "Data",
+                "State 1",
+                5,
+                FsmTextTargetKind.TextMeshFromBuildString,
+                -1,
+                null,
+                null,
+                "Sheets/RallyResults/PlayerResults/Class",
+                "GAME Rally class"),
+            new FsmTextTarget(
+                "Sheets/RallyRegistration/Functions/Class",
+                "Data",
+                "State 1",
+                3,
+                FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings,
+                -1,
+                null,
+                null,
+                null,
+                "GAME Rally class"),
+            new FsmTextTarget(
+                "Sheets/RallyRegistration/Functions/Class",
+                "Data",
+                "State 1",
+                3,
+                FsmTextTargetKind.TextMeshFromBuildString,
+                -1,
+                null,
+                null,
+                "Sheets/RallyRegistration/Functions/Class",
+                "GAME Rally class"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                "State 1",
+                6,
+                FsmTextTargetKind.BuildStringPart,
+                0,
+                null,
+                "Time penalty:",
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                "State 1",
+                6,
+                FsmTextTargetKind.BuildStringPart,
+                2,
+                null,
+                "sec.",
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                "State 1",
+                7,
+                FsmTextTargetKind.BuildStringPart,
+                0,
+                null,
+                "Parc Ferme violation:",
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                "State 1",
+                8,
+                FsmTextTargetKind.BuildStringPart,
+                0,
+                null,
+                "Jump start violation:",
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.FsmVariable,
+                -1,
+                "StringTimePenalty",
+                null,
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.FsmVariable,
+                -1,
+                "StringParcferme",
+                null,
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.FsmVariable,
+                -1,
+                "StringJumpstart",
+                null,
+                null,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.TextMeshFromVariable,
+                -1,
+                "StringTimePenalty",
+                null,
+                RallyPenaltyPath,
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.TextMeshFromVariable,
+                -1,
+                "StringParcferme",
+                null,
+                "Sheets/RallyResults/PlayerPenalties/Parcferme",
+                "GAME Rally penalties"),
+            new FsmTextTarget(
+                RallyPenaltyPath,
+                "Data",
+                null,
+                -1,
+                FsmTextTargetKind.TextMeshFromVariable,
+                -1,
+                "StringJumpstart",
+                null,
+                "Sheets/RallyResults/PlayerPenalties/Jumpstart",
+                "GAME Rally penalties")
+        };
+
+        private static readonly FsmTextTarget[] GameTicketTargets = new FsmTextTarget[]
+        {
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Calc fine 2", 4, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Calc fine 2", 5, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "100kmh", 4, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "100kmh", 5, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "80kmh", 4, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "80kmh", 5, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "45kmh", 4, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "45kmh", 5, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Fetch data", 11, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Calc fine 5", 8, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Calc fine 5", 9, "GAME Traffic ticket"),
+            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Fetch data", 11, "GAME Traffic ticket")
+        };
+
+        private static FsmTextTarget BuildStringActionTarget(string objectPath, string stateName, int actionIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(
+                objectPath,
+                null,
+                stateName,
+                actionIndex,
+                FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings,
+                -1,
+                null,
+                null,
+                null,
+                appliedLabel);
+        }
 
         private static readonly string TeletextEnnusteUpdaterPrefix = "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste/";
 
@@ -409,10 +679,11 @@ namespace MWC_Localization_Core
 
             if (currentScene == "GAME")
             {
+                bool immediateChanged = ApplyImmediateRallyTranslations();
                 if (!force && !ShouldPoll(ref lastGamePollTime, MaintenancePollInterval))
-                    return false;
+                    return immediateChanged;
 
-                return TryApplyGameTranslations();
+                return TryApplyGameTranslations() || immediateChanged;
             }
 
             return false;
@@ -436,6 +707,9 @@ namespace MWC_Localization_Core
             bool anyChanged = false;
             anyChanged |= TryApplyGamePosFsmTranslations();
             anyChanged |= TryApplyGamePosFsmMappings();
+            anyChanged |= TryApplyGameTvGraphicsScheduleTranslations();
+            anyChanged |= TryApplyGameRallyTemplateTranslations();
+            anyChanged |= TryApplyGameTicketTranslations();
             anyChanged |= TryApplyGameTeletextSportsTemplateTranslations();
             anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
             anyChanged |= TryApplyGameTeletextBuildStringPatternTranslations();
@@ -509,6 +783,510 @@ namespace MWC_Localization_Core
 
             ApplyStateSetPropertyStringParameterTranslation(creditsFsm, "State 2", 2);
             return true;
+        }
+
+        private bool TryApplyGameTvGraphicsScheduleTranslations()
+        {
+            bool anyChanged = false;
+            string translatedPrefix;
+            Dictionary<string, string> translatedDays;
+
+            if (!TryBuildTvScheduleTranslationParts(out translatedPrefix, out translatedDays))
+                return false;
+
+            List<PlayMakerFSM> scheduleFsms = GetFsmsByPathPrefix(TvSchedulePathPrefix);
+            for (int i = 0; i < scheduleFsms.Count; i++)
+            {
+                PlayMakerFSM fsm = scheduleFsms[i];
+                if (!IsFsmReady(fsm) || fsm.FsmName != "Text")
+                    continue;
+
+                anyChanged |= ApplyTvScheduleTitlePrefixTranslation(fsm, translatedPrefix);
+            }
+
+            anyChanged |= TranslateTvScheduleDaysArrays(translatedDays);
+
+            if (anyChanged)
+            {
+                appliedTarget = "GAME TV schedule";
+            }
+
+            return anyChanged;
+        }
+
+        private bool TryApplyGameRallyTemplateTranslations()
+        {
+            return ApplyFsmTextTargets(GameRallyTargets);
+        }
+
+        private bool TryApplyGameTicketTranslations()
+        {
+            return ApplyFsmTextTargets(GameTicketTargets);
+        }
+
+        private bool ApplyImmediateRallyTranslations()
+        {
+            return ApplyFsmTextTargets(GameRallyTargets);
+        }
+
+        private bool ApplyFsmTextTargets(FsmTextTarget[] targets)
+        {
+            if (targets == null || targets.Length == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < targets.Length; i++)
+            {
+                changed |= ApplyFsmTextTarget(targets[i]);
+            }
+
+            return changed;
+        }
+
+        private bool ApplyFsmTextTarget(FsmTextTarget target)
+        {
+            if (target == null || string.IsNullOrEmpty(target.ObjectPath))
+                return false;
+
+            PlayMakerFSM fsm = string.IsNullOrEmpty(target.FsmName)
+                ? FindFsmIncludingInactiveByPathAndState(target.ObjectPath, target.StateName)
+                : FindFsmIncludingInactiveByPathAndName(target.ObjectPath, target.FsmName);
+            if (!IsFsmReady(fsm))
+                return false;
+
+            bool changed = false;
+            switch (target.Kind)
+            {
+                case FsmTextTargetKind.BuildStringPart:
+                    changed = ApplyFsmTextBuildStringPartTarget(fsm, target);
+                    break;
+                case FsmTextTargetKind.FsmVariable:
+                    changed = ApplyFsmTextVariableTarget(fsm, target);
+                    break;
+                case FsmTextTargetKind.TextMeshFromVariable:
+                    changed = ApplyFsmTextMeshFromVariableTarget(fsm, target);
+                    break;
+                case FsmTextTargetKind.TextMeshFromBuildString:
+                    changed = ApplyFsmTextMeshFromBuildStringTarget(fsm, target);
+                    break;
+                case FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings:
+                    changed = ApplyFsmTextActionTranslationTarget(fsm, target);
+                    break;
+            }
+
+            if (changed && !string.IsNullOrEmpty(target.AppliedLabel))
+            {
+                appliedTarget = target.AppliedLabel;
+            }
+
+            return changed;
+        }
+
+        private bool ApplyFsmTextBuildStringPartTarget(PlayMakerFSM fsm, FsmTextTarget target)
+        {
+            HutongGames.PlayMaker.FsmState state = FindState(fsm, target.StateName);
+            if (state == null || state.Actions == null || target.ActionIndex < 0 || target.ActionIndex >= state.Actions.Length)
+                return false;
+
+            object action = state.Actions[target.ActionIndex];
+            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
+            if (parts == null || target.StringPartIndex < 0 || target.StringPartIndex >= parts.Length)
+                return false;
+
+            bool changed = TranslateFsmStringWithOriginalKey(parts[target.StringPartIndex], target.OriginalKey);
+            if (changed)
+            {
+                ApplyBuildStringStoreResultFromParts(action, parts);
+            }
+
+            return changed;
+        }
+
+        private bool ApplyFsmTextVariableTarget(PlayMakerFSM fsm, FsmTextTarget target)
+        {
+            if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(target.VariableName))
+                return false;
+
+            HutongGames.PlayMaker.FsmString variable = fsm.FsmVariables.GetFsmString(target.VariableName);
+            if (variable == null || string.IsNullOrEmpty(variable.Value))
+                return false;
+
+            string patternPath = target.ObjectPath + "|" + target.FsmName + "|variable|" + target.VariableName;
+            return TranslateRallyClassStringValue(variable) || TranslateFsmStringValueWithPattern(variable, patternPath);
+        }
+
+        private bool ApplyFsmTextMeshFromVariableTarget(PlayMakerFSM fsm, FsmTextTarget target)
+        {
+            if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(target.VariableName) || string.IsNullOrEmpty(target.TextMeshPath))
+                return false;
+
+            HutongGames.PlayMaker.FsmString variable = fsm.FsmVariables.GetFsmString(target.VariableName);
+            if (variable == null || string.IsNullOrEmpty(variable.Value))
+                return false;
+
+            return SetTextMeshTextByPath(target.TextMeshPath, variable.Value);
+        }
+
+        private bool ApplyFsmTextMeshFromBuildStringTarget(PlayMakerFSM fsm, FsmTextTarget target)
+        {
+            if (string.IsNullOrEmpty(target.TextMeshPath))
+                return false;
+
+            HutongGames.PlayMaker.FsmState state = FindState(fsm, target.StateName);
+            if (state == null || state.Actions == null || target.ActionIndex < 0 || target.ActionIndex >= state.Actions.Length)
+                return false;
+
+            object action = state.Actions[target.ActionIndex];
+            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
+            if (parts == null || parts.Length == 0)
+                return false;
+
+            bool changed = false;
+            if (parts.Length >= 3)
+            {
+                changed |= ApplyBuildStringFastPatternTranslation(fsm, state.Name, target.ActionIndex, parts);
+            }
+
+            for (int i = 0; i < parts.Length; i++)
+            {
+                bool rallyChanged = TranslateRallyClassStringValue(parts[i]);
+                changed |= rallyChanged;
+                if (!rallyChanged)
+                {
+                    changed |= TranslateStringPart(parts[i]);
+                }
+            }
+
+            changed |= TranslateActionFsmStringFieldsWithPattern(
+                action,
+                BuildFsmActionPatternPath(fsm, state.Name, target.ActionIndex));
+            changed |= ApplyBuildStringStoreResultFromParts(action, parts);
+
+            string combined = BuildCombinedText(parts);
+            if (string.IsNullOrEmpty(combined))
+                return changed;
+
+            return SetTextMeshTextByPath(target.TextMeshPath, combined) || changed;
+        }
+
+        private bool ApplyFsmTextActionTranslationTarget(PlayMakerFSM fsm, FsmTextTarget target)
+        {
+            HutongGames.PlayMaker.FsmState state = FindState(fsm, target.StateName);
+            if (state == null || state.Actions == null || target.ActionIndex < 0 || target.ActionIndex >= state.Actions.Length)
+                return false;
+
+            object action = state.Actions[target.ActionIndex];
+            if (action == null)
+                return false;
+
+            bool changed = false;
+            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
+            if (parts != null && parts.Length > 0)
+            {
+                if (parts.Length >= 3)
+                {
+                    changed |= ApplyBuildStringFastPatternTranslation(fsm, state.Name, target.ActionIndex, parts);
+                }
+
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    bool rallyChanged = TranslateRallyClassStringValue(parts[i]);
+                    changed |= rallyChanged;
+                    if (!rallyChanged)
+                    {
+                        changed |= TranslateStringPart(parts[i]);
+                    }
+                }
+
+                changed |= TranslateActionFsmStringFieldsWithPattern(
+                    action,
+                    BuildFsmActionPatternPath(fsm, state.Name, target.ActionIndex));
+                changed |= ApplyBuildStringStoreResultFromParts(action, parts);
+                return changed;
+            }
+
+            HutongGames.PlayMaker.Actions.SetStringValue setStringAction = action as HutongGames.PlayMaker.Actions.SetStringValue;
+            if (setStringAction != null)
+            {
+                return TranslateSetStringValue(setStringAction);
+            }
+
+            changed |= TranslateSetPropertyStringParameter(action);
+            changed |= TranslateActionFsmStringFieldsWithPattern(
+                action,
+                BuildFsmActionPatternPath(fsm, state.Name, target.ActionIndex));
+            return changed;
+        }
+
+        private bool TranslateFsmStringWithOriginalKey(HutongGames.PlayMaker.FsmString target, string originalKey)
+        {
+            if (target == null || string.IsNullOrEmpty(target.Value) || string.IsNullOrEmpty(originalKey))
+                return false;
+
+            if (!TextMatchesExact(target.Value, originalKey))
+                return false;
+
+            string translated;
+            if (!TryGetTranslationValue(originalKey, out translated) || string.IsNullOrEmpty(translated) || TextMatchesExact(translated, originalKey))
+                return false;
+
+            target.Value = ApplyOuterWhitespaceFromOriginal(target.Value, translated);
+            return true;
+        }
+
+        private bool SetTextMeshTextByPath(string objectPath, string text)
+        {
+            if (string.IsNullOrEmpty(objectPath) || string.IsNullOrEmpty(text))
+                return false;
+
+            TextMesh textMesh = FindTextMeshByPath(objectPath);
+            if (textMesh == null || textMesh.text == text)
+                return false;
+
+            textMesh.text = text;
+            return true;
+        }
+
+        private TextMesh FindTextMeshByPath(string objectPath)
+        {
+            TextMesh cachedTextMesh;
+            if (textMeshPathCache.TryGetValue(objectPath, out cachedTextMesh)
+                && cachedTextMesh != null
+                && cachedTextMesh.gameObject != null)
+            {
+                return cachedTextMesh;
+            }
+
+            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            if (activeObject != null)
+            {
+                TextMesh activeTextMesh = activeObject.GetComponent<TextMesh>();
+                if (activeTextMesh != null)
+                {
+                    textMeshPathCache[objectPath] = activeTextMesh;
+                    return activeTextMesh;
+                }
+            }
+
+            EnsureTextMeshPathCache();
+
+            if (textMeshPathCache.TryGetValue(objectPath, out cachedTextMesh)
+                && cachedTextMesh != null
+                && cachedTextMesh.gameObject != null)
+            {
+                return cachedTextMesh;
+            }
+
+            return null;
+        }
+
+        private bool TryBuildTvScheduleTranslationParts(out string translatedPrefix, out Dictionary<string, string> translatedDays)
+        {
+            translatedPrefix = null;
+            translatedDays = new Dictionary<string, string>();
+
+            if (translations == null)
+                return false;
+
+            Dictionary<string, string> translatedTitlesByDay = new Dictionary<string, string>();
+            for (int i = 0; i < TvScheduleOriginalDays.Length; i++)
+            {
+                string originalDay = TvScheduleOriginalDays[i];
+                string translatedTitle;
+                if (TryGetTranslationValue(TvSchedulePrefixOriginal + originalDay, out translatedTitle)
+                    && !TextMatchesExact(translatedTitle, TvSchedulePrefixOriginal + originalDay))
+                {
+                    translatedTitlesByDay[MLCUtils.FormatUpperKey(originalDay)] = translatedTitle;
+                }
+            }
+
+            if (!TryGetTranslationValue(TvSchedulePrefixOriginal, out translatedPrefix)
+                || TextMatchesExact(translatedPrefix, TvSchedulePrefixOriginal))
+            {
+                translatedPrefix = FindCommonTvScheduleTitlePrefix(translatedTitlesByDay);
+            }
+
+            if (string.IsNullOrEmpty(translatedPrefix))
+                return false;
+
+            for (int i = 0; i < TvScheduleOriginalDays.Length; i++)
+            {
+                string originalDay = TvScheduleOriginalDays[i];
+                string normalizedDay = MLCUtils.FormatUpperKey(originalDay);
+                string translatedDay;
+
+                if (TryGetTranslationValue(originalDay, out translatedDay) && !TextMatchesExact(translatedDay, originalDay))
+                {
+                    translatedDays[normalizedDay] = translatedDay;
+                    continue;
+                }
+
+                string translatedTitle;
+                if (translatedTitlesByDay.TryGetValue(normalizedDay, out translatedTitle)
+                    && translatedTitle.StartsWith(translatedPrefix, System.StringComparison.OrdinalIgnoreCase)
+                    && translatedTitle.Length > translatedPrefix.Length)
+                {
+                    translatedDay = translatedTitle.Substring(translatedPrefix.Length).Trim();
+                    if (!string.IsNullOrEmpty(translatedDay))
+                    {
+                        translatedDays[normalizedDay] = translatedDay;
+                    }
+                }
+            }
+
+            return translatedDays.Count > 0;
+        }
+
+        private string FindCommonTvScheduleTitlePrefix(Dictionary<string, string> translatedTitlesByDay)
+        {
+            if (translatedTitlesByDay == null || translatedTitlesByDay.Count < 2)
+                return null;
+
+            string commonPrefix = null;
+            foreach (KeyValuePair<string, string> pair in translatedTitlesByDay)
+            {
+                if (string.IsNullOrEmpty(pair.Value))
+                    continue;
+
+                if (commonPrefix == null)
+                {
+                    commonPrefix = pair.Value;
+                    continue;
+                }
+
+                commonPrefix = GetCommonPrefix(commonPrefix, pair.Value);
+                if (string.IsNullOrEmpty(commonPrefix))
+                    return null;
+            }
+
+            if (string.IsNullOrEmpty(commonPrefix))
+                return null;
+
+            foreach (KeyValuePair<string, string> pair in translatedTitlesByDay)
+            {
+                if (string.IsNullOrEmpty(pair.Value) || pair.Value.Length <= commonPrefix.Length)
+                    return null;
+            }
+
+            return commonPrefix;
+        }
+
+        private string GetCommonPrefix(string first, string second)
+        {
+            if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(second))
+                return null;
+
+            int length = System.Math.Min(first.Length, second.Length);
+            int index = 0;
+            while (index < length && first[index] == second[index])
+            {
+                index++;
+            }
+
+            return index > 0 ? first.Substring(0, index) : null;
+        }
+
+        private bool ApplyTvScheduleTitlePrefixTranslation(PlayMakerFSM fsm, string translatedPrefix)
+        {
+            HutongGames.PlayMaker.FsmState state = FindState(fsm, "State 11");
+            if (state == null || state.Actions == null || state.Actions.Length == 0)
+                return false;
+
+            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(state.Actions[0]);
+            if (parts == null || parts.Length == 0 || parts[0] == null)
+                return false;
+
+            string current = parts[0].Value;
+            if (current == translatedPrefix)
+                return false;
+
+            if (!TextMatchesExact(current, TvSchedulePrefixOriginal))
+                return false;
+
+            parts[0].Value = translatedPrefix;
+            return true;
+        }
+
+        private bool TranslateTvScheduleDaysArrays(Dictionary<string, string> translatedDays)
+        {
+            if (translatedDays == null || translatedDays.Count == 0)
+                return false;
+
+            bool changed = false;
+
+            PlayMakerArrayListProxy[] allProxies = Resources.FindObjectsOfTypeAll<PlayMakerArrayListProxy>();
+            if (allProxies == null)
+                return false;
+
+            for (int i = 0; i < allProxies.Length; i++)
+            {
+                PlayMakerArrayListProxy proxy = allProxies[i];
+                if (proxy == null || proxy.gameObject == null || proxy.referenceName != "Days")
+                    continue;
+
+                string path = MLCUtils.GetGameObjectPath(proxy.gameObject);
+                if (string.IsNullOrEmpty(path) || !path.StartsWith(TvSchedulePathPrefix, System.StringComparison.Ordinal))
+                    continue;
+
+                changed |= TranslateTvScheduleDayArrayList(proxy._arrayList, translatedDays);
+                changed |= TranslateTvScheduleDayStringList(proxy.preFillStringList, translatedDays);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateTvScheduleDayArrayList(ArrayList values, Dictionary<string, string> translatedDays)
+        {
+            if (values == null || values.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] == null)
+                    continue;
+
+                string translated;
+                if (TryGetTvScheduleDayTranslation(values[i].ToString(), translatedDays, out translated))
+                {
+                    values[i] = translated;
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        private bool TranslateTvScheduleDayStringList(List<string> values, Dictionary<string, string> translatedDays)
+        {
+            if (values == null || values.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < values.Count; i++)
+            {
+                string translated;
+                if (TryGetTvScheduleDayTranslation(values[i], translatedDays, out translated))
+                {
+                    values[i] = translated;
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        private bool TryGetTvScheduleDayTranslation(string original, Dictionary<string, string> translatedDays, out string translated)
+        {
+            translated = null;
+            if (string.IsNullOrEmpty(original) || translatedDays == null)
+                return false;
+
+            string normalized = MLCUtils.FormatUpperKey(original);
+            if (!translatedDays.TryGetValue(normalized, out translated))
+                return false;
+
+            return !string.IsNullOrEmpty(translated) && original != translated;
         }
 
         private bool TryApplyGamePosFsmTranslations()
@@ -1109,6 +1887,15 @@ namespace MWC_Localization_Core
             return TranslateFsmStringValue(target);
         }
 
+        private bool TranslateFsmStringVariableWithPattern(PlayMakerFSM fsm, string variableName, string patternPath)
+        {
+            if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(variableName))
+                return false;
+
+            HutongGames.PlayMaker.FsmString target = fsm.FsmVariables.GetFsmString(variableName);
+            return TranslateFsmStringValueWithPattern(target, patternPath);
+        }
+
         private bool TranslateFsmStringValue(HutongGames.PlayMaker.FsmString target)
         {
             if (target == null || string.IsNullOrEmpty(target.Value))
@@ -1133,6 +1920,25 @@ namespace MWC_Localization_Core
             }
 
             return false;
+        }
+
+        private bool TranslateFsmStringValueWithPattern(HutongGames.PlayMaker.FsmString target, string patternPath)
+        {
+            if (target == null || string.IsNullOrEmpty(target.Value))
+                return false;
+
+            string original = target.Value;
+            if (patternMatcher != null)
+            {
+                string translatedPattern = patternMatcher.TryTranslateWithPattern(original, patternPath ?? string.Empty);
+                if (!string.IsNullOrEmpty(translatedPattern) && translatedPattern != original)
+                {
+                    target.Value = translatedPattern;
+                    return true;
+                }
+            }
+
+            return TranslateFsmStringValue(target);
         }
 
         private bool ApplyFirstStateSetPropertyStringParameterTranslation(PlayMakerFSM fsm, int actionIndex)
@@ -1951,6 +2757,160 @@ namespace MWC_Localization_Core
             return ApplyBuildStringPatternTranslationCore(fsm, stateName, actionIndex, parts, false, out resolved);
         }
 
+        private bool ApplyBuildStringStoreResultFromParts(object action, HutongGames.PlayMaker.FsmString[] parts)
+        {
+            if (action == null || parts == null || parts.Length == 0)
+                return false;
+
+            FieldInfo storeResultField = GetCachedField(action.GetType(), "storeResult");
+            if (storeResultField == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmString storeResult = storeResultField.GetValue(action) as HutongGames.PlayMaker.FsmString;
+            if (storeResult == null)
+                return false;
+
+            string combined = BuildCombinedText(parts);
+            if (string.IsNullOrEmpty(combined) || storeResult.Value == combined)
+                return false;
+
+            storeResult.Value = combined;
+            return true;
+        }
+
+        private bool TranslateActionFsmStringFieldsWithPattern(object action, string patternPath)
+        {
+            return TranslateObjectFsmStringFieldsWithPattern(action, 0, patternPath);
+        }
+
+        private bool TranslateObjectFsmStringFieldsWithPattern(object value, int depth, string patternPath)
+        {
+            if (value == null || depth > 2)
+                return false;
+
+            bool changed = false;
+
+            HutongGames.PlayMaker.FsmString fsmString = value as HutongGames.PlayMaker.FsmString;
+            if (fsmString != null)
+                return TranslateRallyClassStringValue(fsmString) | TranslateFsmStringValueWithPattern(fsmString, patternPath);
+
+            HutongGames.PlayMaker.FsmString[] fsmStrings = value as HutongGames.PlayMaker.FsmString[];
+            if (fsmStrings != null)
+            {
+                for (int i = 0; i < fsmStrings.Length; i++)
+                {
+                    bool rallyChanged = TranslateRallyClassStringValue(fsmStrings[i]);
+                    changed |= rallyChanged;
+                    if (!rallyChanged)
+                    {
+                        changed |= TranslateFsmStringValueWithPattern(fsmStrings[i], patternPath);
+                    }
+                }
+
+                return changed;
+            }
+
+            System.Type type = value.GetType();
+            if (type.IsPrimitive || type == typeof(string) || typeof(UnityEngine.Object).IsAssignableFrom(type))
+                return false;
+
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (fields == null)
+                return false;
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                object fieldValue = fields[i].GetValue(value);
+                changed |= TranslateObjectFsmStringFieldsWithPattern(fieldValue, depth + 1, patternPath);
+            }
+
+            return changed;
+        }
+
+        private string BuildFsmActionPatternPath(PlayMakerFSM fsm, string stateName, int actionIndex)
+        {
+            if (fsm == null || fsm.gameObject == null)
+                return string.Empty;
+
+            return MLCUtils.GetGameObjectPath(fsm.gameObject)
+                + "|"
+                + fsm.FsmName
+                + "|"
+                + (stateName ?? string.Empty)
+                + "|"
+                + actionIndex.ToString();
+        }
+
+        private bool TranslateRallyClassStringValue(HutongGames.PlayMaker.FsmString target)
+        {
+            if (target == null || string.IsNullOrEmpty(target.Value))
+                return false;
+
+            string translated;
+            if (!TryTranslateRallyClassText(target.Value, out translated))
+                return false;
+
+            if (target.Value == translated)
+                return false;
+
+            target.Value = translated;
+            return true;
+        }
+
+        private bool TryTranslateRallyClassText(string original, out string translated)
+        {
+            translated = null;
+            if (string.IsNullOrEmpty(original))
+                return false;
+
+            return TryTranslateRallyClassSegment(original, out translated)
+                || TryTranslateRallyClassPrefix(original, "Junior", out translated)
+                || TryTranslateRallyClassPrefix(original, "Amateur", out translated);
+        }
+
+        private bool TryTranslateRallyClassSegment(string original, out string translated)
+        {
+            translated = null;
+            if (string.IsNullOrEmpty(original) || !TextMatchesExact(original.Trim(), "- Class"))
+                return false;
+
+            string translatedCore;
+            if (!TryGetTranslationValue("- Class", out translatedCore) || TextMatchesExact(translatedCore, "- Class"))
+                return false;
+
+            translated = GetLeadingWhitespace(original) + translatedCore.Trim() + GetTrailingWhitespace(original);
+            return translated != original;
+        }
+
+        private bool TryTranslateRallyClassPrefix(string original, string className, out string translated)
+        {
+            translated = null;
+            string originalPrefix = className + " - Class";
+            string translatedClassName;
+            string translatedClassSegment;
+            if (string.IsNullOrEmpty(original)
+                || !original.StartsWith(originalPrefix, System.StringComparison.OrdinalIgnoreCase)
+                || !TryGetTranslationValue(className, out translatedClassName)
+                || TextMatchesExact(translatedClassName, className)
+                || !TryTranslateRallyClassSegment(" - Class", out translatedClassSegment))
+            {
+                return false;
+            }
+
+            string translatedPrefix = translatedClassName + translatedClassSegment;
+            string remainder = original.Substring(originalPrefix.Length);
+            if (translatedPrefix.Length > 0
+                && remainder.Length > 0
+                && char.IsWhiteSpace(translatedPrefix[translatedPrefix.Length - 1])
+                && char.IsWhiteSpace(remainder[0]))
+            {
+                remainder = remainder.Substring(1);
+            }
+
+            translated = translatedPrefix + remainder;
+            return translated != original;
+        }
+
         private bool ApplyBuildStringActionStringPartsTranslation(PlayMakerFSM fsm, string stateName, int actionIndex, bool allowPatternSplit, params int[] skipPartIndexes)
         {
             if (fsm == null || fsm.FsmStates == null)
@@ -2521,7 +3481,7 @@ namespace MWC_Localization_Core
             string translated = GetTranslation(original, original);
             if (translated != original)
             {
-                part.Value = translated;
+                part.Value = ApplyOuterWhitespaceFromOriginal(original, translated);
                 return true;
             }
 
@@ -2536,6 +3496,32 @@ namespace MWC_Localization_Core
             }
 
             return false;
+        }
+
+        private string ApplyOuterWhitespaceFromOriginal(string original, string translated)
+        {
+            if (string.IsNullOrEmpty(original) || string.IsNullOrEmpty(translated))
+                return translated;
+
+            string leadingWhitespace = GetLeadingWhitespace(original);
+            string trailingWhitespace = GetTrailingWhitespace(original);
+            if (string.IsNullOrEmpty(leadingWhitespace) && string.IsNullOrEmpty(trailingWhitespace))
+                return translated;
+
+            bool translatedHasLeadingWhitespace = char.IsWhiteSpace(translated[0]);
+            bool translatedHasTrailingWhitespace = char.IsWhiteSpace(translated[translated.Length - 1]);
+
+            if (!string.IsNullOrEmpty(leadingWhitespace) && !translatedHasLeadingWhitespace)
+            {
+                translated = leadingWhitespace + translated;
+            }
+
+            if (!string.IsNullOrEmpty(trailingWhitespace) && !translatedHasTrailingWhitespace)
+            {
+                translated = translated + trailingWhitespace;
+            }
+
+            return translated;
         }
 
         private bool ShouldSkipIndex(int index, int[] skipPartIndexes)
@@ -2623,15 +3609,21 @@ namespace MWC_Localization_Core
 
         private string GetTranslation(string key, string fallback)
         {
-            if (translations == null)
-                return fallback;
-
-            string normalizedKey = MLCUtils.FormatUpperKey(key);
             string value;
-            if (translations.TryGetValue(normalizedKey, out value))
+            if (TryGetTranslationValue(key, out value))
                 return value;
 
             return fallback;
+        }
+
+        private bool TryGetTranslationValue(string key, out string value)
+        {
+            value = null;
+            if (translations == null || string.IsNullOrEmpty(key))
+                return false;
+
+            string normalizedKey = MLCUtils.FormatUpperKey(key);
+            return translations.TryGetValue(normalizedKey, out value);
         }
 
     }
