@@ -188,7 +188,20 @@ namespace MWC_Localization_Core
 
             // Check if translation exists
             if (!translations.TryGetValue(normalizedKey, out string translation))
+            {
+                if (currentText.IndexOf('\n') >= 0)
+                {
+                    string lineTranslation = TranslateTextByLines(currentText);
+                    if (lineTranslation != currentText)
+                    {
+                        ApplyCustomFont(textMesh, path);
+                        textMesh.text = lineTranslation;
+                        return true;
+                    }
+                }
+
                 return false;
+            }
 
             // Already-localized text still needs its font + adjustments applied so
             // one-shot monitors can stop cleanly and so drift-tracked meshes get
@@ -205,6 +218,60 @@ namespace MWC_Localization_Core
             textMesh.text = translation;
 
             return true;
+        }
+
+        private string TranslateTextByLines(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            string[] lines = text.Split('\n');
+            bool changed = false;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string translatedLine = TranslateLinePreservingPrefix(lines[i]);
+                if (translatedLine != lines[i])
+                {
+                    lines[i] = translatedLine;
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+                return text;
+
+            return string.Join("\n", lines);
+        }
+
+        private string TranslateLinePreservingPrefix(string line)
+        {
+            if (string.IsNullOrEmpty(line))
+                return line;
+
+            string lineNoCr = line.Replace("\r", string.Empty);
+            string translated;
+            if (translations.TryGetValue(MLCUtils.FormatUpperKey(lineNoCr), out translated))
+                return translated;
+
+            int textStart = FindTextStartAfterNumericPrefix(lineNoCr);
+            if (textStart <= 0 || textStart >= lineNoCr.Length)
+                return line;
+
+            string suffix = lineNoCr.Substring(textStart);
+            if (!translations.TryGetValue(MLCUtils.FormatUpperKey(suffix), out translated))
+                return line;
+
+            return line.Substring(0, textStart) + translated;
+        }
+
+        private int FindTextStartAfterNumericPrefix(string line)
+        {
+            int i = 0;
+            while (i < line.Length && (char.IsDigit(line[i]) || line[i] == '.' || line[i] == ':' || line[i] == ',' || char.IsWhiteSpace(line[i])))
+                i++;
+
+            return i;
         }
 
         /// <summary>
@@ -239,7 +306,7 @@ namespace MWC_Localization_Core
         
         /// <summary>
         /// Re-pin drift-tracked TextMeshes (e.g. magazine sheets the game rebuilds).
-        /// Called every LateUpdate by the monitor.
+        /// Invoked each frame from UnifiedTextMeshMonitor.Update().
         /// </summary>
         public void RefreshDriftTrackedAdjustments()
         {
