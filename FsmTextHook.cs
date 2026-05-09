@@ -44,6 +44,10 @@ namespace MWC_Localization_Core
         private const string TvSchedulePathPrefix = "Systems/TV/TVGraphics/GFXTanaan";
         private const string TvSchedulePrefixOriginal = "ohjelmat ";
         private const string RallyPenaltyPath = "Sheets/RallyResults/PlayerPenalties";
+        private const string ServicePaymentPathPrefix = "Sheets/ServicePayment";
+        private const string ServicePaymentLinePathPrefix = "Sheets/ServicePayment/Line";
+        private const string ServicePaymentBreakdownReference = "Breakdown";
+        private const int ServicePaymentLineCount = 12;
         private static readonly string[] TvScheduleOriginalDays =
         {
             "sunnuntai",
@@ -53,6 +57,30 @@ namespace MWC_Localization_Core
             "torstai",
             "perjantai",
             "lauantai"
+        };
+        private static readonly string[] MechanicServiceOriginalKeys =
+        {
+            "Vanteiden kiilotus / Rim polish",
+            "Rengastyöt / tire job",
+            "Custom automaalaus / Custom paint",
+            "Metalliväri / Metallic color",
+            "Alkuperäisväri / original color",
+            "Tehtaan erikoismaalaus / factory special paint",
+            "Vanteet metalliväri / Rim metallic",
+            "Vanteet maalattuna / Rim paint",
+            "Moottorin säätö / Engine adjust",
+            "Aurauskulmien säätö / Toe adjust",
+            "Jarruhuolto / brake service",
+            "Moottorin viritys / engine tune up",
+            "Ripustusten suoristus / susp. repair",
+            "Ovien turvaverkot / door safety nets",
+            "Turvakehikon asennus / rollcage install",
+            "Tuulilasin vaihto / windshield replacement",
+            "Perävälityksen vaihto / ratio change",
+            "Turvakehikon poisto / rollcage removal",
+            "Peltityöt / sheet metal work",
+            "Vinyylikaton poisto / vinyl removal",
+            "Mittatilausjouset / Coil spring order"
         };
         // Reflection cache: (Type, fieldName) -> FieldInfo to avoid repeated GetField calls
         private static readonly Dictionary<System.Type, Dictionary<string, FieldInfo>> reflectionCache
@@ -680,6 +708,7 @@ namespace MWC_Localization_Core
             if (currentScene == "GAME")
             {
                 bool immediateChanged = ApplyImmediateRallyTranslations();
+                immediateChanged |= ApplyImmediateMechanicServiceTranslations();
                 if (!force && !ShouldPoll(ref lastGamePollTime, MaintenancePollInterval))
                     return immediateChanged;
 
@@ -710,6 +739,7 @@ namespace MWC_Localization_Core
             anyChanged |= TryApplyGameTvGraphicsScheduleTranslations();
             anyChanged |= TryApplyGameRallyTemplateTranslations();
             anyChanged |= TryApplyGameTicketTranslations();
+            anyChanged |= TryApplyGameMechanicServiceTranslations();
             anyChanged |= TryApplyGameTeletextSportsTemplateTranslations();
             anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
             anyChanged |= TryApplyGameTeletextBuildStringPatternTranslations();
@@ -822,6 +852,465 @@ namespace MWC_Localization_Core
         private bool TryApplyGameTicketTranslations()
         {
             return ApplyFsmTextTargets(GameTicketTargets);
+        }
+
+        private bool TryApplyGameMechanicServiceTranslations()
+        {
+            bool anyChanged = false;
+            bool hasActiveBreakdown;
+            HashSet<string> activeLineKeys = new HashSet<string>();
+            anyChanged |= TranslateMechanicServiceBreakdownArrays(activeLineKeys, out hasActiveBreakdown);
+            anyChanged |= TranslateMechanicServiceLineFsms(hasActiveBreakdown ? activeLineKeys : null);
+
+            if (anyChanged)
+            {
+                appliedTarget = "GAME mechanic service payment";
+            }
+
+            return anyChanged;
+        }
+
+        private bool ApplyImmediateMechanicServiceTranslations()
+        {
+            bool anyChanged = false;
+            bool hasActiveBreakdown;
+            bool hasCachedBreakdown;
+            HashSet<string> activeLineKeys = new HashSet<string>();
+            anyChanged |= TranslateActiveMechanicServiceBreakdownArrays(activeLineKeys, out hasActiveBreakdown);
+            anyChanged |= TranslateMechanicServiceBreakdownArrays(activeLineKeys, out hasCachedBreakdown);
+            hasActiveBreakdown |= hasCachedBreakdown;
+
+            for (int i = 1; i <= ServicePaymentLineCount; i++)
+            {
+                anyChanged |= TranslateMechanicServiceLineFsmByPath(
+                    ServicePaymentLinePathPrefix + i.ToString(),
+                    hasActiveBreakdown ? activeLineKeys : null);
+            }
+
+            if (anyChanged)
+            {
+                appliedTarget = "GAME mechanic service payment";
+            }
+
+            return anyChanged;
+        }
+
+        private bool TranslateActiveMechanicServiceBreakdownArrays(HashSet<string> activeLineKeys, out bool foundBreakdown)
+        {
+            foundBreakdown = false;
+            GameObject servicePayment = MLCUtils.FindGameObjectCached(ServicePaymentPathPrefix);
+            if (servicePayment == null)
+                return false;
+
+            PlayMakerArrayListProxy[] proxies = servicePayment.GetComponentsInChildren<PlayMakerArrayListProxy>(true);
+            if (proxies == null || proxies.Length == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < proxies.Length; i++)
+            {
+                changed |= TranslateMechanicServiceBreakdownProxy(proxies[i], activeLineKeys, ref foundBreakdown);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceBreakdownArrays(HashSet<string> activeLineKeys, out bool foundBreakdown)
+        {
+            foundBreakdown = false;
+            EnsureArrayListProxyPathCache();
+
+            bool changed = false;
+            foreach (KeyValuePair<string, PlayMakerArrayListProxy> pair in arrayListProxyPathCache)
+            {
+                changed |= TranslateMechanicServiceBreakdownProxy(pair.Value, activeLineKeys, ref foundBreakdown);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceBreakdownProxy(PlayMakerArrayListProxy proxy, HashSet<string> activeLineKeys, ref bool foundBreakdown)
+        {
+            if (proxy == null
+                || proxy.gameObject == null
+                || !string.Equals(proxy.referenceName, ServicePaymentBreakdownReference, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string path = MLCUtils.GetGameObjectPath(proxy.gameObject);
+            if (!IsMechanicServiceBreakdownProxy(proxy, path))
+                return false;
+
+            foundBreakdown = true;
+            return TranslateMechanicServiceArrayList(proxy._arrayList, activeLineKeys);
+        }
+
+        private bool IsMechanicServiceBreakdownProxy(PlayMakerArrayListProxy proxy, string path)
+        {
+            if (proxy == null || proxy._arrayList == null || proxy._arrayList.Count == 0)
+                return false;
+
+            bool isServicePaymentPath = !string.IsNullOrEmpty(path)
+                && path.StartsWith(ServicePaymentPathPrefix, System.StringComparison.Ordinal);
+            for (int i = 0; i < proxy._arrayList.Count; i++)
+            {
+                if (proxy._arrayList[i] == null)
+                    continue;
+
+                if (IsMechanicServiceLine(proxy._arrayList[i].ToString()))
+                    return true;
+            }
+
+            return isServicePaymentPath;
+        }
+
+        private bool TranslateMechanicServiceLineFsms(HashSet<string> activeLineKeys)
+        {
+            List<PlayMakerFSM> lineFsms = GetFsmsByPathPrefix(ServicePaymentLinePathPrefix);
+            if (lineFsms == null || lineFsms.Count == 0)
+                return false;
+
+            bool anyChanged = false;
+            for (int i = 0; i < lineFsms.Count; i++)
+            {
+                PlayMakerFSM fsm = lineFsms[i];
+                anyChanged |= TranslateMechanicServiceLineFsm(fsm, activeLineKeys);
+            }
+
+            return anyChanged;
+        }
+
+        private bool TranslateMechanicServiceLineFsmByPath(string objectPath, HashSet<string> activeLineKeys)
+        {
+            PlayMakerFSM fsm = FindFsmIncludingInactiveByPathAndName(objectPath, "GetLine");
+            return TranslateMechanicServiceLineFsm(fsm, activeLineKeys);
+        }
+
+        private bool TranslateMechanicServiceLineFsm(PlayMakerFSM fsm, HashSet<string> activeLineKeys)
+        {
+            if (!IsFsmReady(fsm) || fsm.FsmName != "GetLine")
+                return false;
+
+            bool changed = false;
+            changed |= TranslateMechanicServiceFsmVariables(fsm, activeLineKeys);
+            changed |= TranslateMechanicServiceFsmActions(fsm, activeLineKeys);
+            changed |= SyncMechanicServiceLineTextMesh(fsm, activeLineKeys);
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceFsmVariables(PlayMakerFSM fsm, HashSet<string> activeLineKeys)
+        {
+            if (fsm == null || fsm.FsmVariables == null || fsm.FsmVariables.StringVariables == null)
+                return false;
+
+            bool changed = false;
+            HutongGames.PlayMaker.FsmString[] variables = fsm.FsmVariables.StringVariables;
+            for (int i = 0; i < variables.Length; i++)
+            {
+                changed |= TranslateMechanicServiceFsmStringValue(variables[i], activeLineKeys);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceFsmActions(PlayMakerFSM fsm, HashSet<string> activeLineKeys)
+        {
+            if (fsm == null || fsm.FsmStates == null)
+                return false;
+
+            bool changed = false;
+            for (int stateIndex = 0; stateIndex < fsm.FsmStates.Length; stateIndex++)
+            {
+                HutongGames.PlayMaker.FsmState state = fsm.FsmStates[stateIndex];
+                if (state == null || state.Actions == null)
+                    continue;
+
+                for (int actionIndex = 0; actionIndex < state.Actions.Length; actionIndex++)
+                {
+                    changed |= TranslateMechanicServiceObjectFsmStringFields(state.Actions[actionIndex], 0, activeLineKeys);
+                }
+            }
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceArrayList(ArrayList values, HashSet<string> activeLineKeys)
+        {
+            if (values == null || values.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] == null)
+                    continue;
+
+                AddMechanicServiceActiveLine(values[i].ToString(), activeLineKeys);
+
+                string translated;
+                if (TryTranslateMechanicServiceLine(values[i].ToString(), out translated))
+                {
+                    values[i] = translated;
+                    changed = true;
+                }
+
+                AddMechanicServiceActiveLine(values[i].ToString(), activeLineKeys);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceStringList(List<string> values)
+        {
+            if (values == null || values.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < values.Count; i++)
+            {
+                string translated;
+                if (TryTranslateMechanicServiceLine(values[i], out translated))
+                {
+                    values[i] = translated;
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        private bool TranslateMechanicServiceFsmStringValue(HutongGames.PlayMaker.FsmString target, HashSet<string> activeLineKeys)
+        {
+            if (target == null || string.IsNullOrEmpty(target.Value))
+                return false;
+
+            string original = target.Value;
+            string translated;
+            if (TryTranslateMechanicServiceLine(original, out translated))
+            {
+                if (ShouldClearInactiveMechanicServiceLine(translated, activeLineKeys))
+                {
+                    target.Value = string.Empty;
+                    return true;
+                }
+
+                target.Value = translated;
+                return true;
+            }
+
+            if (!ShouldClearInactiveMechanicServiceLine(original, activeLineKeys))
+                return false;
+
+            target.Value = string.Empty;
+            return true;
+        }
+
+        private bool TranslateMechanicServiceObjectFsmStringFields(object value, int depth, HashSet<string> activeLineKeys)
+        {
+            if (value == null || depth > 2)
+                return false;
+
+            HutongGames.PlayMaker.FsmString fsmString = value as HutongGames.PlayMaker.FsmString;
+            if (fsmString != null)
+                return TranslateMechanicServiceFsmStringValue(fsmString, activeLineKeys);
+
+            bool changed = false;
+            HutongGames.PlayMaker.FsmString[] fsmStrings = value as HutongGames.PlayMaker.FsmString[];
+            if (fsmStrings != null)
+            {
+                for (int i = 0; i < fsmStrings.Length; i++)
+                {
+                    changed |= TranslateMechanicServiceFsmStringValue(fsmStrings[i], activeLineKeys);
+                }
+
+                return changed;
+            }
+
+            System.Type type = value.GetType();
+            if (type.IsPrimitive || type == typeof(string) || typeof(UnityEngine.Object).IsAssignableFrom(type))
+                return false;
+
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (fields == null)
+                return false;
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                object fieldValue = fields[i].GetValue(value);
+                changed |= TranslateMechanicServiceObjectFsmStringFields(fieldValue, depth + 1, activeLineKeys);
+            }
+
+            return changed;
+        }
+
+        private bool SyncMechanicServiceLineTextMesh(PlayMakerFSM fsm, HashSet<string> activeLineKeys)
+        {
+            if (fsm == null || fsm.FsmVariables == null || fsm.gameObject == null)
+                return false;
+
+            string path = MLCUtils.GetGameObjectPath(fsm.gameObject);
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            HutongGames.PlayMaker.FsmString text = fsm.FsmVariables.GetFsmString("Text");
+            string fsmText = text == null ? null : text.Value;
+
+            if (activeLineKeys != null
+                && !string.IsNullOrEmpty(fsmText)
+                && IsMechanicServiceLine(fsmText)
+                && IsActiveMechanicServiceLine(fsmText, activeLineKeys))
+            {
+                return SetTextMeshTextByPath(path, fsmText);
+            }
+
+            TextMesh textMesh = FindTextMeshByPath(path);
+            if (textMesh == null)
+                return false;
+
+            string currentText = textMesh.text;
+            if (string.IsNullOrEmpty(currentText))
+                return false;
+
+            if (activeLineKeys != null
+                && IsMechanicServiceLine(currentText)
+                && IsActiveMechanicServiceLine(currentText, activeLineKeys))
+            {
+                string translated;
+                if (TryTranslateMechanicServiceLine(currentText, out translated) && textMesh.text != translated)
+                {
+                    textMesh.text = translated;
+                    return true;
+                }
+            }
+
+            if (activeLineKeys == null && IsMechanicServiceLine(currentText))
+            {
+                string translated;
+                if (TryTranslateMechanicServiceLine(currentText, out translated) && textMesh.text != translated)
+                {
+                    textMesh.text = translated;
+                    return true;
+                }
+            }
+
+            if (ShouldClearInactiveMechanicServiceLine(currentText, activeLineKeys))
+            {
+                textMesh.text = string.Empty;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryTranslateMechanicServiceLine(string original, out string translated)
+        {
+            translated = null;
+            if (string.IsNullOrEmpty(original) || translations == null)
+                return false;
+
+            for (int i = 0; i < MechanicServiceOriginalKeys.Length; i++)
+            {
+                string originalKey = MechanicServiceOriginalKeys[i];
+                if (!StartsWithMechanicServiceKey(original, originalKey))
+                    continue;
+
+                string translatedPrefix;
+                if (!TryGetTranslationValue(originalKey, out translatedPrefix)
+                    || string.IsNullOrEmpty(translatedPrefix)
+                    || TextMatchesExact(translatedPrefix, originalKey))
+                {
+                    return false;
+                }
+
+                translated = BuildMechanicServiceLineTranslation(original, originalKey, translatedPrefix);
+                return translated != original;
+            }
+
+            return false;
+        }
+
+        private void AddMechanicServiceActiveLine(string line, HashSet<string> activeLineKeys)
+        {
+            if (activeLineKeys == null || string.IsNullOrEmpty(line) || !IsMechanicServiceLine(line))
+                return;
+
+            activeLineKeys.Add(MLCUtils.FormatUpperKey(line));
+        }
+
+        private bool ShouldClearInactiveMechanicServiceLine(string line, HashSet<string> activeLineKeys)
+        {
+            return activeLineKeys != null
+                && !string.IsNullOrEmpty(line)
+                && IsMechanicServiceLine(line)
+                && !IsActiveMechanicServiceLine(line, activeLineKeys);
+        }
+
+        private bool IsActiveMechanicServiceLine(string line, HashSet<string> activeLineKeys)
+        {
+            if (activeLineKeys == null || string.IsNullOrEmpty(line))
+                return false;
+
+            return activeLineKeys.Contains(MLCUtils.FormatUpperKey(line));
+        }
+
+        private bool IsMechanicServiceLine(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            for (int i = 0; i < MechanicServiceOriginalKeys.Length; i++)
+            {
+                string originalKey = MechanicServiceOriginalKeys[i];
+                if (StartsWithMechanicServiceKey(value, originalKey))
+                    return true;
+
+                string translatedPrefix;
+                if (TryGetTranslationValue(originalKey, out translatedPrefix)
+                    && !string.IsNullOrEmpty(translatedPrefix)
+                    && StartsWithMechanicServiceKey(value, translatedPrefix))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool StartsWithMechanicServiceKey(string value, string originalKey)
+        {
+            if (string.IsNullOrEmpty(value)
+                || string.IsNullOrEmpty(originalKey)
+                || !value.StartsWith(originalKey, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return value.Length == originalKey.Length || char.IsWhiteSpace(value[originalKey.Length]);
+        }
+
+        private string BuildMechanicServiceLineTranslation(string original, string originalKey, string translatedPrefix)
+        {
+            string suffix = original.Length > originalKey.Length ? original.Substring(originalKey.Length) : string.Empty;
+            if (string.IsNullOrEmpty(suffix))
+                return translatedPrefix;
+
+            int suffixContentIndex = 0;
+            while (suffixContentIndex < suffix.Length && char.IsWhiteSpace(suffix[suffixContentIndex]))
+            {
+                suffixContentIndex++;
+            }
+
+            if (suffixContentIndex >= suffix.Length)
+                return translatedPrefix + suffix;
+
+            int originalPriceColumn = originalKey.Length + suffixContentIndex;
+            int spaces = originalPriceColumn - translatedPrefix.Length;
+            if (spaces < 1)
+                spaces = suffixContentIndex > 0 ? suffixContentIndex : 1;
+
+            return translatedPrefix + new string(' ', spaces) + suffix.Substring(suffixContentIndex);
         }
 
         private bool ApplyImmediateRallyTranslations()

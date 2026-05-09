@@ -140,12 +140,6 @@ namespace MWC_Localization_Core
             AddPathRule("Systems/TV/TVGraphics/CHAT/Generated", MonitoringStrategy.LateApplyFontOnce);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Day/Time", MonitoringStrategy.LateApplyFontOnce);
 
-            // Magazine / Sheets - on visibility change
-            AddPathRule("Sheets/UnemployPaper", MonitoringStrategy.OnVisibilityChange);
-            AddPathRule("Sheets/ServiceBrochure", MonitoringStrategy.OnVisibilityChange);
-            AddPathRule("Sheets/ServicePayment", MonitoringStrategy.OnVisibilityChange);
-            AddPathRule("COMPUTER/SYSTEM/TELEBBS/CONLINE/CommandLine", MonitoringStrategy.OnVisibilityChange);
-
             // Magazine / Sheets - persistent monitoring due to dynamic content changes and rebuilds
             AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.Persistent);
             AddPathRule("Sheets/YellowPagesMagazine/Page2", MonitoringStrategy.Persistent);

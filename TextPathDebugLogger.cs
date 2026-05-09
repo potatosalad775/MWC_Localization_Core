@@ -19,6 +19,8 @@ namespace MWC_Localization_Core
             "YARD/Building/BEDROOM1/COMPUTER/SYSTEM",
             "Sheets/TrafficTicket",
             "Sheets/RallyResults",
+            "Sheets/ServiceBrochure",
+            "Sheets/ServicePayment",
             "Sheets/RallyRegistration"
         };
 
