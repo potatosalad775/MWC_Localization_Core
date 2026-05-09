@@ -19,8 +19,10 @@ namespace MWC_Localization_Core
 
         private bool isInitialized = false;
         
-        // Throttling timer for array and proxy monitoring
-        private float lastArrayCheckTime = 0f;
+        // Throttling timer for array/proxy monitoring. Split the work across
+        // frames so lazy-load checks do not land as one frametime spike.
+        private float lastArrayMonitorStepTime = 0f;
+        private int arrayMonitorStep = 0;
 
         public void Initialize(
             UnifiedTextMeshMonitor textMeshMonitorInstance,
@@ -60,33 +62,44 @@ namespace MWC_Localization_Core
                     fsmTextHook.UpdateForScene(currentScene, false);
                 }
                 
-                // Throttled array monitoring (teletext, PlayMaker ArrayLists)
-                if (Time.time - lastArrayCheckTime >= LocalizationConstants.ARRAY_MONITOR_INTERVAL)
+                // Throttled array monitoring (teletext, PlayMaker ArrayLists).
+                // Each category still runs once per ARRAY_MONITOR_INTERVAL, but
+                // the work is staggered across four smaller passes.
+                float arrayMonitorStepInterval = LocalizationConstants.ARRAY_MONITOR_INTERVAL / 4f;
+                if (Time.time - lastArrayMonitorStepTime >= arrayMonitorStepInterval)
                 {
-                    // Monitor teletext arrays for lazy-loaded content
-                    int translated = teletextHandler.MonitorAndTranslateArrays();
-                    if (translated > 0)
+                    if (arrayMonitorStep == 0)
                     {
-                        CoreConsole.Print($"[LateUpdateHandler] Translated {translated} newly-loaded teletext items");
+                        int translated = teletextHandler.MonitorAndTranslateArrays();
+                        if (translated > 0)
+                        {
+                            CoreConsole.Print($"[LateUpdateHandler] Translated {translated} newly-loaded teletext items");
+                        }
                     }
-                    
-                    // Monitor generic arrays for lazy-loaded content
-                    int arrayTranslated = arrayListHandler.MonitorAndTranslateArrays();
-                    if (arrayTranslated > 0)
+                    else if (arrayMonitorStep == 1)
                     {
-                        CoreConsole.Print($"[LateUpdateHandler] Translated {arrayTranslated} newly-loaded array items");
+                        int arrayTranslated = arrayListHandler.MonitorAndTranslateArrays();
+                        if (arrayTranslated > 0)
+                        {
+                            CoreConsole.Print($"[LateUpdateHandler] Translated {arrayTranslated} newly-loaded array items");
+                        }
+                    }
+                    else if (arrayMonitorStep == 2)
+                    {
+                        int hashTableTranslated = hashTableHandler.MonitorAndTranslateHashTables();
+                        if (hashTableTranslated > 0)
+                        {
+                            CoreConsole.Print($"[LateUpdateHandler] Translated {hashTableTranslated} newly-loaded hash table items");
+                        }
+                    }
+                    else
+                    {
+                        // Monitor and apply fonts to late-initialized TextMesh components
+                        arrayListHandler.ApplyFontsToArrayElements();
                     }
 
-                    int hashTableTranslated = hashTableHandler.MonitorAndTranslateHashTables();
-                    if (hashTableTranslated > 0)
-                    {
-                        CoreConsole.Print($"[LateUpdateHandler] Translated {hashTableTranslated} newly-loaded hash table items");
-                    }
-                    
-                    // Monitor and apply fonts to late-initialized TextMesh components
-                    arrayListHandler.ApplyFontsToArrayElements();
-                    
-                    lastArrayCheckTime = Time.time;
+                    arrayMonitorStep = (arrayMonitorStep + 1) % 4;
+                    lastArrayMonitorStepTime = Time.time;
                 }
             }
 
@@ -103,7 +116,8 @@ namespace MWC_Localization_Core
         /// </summary>
         public void ClearCache()
         {
-            lastArrayCheckTime = 0f;
+            lastArrayMonitorStepTime = 0f;
+            arrayMonitorStep = 0;
             isInitialized = false;
         }
     }

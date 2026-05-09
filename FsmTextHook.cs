@@ -19,15 +19,14 @@ namespace MWC_Localization_Core
         private HashSet<string> loggedReadyTargets = new HashSet<string>();
         private List<PlayMakerFSM> cachedEnnusteDataFsms = new List<PlayMakerFSM>();
         private List<PlayMakerFSM> cachedAtmTransactionDescriptionFsms = new List<PlayMakerFSM>();
+        private List<PlayMakerFSM> cachedTvScheduleTextFsms = new List<PlayMakerFSM>();
         private List<PlayMakerArrayListProxy> cachedTvScheduleDayProxies = new List<PlayMakerArrayListProxy>();
+        private List<TextMesh> cachedTvScheduleTitleTextMeshes = new List<TextMesh>();
         private Dictionary<string, PlayMakerFSM> fsmPathStateCache = new Dictionary<string, PlayMakerFSM>();
         private Dictionary<string, PlayMakerFSM> fsmPathNameCache = new Dictionary<string, PlayMakerFSM>();
         private Dictionary<string, PlayMakerFSM> fsmPathComponentCache = new Dictionary<string, PlayMakerFSM>();
         private Dictionary<string, TextMesh> textMeshPathCache = new Dictionary<string, TextMesh>();
         private Dictionary<string, PlayMakerArrayListProxy> arrayListProxyPathCache = new Dictionary<string, PlayMakerArrayListProxy>();
-        private float lastEnnusteDataFsmScanTime = -10f;
-        private float lastAtmTransactionDescriptionFsmScanTime = -10f;
-        private float lastTvScheduleDayProxyScanTime = -10f;
         private float lastMainMenuPollTime = -10f;
         private float lastGamePollTime = -10f;
         private float lastImmediateGamePollTime = -10f;
@@ -38,9 +37,6 @@ namespace MWC_Localization_Core
         private const float BootstrapPollInterval = 0.5f;
         private const float MaintenancePollInterval = 5.0f;
         private const float VisibleImmediatePollInterval = 0.20f;
-        private const float EnnusteDataRescanInterval = 2f;
-        private const float AtmTransactionDescriptionFsmRescanInterval = 5f;
-        private const float TvScheduleDayProxyRescanInterval = 5f;
         private const string TvSchedulePathPrefix = "Systems/TV/TVGraphics/GFXTanaan";
         private const string TvSchedulePrefixOriginal = "ohjelmat ";
         private const string RallyPenaltyPath = "Sheets/RallyResults/PlayerPenalties";
@@ -226,7 +222,7 @@ namespace MWC_Localization_Core
             TemplateTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data 1/Bottomline 1", "Data", "State 1", 3, "Kierros {0} pelikohteet", "GAME Teletext Sports")
         };
 
-        private static readonly FsmTextTarget[] GameRallyTargets = new FsmTextTarget[]
+        private static readonly FsmTextTarget[] GameRallyClassTargets = new FsmTextTarget[]
         {
             new FsmTextTarget(
                 "Sheets/RallyResults/PlayerResults",
@@ -293,7 +289,11 @@ namespace MWC_Localization_Core
                 null,
                 null,
                 "Sheets/RallyRegistration/Functions/Class",
-                "GAME Rally class"),
+                "GAME Rally class")
+        };
+
+        private static readonly FsmTextTarget[] GameRallyPenaltyTargets = new FsmTextTarget[]
+        {
             new FsmTextTarget(
                 RallyPenaltyPath,
                 "Data",
@@ -638,12 +638,11 @@ namespace MWC_Localization_Core
             lastMainMenuPollTime = -10f;
             lastGamePollTime = -10f;
             lastImmediateGamePollTime = -10f;
-            lastEnnusteDataFsmScanTime = -10f;
-            lastAtmTransactionDescriptionFsmScanTime = -10f;
-            lastTvScheduleDayProxyScanTime = -10f;
             cachedEnnusteDataFsms.Clear();
             cachedAtmTransactionDescriptionFsms.Clear();
+            cachedTvScheduleTextFsms.Clear();
             cachedTvScheduleDayProxies.Clear();
+            cachedTvScheduleTitleTextMeshes.Clear();
             ClearObjectPathCaches();
             loggedReadyTargets.Clear();
         }
@@ -709,7 +708,7 @@ namespace MWC_Localization_Core
 
             if (currentScene == "GAME")
             {
-                bool immediateChanged = false;
+                bool immediateChanged = ApplyImmediateRallyClassTranslations();
                 if (force || ShouldPoll(ref lastImmediateGamePollTime, VisibleImmediatePollInterval))
                 {
                     immediateChanged |= ApplyVisibleImmediateTvScheduleTranslations();
@@ -736,8 +735,8 @@ namespace MWC_Localization_Core
 
         private bool ApplyVisibleImmediateRallyTranslations()
         {
-            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults", "Sheets/RallyRegistration/Functions/Class")
-                ? ApplyImmediateRallyTranslations()
+            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults")
+                ? ApplyImmediateRallyPenaltyTranslations()
                 : false;
         }
 
@@ -875,7 +874,7 @@ namespace MWC_Localization_Core
             if (!TryBuildTvScheduleTranslationParts(out translatedPrefix, out translatedDays))
                 return false;
 
-            List<PlayMakerFSM> scheduleFsms = GetFsmsByPathPrefix(TvSchedulePathPrefix);
+            List<PlayMakerFSM> scheduleFsms = GetTvScheduleTextFsms();
             for (int i = 0; i < scheduleFsms.Count; i++)
             {
                 PlayMakerFSM fsm = scheduleFsms[i];
@@ -898,9 +897,14 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGameRallyTemplateTranslations()
         {
-            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults", "Sheets/RallyRegistration/Functions/Class")
-                ? ApplyFsmTextTargets(GameRallyTargets)
-                : false;
+            bool anyChanged = ApplyImmediateRallyClassTranslations();
+
+            if (IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults"))
+            {
+                anyChanged |= ApplyImmediateRallyPenaltyTranslations();
+            }
+
+            return anyChanged;
         }
 
         private bool TryApplyGameTicketTranslations()
@@ -972,12 +976,9 @@ namespace MWC_Localization_Core
 
         private List<PlayMakerFSM> GetAtmTransactionDescriptionFsms()
         {
-            bool shouldRescan = cachedAtmTransactionDescriptionFsms.Count == 0
-                || (Time.realtimeSinceStartup - lastAtmTransactionDescriptionFsmScanTime) >= AtmTransactionDescriptionFsmRescanInterval;
-            if (!shouldRescan)
+            if (AreCachedFsmsValid(cachedAtmTransactionDescriptionFsms))
                 return cachedAtmTransactionDescriptionFsms;
 
-            lastAtmTransactionDescriptionFsmScanTime = Time.realtimeSinceStartup;
             cachedAtmTransactionDescriptionFsms.Clear();
 
             GameObject root = FindGameObjectByPathIncludingInactive(AtmMoneyPathPrefix);
@@ -1740,9 +1741,14 @@ namespace MWC_Localization_Core
             return translatedPrefix + new string(' ', spaces) + suffix.Substring(suffixContentIndex);
         }
 
-        private bool ApplyImmediateRallyTranslations()
+        private bool ApplyImmediateRallyClassTranslations()
         {
-            return ApplyFsmTextTargets(GameRallyTargets);
+            return ApplyFsmTextTargets(GameRallyClassTargets);
+        }
+
+        private bool ApplyImmediateRallyPenaltyTranslations()
+        {
+            return ApplyFsmTextTargets(GameRallyPenaltyTargets);
         }
 
         private bool ApplyFsmTextTargets(FsmTextTarget[] targets)
@@ -2235,21 +2241,74 @@ namespace MWC_Localization_Core
 
         private bool TranslateTvScheduleTitleTextMeshes(string translatedPrefix, Dictionary<string, string> translatedDays)
         {
-            GameObject root = FindGameObjectByPathIncludingInactive(TvSchedulePathPrefix);
-            if (root == null)
-                return false;
-
             bool changed = false;
-            TextMesh[] textMeshes = root.GetComponentsInChildren<TextMesh>(true);
-            if (textMeshes == null)
-                return false;
+            List<TextMesh> textMeshes = GetTvScheduleTitleTextMeshes();
 
-            for (int i = 0; i < textMeshes.Length; i++)
+            for (int i = 0; i < textMeshes.Count; i++)
             {
                 changed |= TranslateTvScheduleTextMesh(textMeshes[i], translatedPrefix, translatedDays);
             }
 
             return changed;
+        }
+
+        private List<PlayMakerFSM> GetTvScheduleTextFsms()
+        {
+            if (AreCachedFsmsValid(cachedTvScheduleTextFsms))
+                return cachedTvScheduleTextFsms;
+
+            cachedTvScheduleTextFsms.Clear();
+
+            GameObject root = FindNearestGameObjectForPathPrefix(TvSchedulePathPrefix);
+            if (root == null)
+                return cachedTvScheduleTextFsms;
+
+            PlayMakerFSM[] fsms = root.GetComponentsInChildren<PlayMakerFSM>(true);
+            if (fsms == null)
+                return cachedTvScheduleTextFsms;
+
+            for (int i = 0; i < fsms.Length; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (fsm == null
+                    || fsm.gameObject == null
+                    || fsm.FsmName != "Text"
+                    || !IsObjectPathUnderPrefix(fsm.gameObject, TvSchedulePathPrefix))
+                {
+                    continue;
+                }
+
+                cachedTvScheduleTextFsms.Add(fsm);
+            }
+
+            return cachedTvScheduleTextFsms;
+        }
+
+        private List<TextMesh> GetTvScheduleTitleTextMeshes()
+        {
+            if (AreCachedTextMeshesValid(cachedTvScheduleTitleTextMeshes))
+                return cachedTvScheduleTitleTextMeshes;
+
+            cachedTvScheduleTitleTextMeshes.Clear();
+
+            GameObject root = FindGameObjectByPathIncludingInactive(TvSchedulePathPrefix);
+            if (root == null)
+                return cachedTvScheduleTitleTextMeshes;
+
+            TextMesh[] textMeshes = root.GetComponentsInChildren<TextMesh>(true);
+            if (textMeshes == null)
+                return cachedTvScheduleTitleTextMeshes;
+
+            for (int i = 0; i < textMeshes.Length; i++)
+            {
+                TextMesh textMesh = textMeshes[i];
+                if (textMesh == null || textMesh.gameObject == null)
+                    continue;
+
+                cachedTvScheduleTitleTextMeshes.Add(textMesh);
+            }
+
+            return cachedTvScheduleTitleTextMeshes;
         }
 
         private bool TranslateTvScheduleTextMesh(TextMesh textMesh, string translatedPrefix, Dictionary<string, string> translatedDays)
@@ -2346,12 +2405,9 @@ namespace MWC_Localization_Core
 
         private List<PlayMakerArrayListProxy> GetTvScheduleDayProxies()
         {
-            bool shouldRescan = cachedTvScheduleDayProxies.Count == 0
-                || (Time.realtimeSinceStartup - lastTvScheduleDayProxyScanTime) >= TvScheduleDayProxyRescanInterval;
-            if (!shouldRescan)
+            if (AreCachedArrayListProxiesValid(cachedTvScheduleDayProxies))
                 return cachedTvScheduleDayProxies;
 
-            lastTvScheduleDayProxyScanTime = Time.realtimeSinceStartup;
             cachedTvScheduleDayProxies.Clear();
 
             PlayMakerArrayListProxy[] allProxies = Resources.FindObjectsOfTypeAll<PlayMakerArrayListProxy>();
@@ -2372,6 +2428,51 @@ namespace MWC_Localization_Core
             }
 
             return cachedTvScheduleDayProxies;
+        }
+
+        private bool AreCachedFsmsValid(List<PlayMakerFSM> fsms)
+        {
+            if (fsms == null || fsms.Count == 0)
+                return false;
+
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (fsm == null || fsm.gameObject == null)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool AreCachedArrayListProxiesValid(List<PlayMakerArrayListProxy> proxies)
+        {
+            if (proxies == null || proxies.Count == 0)
+                return false;
+
+            for (int i = 0; i < proxies.Count; i++)
+            {
+                PlayMakerArrayListProxy proxy = proxies[i];
+                if (proxy == null || proxy.gameObject == null)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool AreCachedTextMeshesValid(List<TextMesh> textMeshes)
+        {
+            if (textMeshes == null || textMeshes.Count == 0)
+                return false;
+
+            for (int i = 0; i < textMeshes.Count; i++)
+            {
+                TextMesh textMesh = textMeshes[i];
+                if (textMesh == null || textMesh.gameObject == null)
+                    return false;
+            }
+
+            return true;
         }
 
         private bool TranslateTvScheduleDayArrayList(ArrayList values, Dictionary<string, string> translatedDays)
@@ -2690,11 +2791,9 @@ namespace MWC_Localization_Core
 
         private List<PlayMakerFSM> GetEnnusteDataFsms()
         {
-            bool shouldRescan = cachedEnnusteDataFsms.Count == 0 || (Time.realtimeSinceStartup - lastEnnusteDataFsmScanTime) >= EnnusteDataRescanInterval;
-            if (!shouldRescan)
+            if (cachedEnnusteDataFsms.Count > 0)
                 return cachedEnnusteDataFsms;
 
-            lastEnnusteDataFsmScanTime = Time.realtimeSinceStartup;
             cachedEnnusteDataFsms.Clear();
 
             FindFsmsIncludingInactiveByPathPrefixAndName(TeletextEnnusteUpdaterPrefix, "Data", cachedEnnusteDataFsms);
