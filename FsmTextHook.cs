@@ -163,6 +163,25 @@ namespace MWC_Localization_Core
         private const string GameComputerLabel = "GAME Computer";
         private const string GameFishgameLabel = "GAME Computer Fishgame";
         private const string GameProPilkkiLabel = "GAME Computer ProPilkki";
+        private const string GameTrafficTicketLabel = "GAME Traffic ticket";
+
+        private static readonly string[] TicketDynamicSegments =
+        {
+            "Ylinopeus. 80km/h rajoitusalueella",
+            "Speeding.",
+            "DUI. Alc breath test",
+            "Rattijuopumus. Puhalluskokeessa",
+            "Illegal dumping of waste,",
+            "Ylinopeus.",
+            "km/h at 80km/h limit zone.",
+            "km/h at 80km/h vehicle limit.",
+            "km/h at 80km/h zone.",
+            "km/h 80km/h rajoitetulla",
+            "per mille.",
+            "promillea.",
+            "litres.",
+            "litraa lietett\u00e4 kaadettu maastoon."
+        };
 
         private static readonly FsmTextTarget[] GamePosTargets = new FsmTextTarget[]
         {
@@ -407,18 +426,18 @@ namespace MWC_Localization_Core
 
         private static readonly FsmTextTarget[] GameTicketTargets = new FsmTextTarget[]
         {
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Calc fine 2", 4, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Calc fine 2", 5, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "100kmh", 4, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "100kmh", 5, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "80kmh", 4, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "80kmh", 5, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "45kmh", 4, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "45kmh", 5, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Fetch data", 11, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Calc fine 5", 8, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Calc fine 5", 9, "GAME Traffic ticket"),
-            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Fetch data", 11, "GAME Traffic ticket")
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Calc fine 2", 4, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Calc fine 2", 5, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "100kmh", 4, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "100kmh", 5, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "80kmh", 4, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "80kmh", 5, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "45kmh", 4, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "45kmh", 5, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/TrafficTicket/TicketData", "Fetch data", 11, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Calc fine 5", 8, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Calc fine 5", 9, GameTrafficTicketLabel),
+            BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Fetch data", 11, GameTrafficTicketLabel)
         };
 
         private static readonly FsmTextTarget[] GameAtmTransactionTargets = new FsmTextTarget[]
@@ -712,6 +731,7 @@ namespace MWC_Localization_Core
                 {
                     immediateChanged |= ApplyVisibleImmediateTvScheduleTranslations();
                     immediateChanged |= ApplyVisibleImmediateRallyTranslations();
+                    immediateChanged |= ApplyVisibleImmediateTicketTranslations();
                     immediateChanged |= ApplyVisibleImmediateAtmTransactionTranslations();
                     immediateChanged |= ApplyVisibleImmediateMechanicServiceTranslations();
                 }
@@ -741,6 +761,17 @@ namespace MWC_Localization_Core
             return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults")
                 ? ApplyImmediateRallyPenaltyTranslations()
                 : false;
+        }
+
+        private bool ApplyVisibleImmediateTicketTranslations()
+        {
+            if (!IsAnyPathActiveInHierarchy("Sheets/TrafficTicket", "Sheets/EnviroCrime"))
+                return false;
+
+            bool changed = ApplyImmediateTicketTranslations();
+            changed |= TranslateTicketTextMeshesByPath("Sheets/TrafficTicket");
+            changed |= TranslateTicketTextMeshesByPath("Sheets/EnviroCrime");
+            return changed;
         }
 
         private bool ApplyVisibleImmediateAtmTransactionTranslations()
@@ -913,7 +944,7 @@ namespace MWC_Localization_Core
         private bool TryApplyGameTicketTranslations()
         {
             return IsAnyPathActiveInHierarchy("Sheets/TrafficTicket", "Sheets/EnviroCrime")
-                ? ApplyFsmTextTargets(GameTicketTargets)
+                ? ApplyImmediateTicketTranslations()
                 : false;
         }
 
@@ -1754,6 +1785,11 @@ namespace MWC_Localization_Core
             return ApplyFsmTextTargets(GameRallyPenaltyTargets);
         }
 
+        private bool ApplyImmediateTicketTranslations()
+        {
+            return ApplyFsmTextTargets(GameTicketTargets);
+        }
+
         private bool ApplyFsmTextTargets(FsmTextTarget[] targets)
         {
             if (targets == null || targets.Length == 0)
@@ -1989,6 +2025,7 @@ namespace MWC_Localization_Core
                 return false;
 
             bool changed = false;
+            bool ticketTarget = IsTrafficTicketTarget(target);
             HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
             if (parts != null && parts.Length > 0)
             {
@@ -2005,19 +2042,39 @@ namespace MWC_Localization_Core
                     {
                         changed |= TranslateStringPart(parts[i]);
                     }
+
+                    if (ticketTarget)
+                    {
+                        changed |= TranslateTicketStringValue(parts[i]);
+                    }
                 }
 
                 changed |= ApplyBuildStringStoreResultFromParts(action, parts);
+                if (ticketTarget)
+                {
+                    changed |= TranslateTicketBuildStringStoreResult(action);
+                }
                 return changed;
             }
 
             HutongGames.PlayMaker.Actions.SetStringValue setStringAction = action as HutongGames.PlayMaker.Actions.SetStringValue;
             if (setStringAction != null)
             {
-                return TranslateSetStringValue(setStringAction);
+                changed |= TranslateSetStringValue(setStringAction);
+                if (ticketTarget)
+                {
+                    changed |= TranslateTicketStringValue(setStringAction.stringValue);
+                }
+
+                return changed;
             }
 
             changed |= TranslateSetPropertyStringParameter(action);
+            if (ticketTarget)
+            {
+                changed |= TranslateActionTicketStringFields(action);
+            }
+
             return changed;
         }
 
@@ -2035,6 +2092,122 @@ namespace MWC_Localization_Core
 
             target.Value = ApplyOuterWhitespaceFromOriginal(target.Value, translated);
             return true;
+        }
+
+        private bool IsTrafficTicketTarget(FsmTextTarget target)
+        {
+            return target != null && target.AppliedLabel == GameTrafficTicketLabel;
+        }
+
+        private bool TranslateTicketStringValue(HutongGames.PlayMaker.FsmString target)
+        {
+            if (target == null || string.IsNullOrEmpty(target.Value))
+                return false;
+
+            string translated;
+            if (!TryTranslateTicketText(target.Value, out translated) || target.Value == translated)
+                return false;
+
+            target.Value = translated;
+            return true;
+        }
+
+        private bool TranslateTicketBuildStringStoreResult(object action)
+        {
+            if (action == null)
+                return false;
+
+            FieldInfo storeResultField = GetCachedField(action.GetType(), "storeResult");
+            if (storeResultField == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmString storeResult = storeResultField.GetValue(action) as HutongGames.PlayMaker.FsmString;
+            return TranslateTicketStringValue(storeResult);
+        }
+
+        private bool TranslateActionTicketStringFields(object action)
+        {
+            if (action == null)
+                return false;
+
+            bool changed = false;
+            FieldInfo[] fields = action.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (fields == null)
+                return false;
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                object value = fields[i].GetValue(action);
+                HutongGames.PlayMaker.FsmString fsmString = value as HutongGames.PlayMaker.FsmString;
+                if (fsmString != null)
+                {
+                    changed |= TranslateTicketStringValue(fsmString);
+                    continue;
+                }
+
+                HutongGames.PlayMaker.FsmString[] fsmStrings = value as HutongGames.PlayMaker.FsmString[];
+                if (fsmStrings == null)
+                    continue;
+
+                for (int partIndex = 0; partIndex < fsmStrings.Length; partIndex++)
+                {
+                    changed |= TranslateTicketStringValue(fsmStrings[partIndex]);
+                }
+            }
+
+            return changed;
+        }
+
+        private bool TranslateTicketTextMeshesByPath(string objectPath)
+        {
+            GameObject root = FindGameObjectByPathIncludingInactive(objectPath);
+            if (root == null || !root.activeInHierarchy)
+                return false;
+
+            TextMesh[] textMeshes = root.GetComponentsInChildren<TextMesh>(true);
+            if (textMeshes == null)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < textMeshes.Length; i++)
+            {
+                TextMesh textMesh = textMeshes[i];
+                if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
+                    continue;
+
+                string translated;
+                if (!TryTranslateTicketText(textMesh.text, out translated) || textMesh.text == translated)
+                    continue;
+
+                textMesh.text = translated;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private bool TryTranslateTicketText(string original, out string translated)
+        {
+            translated = original;
+            if (string.IsNullOrEmpty(original))
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < TicketDynamicSegments.Length; i++)
+            {
+                string sourceSegment = TicketDynamicSegments[i];
+                string translatedSegment;
+                if (!TryGetTranslationValue(sourceSegment, out translatedSegment)
+                    || string.IsNullOrEmpty(translatedSegment)
+                    || TextMatchesExact(translatedSegment, sourceSegment))
+                {
+                    continue;
+                }
+
+                translated = ReplaceOrdinalIgnoreCase(translated, sourceSegment, translatedSegment, ref changed);
+            }
+
+            return changed;
         }
 
         private bool SetTextMeshTextByPath(string objectPath, string text)
