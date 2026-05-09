@@ -28,14 +28,13 @@ namespace MWC_Localization_Core
         private Dictionary<string, TextMesh> textMeshPathCache = new Dictionary<string, TextMesh>();
         private Dictionary<string, PlayMakerArrayListProxy> arrayListProxyPathCache = new Dictionary<string, PlayMakerArrayListProxy>();
         private float lastMainMenuPollTime = -10f;
-        private float lastGamePollTime = -10f;
         private float lastImmediateGamePollTime = -10f;
         private bool mainMenuApplied;
         private bool mainMenuRadioApplied;
         private bool mainMenuCreditsApplied;
+        private bool gameFsmSourcesApplied;
 
         private const float BootstrapPollInterval = 0.5f;
-        private const float MaintenancePollInterval = 5.0f;
         private const float VisibleImmediatePollInterval = 0.20f;
         private const string TvSchedulePathPrefix = "Systems/TV/TVGraphics/GFXTanaan";
         private const string TvSchedulePrefixOriginal = "ohjelmat ";
@@ -635,8 +634,8 @@ namespace MWC_Localization_Core
             mainMenuApplied = false;
             mainMenuRadioApplied = false;
             mainMenuCreditsApplied = false;
+            gameFsmSourcesApplied = false;
             lastMainMenuPollTime = -10f;
-            lastGamePollTime = -10f;
             lastImmediateGamePollTime = -10f;
             cachedEnnusteDataFsms.Clear();
             cachedAtmTransactionDescriptionFsms.Clear();
@@ -717,10 +716,14 @@ namespace MWC_Localization_Core
                     immediateChanged |= ApplyVisibleImmediateMechanicServiceTranslations();
                 }
 
-                if (!force && !ShouldPoll(ref lastGamePollTime, MaintenancePollInterval))
-                    return immediateChanged;
+                if (force || !gameFsmSourcesApplied)
+                {
+                    bool sourceChanged = TryApplyGameTranslations();
+                    gameFsmSourcesApplied = true;
+                    return sourceChanged || immediateChanged;
+                }
 
-                return TryApplyGameTranslations() || immediateChanged;
+                return immediateChanged;
             }
 
             return false;
