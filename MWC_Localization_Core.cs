@@ -53,7 +53,6 @@ namespace MWC_Localization_Core
 
         // MSCLoader settings
         private SettingsKeybind reloadKey;
-        private SettingsKeybind inspectTextKey;
         private SettingsCheckBox showDebugLogs;
         private SettingsCheckBox showWarningLogs;
 
@@ -72,7 +71,6 @@ namespace MWC_Localization_Core
             // Keybind for reloading translations
             Keybind.AddHeader("Localization Plugin Hotkeys");
             reloadKey = Keybind.Add("reloadKey", "Reload Translations", KeyCode.F8);
-            inspectTextKey = Keybind.Add("inspectTextKey", "Log Text/FSM Path", KeyCode.F9);
 
             // Show debug console messages
             Settings.AddHeader("Miscellaneous Options");
@@ -174,12 +172,6 @@ namespace MWC_Localization_Core
             if (reloadKey != null && reloadKey.GetKeybindDown())
             {
                 ReloadTranslations();
-                return;
-            }
-
-            if (inspectTextKey != null && inspectTextKey.GetKeybindDown())
-            {
-                TextPathDebugLogger.LogVisibleTextPaths(translations);
                 return;
             }
 

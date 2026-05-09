@@ -18,36 +18,36 @@ namespace MWC_Localization_Core
         private string appliedTarget;
         private HashSet<string> loggedReadyTargets = new HashSet<string>();
         private List<PlayMakerFSM> cachedEnnusteDataFsms = new List<PlayMakerFSM>();
-        private Dictionary<string, List<PlayMakerFSM>> fsmsByPathCache = new Dictionary<string, List<PlayMakerFSM>>();
+        private List<PlayMakerFSM> cachedAtmTransactionDescriptionFsms = new List<PlayMakerFSM>();
+        private List<PlayMakerArrayListProxy> cachedTvScheduleDayProxies = new List<PlayMakerArrayListProxy>();
         private Dictionary<string, PlayMakerFSM> fsmPathStateCache = new Dictionary<string, PlayMakerFSM>();
         private Dictionary<string, PlayMakerFSM> fsmPathNameCache = new Dictionary<string, PlayMakerFSM>();
         private Dictionary<string, PlayMakerFSM> fsmPathComponentCache = new Dictionary<string, PlayMakerFSM>();
         private Dictionary<string, TextMesh> textMeshPathCache = new Dictionary<string, TextMesh>();
         private Dictionary<string, PlayMakerArrayListProxy> arrayListProxyPathCache = new Dictionary<string, PlayMakerArrayListProxy>();
         private float lastEnnusteDataFsmScanTime = -10f;
-        private float lastFsmPathCacheBuildTime = -1000f;
-        private float lastTextMeshPathCacheBuildTime = -1000f;
-        private float lastArrayListProxyPathCacheBuildTime = -1000f;
+        private float lastAtmTransactionDescriptionFsmScanTime = -10f;
+        private float lastTvScheduleDayProxyScanTime = -10f;
         private float lastMainMenuPollTime = -10f;
         private float lastGamePollTime = -10f;
-        private bool fsmPathCacheBuilt;
-        private bool textMeshPathCacheBuilt;
-        private bool arrayListProxyPathCacheBuilt;
+        private float lastImmediateGamePollTime = -10f;
         private bool mainMenuApplied;
         private bool mainMenuRadioApplied;
         private bool mainMenuCreditsApplied;
 
         private const float BootstrapPollInterval = 0.5f;
-        private const float MaintenancePollInterval = 2.0f;
+        private const float MaintenancePollInterval = 5.0f;
+        private const float VisibleImmediatePollInterval = 0.20f;
         private const float EnnusteDataRescanInterval = 2f;
-        private const float ObjectPathCacheRefreshInterval = 10f;
+        private const float AtmTransactionDescriptionFsmRescanInterval = 5f;
+        private const float TvScheduleDayProxyRescanInterval = 5f;
         private const string TvSchedulePathPrefix = "Systems/TV/TVGraphics/GFXTanaan";
         private const string TvSchedulePrefixOriginal = "ohjelmat ";
         private const string RallyPenaltyPath = "Sheets/RallyResults/PlayerPenalties";
         private const string AtmMoneyPathPrefix = "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM";
-        private const string AtmTransactionsPathPrefix = "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat";
         private const string AtmTransactionDescriptionPath = "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite";
         private const string AtmTransactionDescriptionReference = "Selite";
+        private const string AtmTransactionLabel = "GAME ATM transactions";
         private const string ServicePaymentPathPrefix = "Sheets/ServicePayment";
         private const string ServicePaymentLinePathPrefix = "Sheets/ServicePayment/Line";
         private const string ServicePaymentBreakdownReference = "Breakdown";
@@ -105,82 +105,19 @@ namespace MWC_Localization_Core
             return fi;
         }
 
-        private enum FsmStrategyType
-        {
-            PosUse,
-            PosTyper,
-            TeletextBuildStringPattern,
-            TeletextBuildStringSimple,
-            TeletextWeatherUpdaterTokens,
-            UnemployPaperButtonVariables,
-            ConlineChatStatus
-        }
-
         private enum FsmTextTargetKind
         {
             BuildStringPart,
+            StringAddNewLinePart,
             FsmVariable,
             TextMeshFromVariable,
             TextMeshFromBuildString,
+            ActionFsmStringField,
+            FirstStateSetPropertyStringParameter,
+            SetPropertyStringParameter,
+            BuildStringTemplate,
+            ExactFsmTranslation,
             TranslateAllBuildStringAndDisplayStrings
-        }
-
-        private sealed class FsmStrategyTarget
-        {
-            public string ObjectPath;
-            public string FsmName;
-            public FsmStrategyType Strategy;
-            public string AppliedLabel;
-            public string ReadyLogKey;
-            public string ReadyLogMessage;
-            public string StateName;
-            public int ActionIndex;
-
-            public FsmStrategyTarget(
-                string objectPath,
-                string fsmName,
-                FsmStrategyType strategy,
-                string appliedLabel,
-                string readyLogKey,
-                string readyLogMessage,
-                string stateName,
-                int actionIndex)
-            {
-                ObjectPath = objectPath;
-                FsmName = fsmName;
-                Strategy = strategy;
-                AppliedLabel = appliedLabel;
-                ReadyLogKey = readyLogKey;
-                ReadyLogMessage = readyLogMessage;
-                StateName = stateName;
-                ActionIndex = actionIndex;
-            }
-        }
-
-        private sealed class BuildStringTemplateTarget
-        {
-            public string ObjectPath;
-            public string FsmName;
-            public string StateName;
-            public int ActionIndex;
-            public string OriginalPattern;
-            public string AppliedLabel;
-
-            public BuildStringTemplateTarget(
-                string objectPath,
-                string fsmName,
-                string stateName,
-                int actionIndex,
-                string originalPattern,
-                string appliedLabel)
-            {
-                ObjectPath = objectPath;
-                FsmName = fsmName;
-                StateName = stateName;
-                ActionIndex = actionIndex;
-                OriginalPattern = originalPattern;
-                AppliedLabel = appliedLabel;
-            }
         }
 
         private sealed class FsmTextTarget
@@ -195,6 +132,7 @@ namespace MWC_Localization_Core
             public string OriginalKey;
             public string TextMeshPath;
             public string AppliedLabel;
+            public int ComponentIndex;
 
             public FsmTextTarget(
                 string objectPath,
@@ -206,7 +144,8 @@ namespace MWC_Localization_Core
                 string variableName,
                 string originalKey,
                 string textMeshPath,
-                string appliedLabel)
+                string appliedLabel,
+                int componentIndex = -1)
             {
                 ObjectPath = objectPath;
                 FsmName = fsmName;
@@ -218,115 +157,73 @@ namespace MWC_Localization_Core
                 OriginalKey = originalKey;
                 TextMeshPath = textMeshPath;
                 AppliedLabel = appliedLabel;
+                ComponentIndex = componentIndex;
             }
         }
 
-        private static readonly string[] PosUseStateNames = new string[] { "State 1", "State 3", "State 4", "State 5" };
-        private static readonly string[] PosTyperCommandStateNames = new string[] { "Player input", "Player input 2", "Type", "Type 2", "Drive mem", "Disk mem", "Change baud" };
+        private const string GamePosLabel = "GAME POS";
+        private const string GameTeletextBottomlineLabel = "GAME Teletext Bottomline";
+        private const string GameTeletextWeatherLabel = "GAME Teletext Weather";
+        private const string GameConlineLabel = "GAME Conline";
+        private const string GameComputerLabel = "GAME Computer";
+        private const string GameFishgameLabel = "GAME Computer Fishgame";
+        private const string GameProPilkkiLabel = "GAME Computer ProPilkki";
 
-        private static readonly FsmStrategyTarget[] GamePosTargets = new FsmStrategyTarget[]
+        private static readonly FsmTextTarget[] GamePosTargets = new FsmTextTarget[]
         {
-            new FsmStrategyTarget(
-                "COMPUTER/SYSTEM/POS/BootSequence",
-                "Use",
-                FsmStrategyType.PosUse,
-                "GAME POS",
-                "POS_USE_READY",
-                "[FsmTextHook] Use FSM is initialized and ready.",
-                null,
-                -1),
-            new FsmStrategyTarget(
-                "COMPUTER/SYSTEM/POS/Command",
-                "Typer",
-                FsmStrategyType.PosTyper,
-                "GAME POS",
-                "POS_TYPER_READY",
-                "[FsmTextHook] Typer FSM is initialized and ready.",
-                null,
-                -1)
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 1", 0, 0, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 3", 0, 2, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 4", 0, 1, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 5", 0, 1, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Error", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Format disk", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Format drive", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Copy disk", 1, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Data error", 1, GamePosLabel),
+            FsmStringFieldTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Write new line 2", 0, "setValue", GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Reset POS 2", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Error 2", 0, GamePosLabel),
+            FsmStringFieldTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Calling...", 0, "setValue", GamePosLabel),
+            FsmStringFieldTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Waiting...", 0, "setValue", GamePosLabel),
+            FsmStringFieldTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Calling....", 0, "setValue", GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Wrong number", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Incorrect", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "New baud", 0, GamePosLabel),
+            ActionTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Mem error", 1, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Copyying", 4, 0, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Remove mem", 3, 0, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Remove mem 2", 3, 0, GamePosLabel),
+            StringAddNewLinePartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Dir list A", 3, 1, GamePosLabel),
+            StringAddNewLinePartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Dir list C", 3, 1, GamePosLabel),
+            ExactFsmTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Volume in drive A is A", GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "Spezzer", 1, 2, GamePosLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/POS/Command", "Typer", "State 3", 1, 2, GamePosLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/POS/NoOS", null, "State 1", 0, GamePosLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/POS/NoOS", null, "State 3", 0, GamePosLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/TELEBBS/Software/StatusBar", null, "State 1", 0, GamePosLabel)
         };
 
-        private static readonly FsmStrategyTarget[] GameTeletextTargets = new FsmStrategyTarget[]
+        private static readonly FsmTextTarget[] GameTeletextTargets = new FsmTextTarget[]
         {
-            new FsmStrategyTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/240/Texts/Data/Bottomline 1",
-                "Data",
-                FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
-                "State 1",
-                2),
-            new FsmStrategyTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/241/Texts/Data/Bottomline 1",
-                "Data",
-                FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
-                "State 1",
-                2),
-            new FsmStrategyTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data/Bottomline 1",
-                "Data",
-                FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
-                "State 1",
-                2),
-            new FsmStrategyTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data 1/Bottomline 1",
-                "Data",
-                FsmStrategyType.TeletextBuildStringPattern,
-                "GAME Teletext Bottomline",
-                "TTX_DATA_READY",
-                "[FsmTextHook] Teletext Data FSM bottomline targets are ready.",
-                "State 1",
-                3),
-            // Chat-TV clock label (e.g. "KLO" prefix) uses a BuildString action; only part[0]
-            // should be translated - the other parts hold dynamic time/date values.
-            new FsmStrategyTarget(
-                "Systems/TV/TVGraphics/CHAT/Day/Time",
-                "Clock",
-                FsmStrategyType.TeletextBuildStringSimple,
-                "GAME Teletext Clock",
-                "TTX_CLOCK_READY",
-                "[FsmTextHook] Teletext Clock FSM target is ready.",
-                "State 3",
-                2)
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/240/Texts/Data/Bottomline 1", "Data", "State 1", 2, GameTeletextBottomlineLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/241/Texts/Data/Bottomline 1", "Data", "State 1", 2, GameTeletextBottomlineLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data/Bottomline 1", "Data", "State 1", 2, GameTeletextBottomlineLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data 1/Bottomline 1", "Data", "State 1", 3, GameTeletextBottomlineLabel),
+            BuildStringPartTarget("Systems/TV/TVGraphics/CHAT/Day/Time", "Clock", "State 3", 2, 0, "GAME Teletext Clock")
         };
 
-        private static readonly BuildStringTemplateTarget[] GameTeletextSportsTemplateTargets = new BuildStringTemplateTarget[]
+        private static readonly FsmTextTarget[] GameTeletextSportsTemplateTargets = new FsmTextTarget[]
         {
-            new BuildStringTemplateTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/241/Texts/Data/Bottomline 1",
-                "Data",
-                "State 1",
-                2,
-                "Sarjatilanne kun pelattu {0} ottelua.",
-                "GAME Teletext Sports"),
-            new BuildStringTemplateTarget(
+            TemplateTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/241/Texts/Data/Bottomline 1", "Data", "State 1", 2, "Sarjatilanne kun pelattu {0} ottelua.", "GAME Teletext Sports"),
+            TemplateTarget(
                 "Systems/TV/Teletext/VKTekstiTV/PAGES/240/Texts/Data/Bottomline 1",
                 "Data",
                 "State 1",
                 2,
                 "Pääsarjan kierroksen {0} tulokset.",
                 "GAME Teletext Sports"),
-            new BuildStringTemplateTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data/Bottomline 1",
-                "Data",
-                "State 1",
-                2,
-                "Kierros {0} tulokset",
-                "GAME Teletext Sports"),
-            new BuildStringTemplateTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data 1/Bottomline 1",
-                "Data",
-                "State 1",
-                3,
-                "Kierros {0} pelikohteet",
-                "GAME Teletext Sports")
+            TemplateTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data/Bottomline 1", "Data", "State 1", 2, "Kierros {0} tulokset", "GAME Teletext Sports"),
+            TemplateTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/302/Texts/Data 1/Bottomline 1", "Data", "State 1", 3, "Kierros {0} pelikohteet", "GAME Teletext Sports")
         };
 
         private static readonly FsmTextTarget[] GameRallyTargets = new FsmTextTarget[]
@@ -525,49 +422,92 @@ namespace MWC_Localization_Core
             BuildStringActionTarget("Sheets/EnviroCrime/TicketData", "Fetch data", 11, "GAME Traffic ticket")
         };
 
+        private static readonly FsmTextTarget[] GameAtmTransactionTargets = new FsmTextTarget[]
+        {
+            new FsmTextTarget(AtmTransactionDescriptionPath, "GetData", null, -1, FsmTextTargetKind.FsmVariable, -1, "Data", null, null, AtmTransactionLabel),
+            new FsmTextTarget(AtmTransactionDescriptionPath, "GetData", "State 1", 0, FsmTextTargetKind.ActionFsmStringField, -1, "result", null, null, AtmTransactionLabel),
+            new FsmTextTarget(AtmTransactionDescriptionPath, "GetData", "State 1", 1, FsmTextTargetKind.SetPropertyStringParameter, -1, null, null, null, AtmTransactionLabel),
+            new FsmTextTarget(AtmTransactionDescriptionPath, "GetData", null, -1, FsmTextTargetKind.TextMeshFromVariable, -1, "Data", null, null, AtmTransactionLabel)
+        };
+
         private static FsmTextTarget BuildStringActionTarget(string objectPath, string stateName, int actionIndex, string appliedLabel)
         {
-            return new FsmTextTarget(
-                objectPath,
-                null,
-                stateName,
-                actionIndex,
-                FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings,
-                -1,
-                null,
-                null,
-                null,
-                appliedLabel);
+            return ActionTarget(objectPath, null, stateName, actionIndex, appliedLabel);
+        }
+
+        private static FsmTextTarget ActionTarget(string objectPath, string fsmName, string stateName, int actionIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, stateName, actionIndex, FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings, -1, null, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget BuildStringPartTarget(string objectPath, string fsmName, string stateName, int actionIndex, int stringPartIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, stateName, actionIndex, FsmTextTargetKind.BuildStringPart, stringPartIndex, null, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget StringAddNewLinePartTarget(string objectPath, string fsmName, string stateName, int actionIndex, int stringPartIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, stateName, actionIndex, FsmTextTargetKind.StringAddNewLinePart, stringPartIndex, null, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget FsmStringFieldTarget(string objectPath, string fsmName, string stateName, int actionIndex, string fieldName, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, stateName, actionIndex, FsmTextTargetKind.ActionFsmStringField, -1, fieldName, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget SetPropertyTarget(string objectPath, string fsmName, string stateName, int actionIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, stateName, actionIndex, FsmTextTargetKind.SetPropertyStringParameter, -1, null, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget FirstSetPropertyTarget(string objectPath, string fsmName, int actionIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, null, actionIndex, FsmTextTargetKind.FirstStateSetPropertyStringParameter, -1, null, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget FirstSetPropertyTargetByState(string objectPath, string stateName, int actionIndex, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, null, stateName, actionIndex, FsmTextTargetKind.FirstStateSetPropertyStringParameter, -1, null, null, null, appliedLabel);
+        }
+
+        private static FsmTextTarget TemplateTarget(string objectPath, string fsmName, string stateName, int actionIndex, string originalPattern, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, stateName, actionIndex, FsmTextTargetKind.BuildStringTemplate, -1, null, originalPattern, null, appliedLabel);
+        }
+
+        private static FsmTextTarget ExactFsmTarget(string objectPath, string fsmName, string original, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, fsmName, null, -1, FsmTextTargetKind.ExactFsmTranslation, -1, null, original, null, appliedLabel);
+        }
+
+        private static FsmTextTarget ComponentVariableTarget(string objectPath, int componentIndex, string variableName, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, null, null, -1, FsmTextTargetKind.FsmVariable, -1, variableName, null, null, appliedLabel, componentIndex);
+        }
+
+        private static FsmTextTarget ComponentFsmStringFieldTarget(string objectPath, int componentIndex, string stateName, int actionIndex, string fieldName, string appliedLabel)
+        {
+            return new FsmTextTarget(objectPath, null, stateName, actionIndex, FsmTextTargetKind.ActionFsmStringField, -1, fieldName, null, null, appliedLabel, componentIndex);
         }
 
         private static readonly string TeletextEnnusteUpdaterPrefix = "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste/";
 
-        private static readonly FsmStrategyTarget[] GameTeletextWeatherTargets = new FsmStrategyTarget[]
+        private static readonly FsmTextTarget[] GameTeletextWeatherTargets = new FsmTextTarget[]
         {
-            new FsmStrategyTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt",
-                "Logic",
-                FsmStrategyType.TeletextWeatherUpdaterTokens,
-                "GAME Teletext Weather",
-                "TTX_WX_READY",
-                "[FsmTextHook] Teletext weather updater FSM targets are ready.",
-                null,
-                -1),
-            new FsmStrategyTarget(
-                "Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste",
-                "Logic",
-                FsmStrategyType.TeletextWeatherUpdaterTokens,
-                "GAME Teletext Weather",
-                "TTX_WX_READY",
-                "[FsmTextHook] Teletext weather updater FSM targets are ready.",
-                null,
-                -1)
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt", "Logic", "State 4", 0, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt", "Logic", "State 4", 1, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt", "Logic", "State 6", 0, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt", "Logic", "State 6", 1, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste", "Logic", "State 4", 0, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste", "Logic", "State 4", 1, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste", "Logic", "State 6", 0, GameTeletextWeatherLabel),
+            ActionTarget("Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste", "Logic", "State 6", 1, GameTeletextWeatherLabel)
         };
 
-        private static readonly FsmStrategyTarget[] GameUnemployPaperTargets = BuildUnemployPaperTargets();
-        private static FsmStrategyTarget[] BuildUnemployPaperTargets()
+        private static readonly FsmTextTarget[] GameUnemployPaperTargets = BuildUnemployPaperTargets();
+        private static FsmTextTarget[] BuildUnemployPaperTargets()
         {
-            List<FsmStrategyTarget> targets = new List<FsmStrategyTarget>();
+            List<FsmTextTarget> targets = new List<FsmTextTarget>();
             string[] groups = new string[] { "2A", "2B", "2C", "2D" };
 
             for (int g = 0; g < groups.Length; g++)
@@ -576,36 +516,97 @@ namespace MWC_Localization_Core
                 for (int i = 1; i <= 7; i++)
                 {
                     string path = "Sheets/UnemployPaper/" + group + "/" + i.ToString();
-                    targets.Add(new FsmStrategyTarget(
-                        path,
-                        "Button",
-                        FsmStrategyType.UnemployPaperButtonVariables,
-                        "GAME UnemployPaper",
-                        "UNEMPLOY_READY",
-                        "[FsmTextHook] UnemployPaper Button FSM targets are ready.",
-                        null,
-                        -1));
+                    targets.Add(new FsmTextTarget(path, "Button", null, -1, FsmTextTargetKind.FsmVariable, -1, "jobNo", null, null, "GAME UnemployPaper"));
+                    targets.Add(new FsmTextTarget(path, "Button", null, -1, FsmTextTargetKind.FsmVariable, -1, "JobNo", null, null, "GAME UnemployPaper"));
+                    targets.Add(new FsmTextTarget(path, "Button", null, -1, FsmTextTargetKind.FsmVariable, -1, "jobYes", null, null, "GAME UnemployPaper"));
+                    targets.Add(new FsmTextTarget(path, "Button", null, -1, FsmTextTargetKind.FsmVariable, -1, "JobYes", null, null, "GAME UnemployPaper"));
                 }
             }
 
             return targets.ToArray();
         }
 
-        // CONLINE chat-status target: FSM nested setProperty on Download/Fail/Upload states that
-        // pushes status strings (e.g. "ONLINE", "CALL FAILED") into an FsmString on the
-        // chat-TV UI. The nested reflection doesn't always resolve on the first ready check,
-        // so this strategy is intentionally retried until it actually makes a change.
-        private static readonly FsmStrategyTarget[] GameConlineTargets = new FsmStrategyTarget[]
+        private static readonly FsmTextTarget[] GameConlineTargets = new FsmTextTarget[]
         {
-            new FsmStrategyTarget(
-                "COMPUTER/SYSTEM/TELEBBS/CONLINE/CHAT",
-                "Type",
-                FsmStrategyType.ConlineChatStatus,
-                "GAME Conline Chat",
-                "CONLINE_CHAT_READY",
-                "[FsmTextHook] Conline Chat FSM target is ready.",
-                null,
-                -1)
+            SetPropertyTarget("COMPUTER/SYSTEM/TELEBBS/CONLINE/Initialize", null, "Wait", 0, GameConlineLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/TELEBBS/CONLINE/Initialize", null, "Too short", 0, GameConlineLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/TELEBBS/CONLINE/CHAT", "Type", "Download", 1, "GAME Conline Chat"),
+            SetPropertyTarget("COMPUTER/SYSTEM/TELEBBS/CONLINE/CHAT", "Type", "Fail", 0, "GAME Conline Chat"),
+            SetPropertyTarget("COMPUTER/SYSTEM/TELEBBS/CONLINE/CHAT", "Type", "Upload", 1, "GAME Conline Chat")
+        };
+
+        private static readonly FsmTextTarget[] GameFishgameTargets = new FsmTextTarget[]
+        {
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Reset", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "kÃ¤nnikala 6", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kalja 1", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kalja 2", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kalja 3", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kalja 4", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kalja 5", 1, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Peruskala", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Karkasi", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Ahven", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Hauki", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "SÃ¤rki", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Lahna", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kalakukko", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Sakko", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "KÃ¤nnikala", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Erikoiskala", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "UKK", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Kultakala", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "RahasÃ¤kki", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Tonnikala", 0, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Rosvo", 0, GameFishgameLabel),
+            FirstSetPropertyTargetByState("COMPUTER/SYSTEM/Kaappis-Fishgame", "Play", 5, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Fishgame", null, "Play", 2, GameFishgameLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Grilli", null, "Game over", 0, GameComputerLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Wildvest/Mekaanikka", null, "State 2", 0, GameComputerLabel),
+            SetPropertyTarget("COMPUTER/SYSTEM/Kaappis-Wildvest/Mekaanikka", null, "Lose", 0, GameComputerLabel)
+        };
+
+        private static readonly FsmTextTarget[] GameProPilkkiTargets = new FsmTextTarget[]
+        {
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", null, "State 7", 1, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", null, "State 8", 1, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", null, "State 11", 1, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", null, "State 16", 1, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", null, "State 21", 1, GameProPilkkiLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/SuurinKala", null, "State 1", 5, 0, GameProPilkkiLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/SuurinKala", null, "State 1", 5, 4, GameProPilkkiLabel),
+            ComponentVariableTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Alkuvalikko/Asetukset", 1, "Name", GameProPilkkiLabel),
+            ComponentFsmStringFieldTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Alkuvalikko/Asetukset", 1, "State 2", 0, "storeValue", GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", null, "State 7", 0, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", null, "State 8", 0, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", null, "State 11", 0, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", null, "State 16", 0, GameProPilkkiLabel),
+            ActionTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", null, "State 21", 0, GameProPilkkiLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset", null, "Grammat", 3, 1, GameProPilkkiLabel),
+            BuildStringPartTarget("COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset", null, "Kalan paino", 2, 1, GameProPilkkiLabel)
+        };
+
+        private static readonly string[] GameComputerTextMeshTargets = new string[]
+        {
+            "COMPUTER/SYSTEM/TELEBBS/Software/text",
+            "COMPUTER/SYSTEM/TELEBBS/CONLINE/GFX/text",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Alkuvalikko/Asetukset/Nimi",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin/Nimi",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Ahven",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/FishName",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Kiiski",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Lahna",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Sarki",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Siika",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/Fail/Otsikko",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetKisa/Numerot",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetKisa/Otsikko",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/Otsikko",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/SuurinKala",
+            "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/Yhteispaino",
+            "COMPUTER/SYSTEM/RAMI-Simppa&Jokke/Seikailu-Tekstit/Text-Lersman-Antenna",
+            "COMPUTER/SYSTEM/RAMI-Simppa&Jokke/ItemsHeld/Item09-WineBottle",
+            "COMPUTER/SYSTEM/RAMI-Simppa&Jokke/Seikailu-Tekstit/Text-Lersman-Oven"
         };
 
         public void Initialize(Dictionary<string, string> translations, string[] patternFiles)
@@ -636,8 +637,13 @@ namespace MWC_Localization_Core
             mainMenuCreditsApplied = false;
             lastMainMenuPollTime = -10f;
             lastGamePollTime = -10f;
+            lastImmediateGamePollTime = -10f;
             lastEnnusteDataFsmScanTime = -10f;
+            lastAtmTransactionDescriptionFsmScanTime = -10f;
+            lastTvScheduleDayProxyScanTime = -10f;
             cachedEnnusteDataFsms.Clear();
+            cachedAtmTransactionDescriptionFsms.Clear();
+            cachedTvScheduleDayProxies.Clear();
             ClearObjectPathCaches();
             loggedReadyTargets.Clear();
         }
@@ -666,19 +672,11 @@ namespace MWC_Localization_Core
 
         private void ClearObjectPathCaches()
         {
-            fsmsByPathCache.Clear();
             fsmPathStateCache.Clear();
             fsmPathNameCache.Clear();
             fsmPathComponentCache.Clear();
             textMeshPathCache.Clear();
             arrayListProxyPathCache.Clear();
-
-            fsmPathCacheBuilt = false;
-            textMeshPathCacheBuilt = false;
-            arrayListProxyPathCacheBuilt = false;
-            lastFsmPathCacheBuildTime = -1000f;
-            lastTextMeshPathCacheBuildTime = -1000f;
-            lastArrayListProxyPathCacheBuildTime = -1000f;
         }
 
         public bool UpdateForCurrentScene(bool force)
@@ -711,13 +709,62 @@ namespace MWC_Localization_Core
 
             if (currentScene == "GAME")
             {
-                bool immediateChanged = ApplyImmediateRallyTranslations();
-                immediateChanged |= ApplyImmediateAtmTransactionTranslations();
-                immediateChanged |= ApplyImmediateMechanicServiceTranslations();
+                bool immediateChanged = false;
+                if (force || ShouldPoll(ref lastImmediateGamePollTime, VisibleImmediatePollInterval))
+                {
+                    immediateChanged |= ApplyVisibleImmediateTvScheduleTranslations();
+                    immediateChanged |= ApplyVisibleImmediateRallyTranslations();
+                    immediateChanged |= ApplyVisibleImmediateAtmTransactionTranslations();
+                    immediateChanged |= ApplyVisibleImmediateMechanicServiceTranslations();
+                }
+
                 if (!force && !ShouldPoll(ref lastGamePollTime, MaintenancePollInterval))
                     return immediateChanged;
 
                 return TryApplyGameTranslations() || immediateChanged;
+            }
+
+            return false;
+        }
+
+        private bool ApplyVisibleImmediateTvScheduleTranslations()
+        {
+            return IsAnyPathActiveInHierarchy(TvSchedulePathPrefix)
+                ? TryApplyGameTvGraphicsScheduleTranslations()
+                : false;
+        }
+
+        private bool ApplyVisibleImmediateRallyTranslations()
+        {
+            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults")
+                ? ApplyImmediateRallyTranslations()
+                : false;
+        }
+
+        private bool ApplyVisibleImmediateAtmTransactionTranslations()
+        {
+            return IsAnyPathActiveInHierarchy("PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat")
+                ? ApplyImmediateAtmTransactionTranslations()
+                : false;
+        }
+
+        private bool ApplyVisibleImmediateMechanicServiceTranslations()
+        {
+            return IsAnyPathActiveInHierarchy(ServicePaymentPathPrefix)
+                ? ApplyImmediateMechanicServiceTranslations()
+                : false;
+        }
+
+        private bool IsAnyPathActiveInHierarchy(params string[] paths)
+        {
+            if (paths == null || paths.Length == 0)
+                return false;
+
+            for (int i = 0; i < paths.Length; i++)
+            {
+                GameObject obj = FindGameObjectByPathIncludingInactive(paths[i]);
+                if (obj != null && obj.activeInHierarchy)
+                    return true;
             }
 
             return false;
@@ -748,12 +795,10 @@ namespace MWC_Localization_Core
             anyChanged |= TryApplyGameMechanicServiceTranslations();
             anyChanged |= TryApplyGameTeletextSportsTemplateTranslations();
             anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
-            anyChanged |= TryApplyGameTeletextBuildStringPatternTranslations();
             anyChanged |= TryApplyGameTeletextControlTranslations();
             anyChanged |= TryApplyGameTeletextWeatherUpdaterFsmTranslations();
             anyChanged |= TryApplyGameUnemployPaperFsmTranslations();
             anyChanged |= TryApplyGameConlineInitializeTranslations();
-            anyChanged |= TryApplyGameConlineChatFsmTranslations();
             anyChanged |= TryApplyGameConlineTextTranslations();
             anyChanged |= TryApplyGameComputerGamesTranslations();
 
@@ -837,10 +882,11 @@ namespace MWC_Localization_Core
                 if (!IsFsmReady(fsm) || fsm.FsmName != "Text")
                     continue;
 
-                anyChanged |= ApplyTvScheduleTitlePrefixTranslation(fsm, translatedPrefix);
+                anyChanged |= ApplyTvScheduleTitleTranslation(fsm, translatedPrefix, translatedDays);
             }
 
             anyChanged |= TranslateTvScheduleDaysArrays(translatedDays);
+            anyChanged |= TranslateTvScheduleTitleTextMeshes(translatedPrefix, translatedDays);
 
             if (anyChanged)
             {
@@ -852,23 +898,31 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGameRallyTemplateTranslations()
         {
-            return ApplyFsmTextTargets(GameRallyTargets);
+            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults")
+                ? ApplyFsmTextTargets(GameRallyTargets)
+                : false;
         }
 
         private bool TryApplyGameTicketTranslations()
         {
-            return ApplyFsmTextTargets(GameTicketTargets);
+            return IsAnyPathActiveInHierarchy("Sheets/TrafficTicket", "Sheets/EnviroCrime")
+                ? ApplyFsmTextTargets(GameTicketTargets)
+                : false;
         }
 
         private bool TryApplyGameAtmTransactionTranslations()
         {
+            if (!IsAnyPathActiveInHierarchy("PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat"))
+                return false;
+
             bool anyChanged = false;
-            anyChanged |= TranslateAtmTransactionDescriptionArrays();
-            anyChanged |= TranslateAtmTransactionDescriptionFsms();
+            anyChanged |= TranslateArrayListProxiesByReference(AtmMoneyPathPrefix, AtmTransactionDescriptionReference);
+            anyChanged |= TranslateArrayListProxiesFromArrayListGetActions(AtmMoneyPathPrefix, AtmTransactionDescriptionReference);
+            anyChanged |= ApplyAtmTransactionDescriptionFsmTargets();
 
             if (anyChanged)
             {
-                appliedTarget = "GAME ATM transactions";
+                appliedTarget = AtmTransactionLabel;
             }
 
             return anyChanged;
@@ -877,60 +931,156 @@ namespace MWC_Localization_Core
         private bool ApplyImmediateAtmTransactionTranslations()
         {
             bool anyChanged = false;
-            anyChanged |= TranslateActiveAtmTransactionDescriptionArrays();
-            anyChanged |= TranslateAtmTransactionDescriptionFsms();
+            anyChanged |= TranslateArrayListProxiesByReference(AtmMoneyPathPrefix, AtmTransactionDescriptionReference);
+            anyChanged |= TranslateArrayListProxiesFromArrayListGetActions(AtmMoneyPathPrefix, AtmTransactionDescriptionReference);
+            anyChanged |= ApplyAtmTransactionDescriptionFsmTargets();
 
             if (anyChanged)
             {
-                appliedTarget = "GAME ATM transactions";
+                appliedTarget = AtmTransactionLabel;
             }
 
             return anyChanged;
         }
 
-        private bool TranslateActiveAtmTransactionDescriptionArrays()
+        private bool ApplyAtmTransactionDescriptionFsmTargets()
         {
-            GameObject moneyAtm = MLCUtils.FindGameObjectCached(AtmMoneyPathPrefix);
-            if (moneyAtm == null)
+            List<PlayMakerFSM> fsms = GetAtmTransactionDescriptionFsms();
+            if (fsms == null || fsms.Count == 0)
+                return ApplyFsmTextTargets(GameAtmTransactionTargets);
+
+            bool changed = false;
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (!IsFsmReady(fsm))
+                    continue;
+
+                for (int targetIndex = 0; targetIndex < GameAtmTransactionTargets.Length; targetIndex++)
+                {
+                    changed |= ApplyFsmTextTargetToFsm(fsm, GameAtmTransactionTargets[targetIndex]);
+                }
+            }
+
+            if (changed)
+            {
+                appliedTarget = AtmTransactionLabel;
+            }
+
+            return changed;
+        }
+
+        private List<PlayMakerFSM> GetAtmTransactionDescriptionFsms()
+        {
+            bool shouldRescan = cachedAtmTransactionDescriptionFsms.Count == 0
+                || (Time.realtimeSinceStartup - lastAtmTransactionDescriptionFsmScanTime) >= AtmTransactionDescriptionFsmRescanInterval;
+            if (!shouldRescan)
+                return cachedAtmTransactionDescriptionFsms;
+
+            lastAtmTransactionDescriptionFsmScanTime = Time.realtimeSinceStartup;
+            cachedAtmTransactionDescriptionFsms.Clear();
+
+            GameObject root = FindGameObjectByPathIncludingInactive(AtmMoneyPathPrefix);
+            if (root == null)
+                return cachedAtmTransactionDescriptionFsms;
+
+            PlayMakerFSM[] allFsms = root.GetComponentsInChildren<PlayMakerFSM>(true);
+            if (allFsms == null)
+                return cachedAtmTransactionDescriptionFsms;
+
+            for (int i = 0; i < allFsms.Length; i++)
+            {
+                PlayMakerFSM fsm = allFsms[i];
+                if (fsm == null || fsm.gameObject == null || fsm.FsmName != "GetData")
+                    continue;
+
+                string path = MLCUtils.GetGameObjectPath(fsm.gameObject);
+                if (path == AtmTransactionDescriptionPath)
+                {
+                    cachedAtmTransactionDescriptionFsms.Add(fsm);
+                }
+            }
+
+            return cachedAtmTransactionDescriptionFsms;
+        }
+
+        private bool TranslateArrayListProxiesFromArrayListGetActions(string pathPrefix, string referenceName)
+        {
+            if (string.IsNullOrEmpty(pathPrefix) || string.IsNullOrEmpty(referenceName))
                 return false;
 
-            PlayMakerArrayListProxy[] proxies = moneyAtm.GetComponentsInChildren<PlayMakerArrayListProxy>(true);
+            bool changed = false;
+            List<PlayMakerFSM> fsms = GetAtmTransactionDescriptionFsms();
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (!IsFsmReady(fsm) || fsm.FsmStates == null)
+                    continue;
+
+                for (int stateIndex = 0; stateIndex < fsm.FsmStates.Length; stateIndex++)
+                {
+                    HutongGames.PlayMaker.FsmState state = fsm.FsmStates[stateIndex];
+                    if (state == null || state.Actions == null)
+                        continue;
+
+                    for (int actionIndex = 0; actionIndex < state.Actions.Length; actionIndex++)
+                    {
+                        HutongGames.PlayMaker.Actions.ArrayListGet action = state.Actions[actionIndex] as HutongGames.PlayMaker.Actions.ArrayListGet;
+                        PlayMakerArrayListProxy proxy = GetArrayListGetProxy(action);
+                        if (action == null
+                            || action.reference == null
+                            || !TextMatchesExact(action.reference.Value, referenceName)
+                            || proxy == null)
+                        {
+                            continue;
+                        }
+
+                        changed |= TranslateArrayListValues(proxy._arrayList);
+                        changed |= TranslateStringListValues(proxy.preFillStringList);
+                    }
+                }
+            }
+
+            return changed;
+        }
+
+        private bool TranslateArrayListProxiesByReference(string pathPrefix, string referenceName)
+        {
+            if (string.IsNullOrEmpty(pathPrefix) || string.IsNullOrEmpty(referenceName))
+                return false;
+
+            GameObject root = FindGameObjectByPathIncludingInactive(pathPrefix);
+            if (root == null)
+                return false;
+
+            PlayMakerArrayListProxy[] proxies = root.GetComponentsInChildren<PlayMakerArrayListProxy>(true);
             if (proxies == null || proxies.Length == 0)
                 return false;
 
             bool changed = false;
             for (int i = 0; i < proxies.Length; i++)
             {
-                changed |= TranslateAtmTransactionDescriptionProxy(proxies[i], null);
+                changed |= TranslateArrayListProxyIfReferenceMatches(proxies[i], pathPrefix, referenceName, null);
             }
 
             return changed;
         }
 
-        private bool TranslateAtmTransactionDescriptionArrays()
-        {
-            EnsureArrayListProxyPathCache();
-
-            bool changed = false;
-            foreach (KeyValuePair<string, PlayMakerArrayListProxy> pair in arrayListProxyPathCache)
-            {
-                changed |= TranslateAtmTransactionDescriptionProxy(pair.Value, pair.Key);
-            }
-
-            return changed;
-        }
-
-        private bool TranslateAtmTransactionDescriptionProxy(PlayMakerArrayListProxy proxy, string cachePath)
+        private bool TranslateArrayListProxyIfReferenceMatches(
+            PlayMakerArrayListProxy proxy,
+            string pathPrefix,
+            string referenceName,
+            string cachePath)
         {
             if (proxy == null
                 || proxy.gameObject == null
-                || !string.Equals(proxy.referenceName, AtmTransactionDescriptionReference, System.StringComparison.OrdinalIgnoreCase))
+                || !string.Equals(proxy.referenceName, referenceName, System.StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
             string path = string.IsNullOrEmpty(cachePath) ? MLCUtils.GetGameObjectPath(proxy.gameObject) : cachePath;
-            if (string.IsNullOrEmpty(path) || !path.StartsWith(AtmMoneyPathPrefix, System.StringComparison.Ordinal))
+            if (string.IsNullOrEmpty(path) || !path.StartsWith(pathPrefix, System.StringComparison.Ordinal))
                 return false;
 
             bool changed = false;
@@ -939,70 +1089,71 @@ namespace MWC_Localization_Core
             return changed;
         }
 
-        private bool TranslateAtmTransactionDescriptionFsms()
+        private GameObject FindGameObjectByPathIncludingInactive(string objectPath)
         {
-            List<PlayMakerFSM> fsms = GetFsmsByPathPrefix(AtmTransactionDescriptionPath);
-            if (fsms == null || fsms.Count == 0)
-                return false;
+            if (string.IsNullOrEmpty(objectPath))
+                return null;
 
-            bool changed = false;
-            for (int i = 0; i < fsms.Count; i++)
+            string normalizedPath = objectPath.TrimEnd('/');
+            GameObject activeObject = MLCUtils.FindGameObjectCached(normalizedPath);
+            if (activeObject != null)
+                return activeObject;
+
+            int slashIndex = normalizedPath.IndexOf('/');
+            if (slashIndex < 0)
+                return null;
+
+            GameObject root = MLCUtils.FindGameObjectCached(normalizedPath.Substring(0, slashIndex));
+            if (root == null)
+                return null;
+
+            Transform child = root.transform.Find(normalizedPath.Substring(slashIndex + 1));
+            return child != null ? child.gameObject : null;
+        }
+
+        private GameObject FindNearestGameObjectForPathPrefix(string pathPrefix)
+        {
+            if (string.IsNullOrEmpty(pathPrefix))
+                return null;
+
+            string candidate = pathPrefix.TrimEnd('/');
+            while (!string.IsNullOrEmpty(candidate))
             {
-                PlayMakerFSM fsm = fsms[i];
-                if (!IsFsmReady(fsm) || fsm.FsmName != "GetData" || fsm.gameObject == null)
-                    continue;
+                GameObject obj = FindGameObjectByPathIncludingInactive(candidate);
+                if (obj != null)
+                    return obj;
 
-                string path = MLCUtils.GetGameObjectPath(fsm.gameObject);
-                if (string.IsNullOrEmpty(path) || !path.StartsWith(AtmTransactionDescriptionPath, System.StringComparison.Ordinal))
-                    continue;
+                int slashIndex = candidate.LastIndexOf('/');
+                if (slashIndex < 0)
+                    break;
 
-                changed |= TranslateAtmTransactionDescriptionFsm(fsm);
+                candidate = candidate.Substring(0, slashIndex);
             }
 
-            return changed;
+            return null;
         }
 
-        private bool TranslateAtmTransactionDescriptionFsm(PlayMakerFSM fsm)
+        private bool IsObjectPathUnderPrefix(GameObject obj, string pathPrefix)
         {
-            if (!IsFsmReady(fsm))
+            if (obj == null || string.IsNullOrEmpty(pathPrefix))
                 return false;
 
-            bool changed = false;
-            changed |= TranslateFsmStringVariableExact(fsm, "Data");
-            changed |= ApplyStateActionFsmStringFieldTranslation(fsm, "State 1", 0, "result");
-            changed |= ApplyStateSetPropertyStringParameterTranslation(fsm, "State 1", 1);
-            changed |= SyncAtmTransactionDescriptionTextMesh(fsm);
-            return changed;
-        }
-
-        private bool SyncAtmTransactionDescriptionTextMesh(PlayMakerFSM fsm)
-        {
-            if (fsm == null || fsm.FsmVariables == null || fsm.gameObject == null)
-                return false;
-
-            HutongGames.PlayMaker.FsmString data = fsm.FsmVariables.GetFsmString("Data");
-            if (data == null || string.IsNullOrEmpty(data.Value))
-                return false;
-
-            TextMesh textMesh = fsm.gameObject.GetComponent<TextMesh>();
-            if (textMesh == null)
-                return false;
-
-            string translated;
-            string nextText = TryTranslateString(data.Value, out translated) ? translated : data.Value;
-            if (string.IsNullOrEmpty(nextText) || textMesh.text == nextText)
-                return false;
-
-            textMesh.text = nextText;
-            return true;
+            string path = MLCUtils.GetGameObjectPath(obj);
+            return !string.IsNullOrEmpty(path)
+                && path.StartsWith(pathPrefix.TrimEnd('/'), System.StringComparison.Ordinal);
         }
 
         private bool TryApplyGameMechanicServiceTranslations()
         {
+            if (!IsAnyPathActiveInHierarchy(ServicePaymentPathPrefix))
+                return false;
+
             bool anyChanged = false;
             bool hasActiveBreakdown;
+            bool hasCachedBreakdown;
             HashSet<string> activeLineKeys = new HashSet<string>();
-            anyChanged |= TranslateMechanicServiceBreakdownArrays(activeLineKeys, out hasActiveBreakdown);
+            anyChanged |= TranslateActiveMechanicServiceBreakdownArrays(activeLineKeys, out hasActiveBreakdown);
+            anyChanged |= TranslateMechanicServiceBreakdownArrays(null, out hasCachedBreakdown);
             anyChanged |= TranslateMechanicServiceLineFsms(hasActiveBreakdown ? activeLineKeys : null);
 
             if (anyChanged)
@@ -1020,8 +1171,7 @@ namespace MWC_Localization_Core
             bool hasCachedBreakdown;
             HashSet<string> activeLineKeys = new HashSet<string>();
             anyChanged |= TranslateActiveMechanicServiceBreakdownArrays(activeLineKeys, out hasActiveBreakdown);
-            anyChanged |= TranslateMechanicServiceBreakdownArrays(activeLineKeys, out hasCachedBreakdown);
-            hasActiveBreakdown |= hasCachedBreakdown;
+            anyChanged |= TranslateMechanicServiceBreakdownArrays(null, out hasCachedBreakdown);
 
             for (int i = 1; i <= ServicePaymentLineCount; i++)
             {
@@ -1041,7 +1191,7 @@ namespace MWC_Localization_Core
         private bool TranslateActiveMechanicServiceBreakdownArrays(HashSet<string> activeLineKeys, out bool foundBreakdown)
         {
             foundBreakdown = false;
-            GameObject servicePayment = MLCUtils.FindGameObjectCached(ServicePaymentPathPrefix);
+            GameObject servicePayment = FindGameObjectByPathIncludingInactive(ServicePaymentPathPrefix);
             if (servicePayment == null)
                 return false;
 
@@ -1061,12 +1211,18 @@ namespace MWC_Localization_Core
         private bool TranslateMechanicServiceBreakdownArrays(HashSet<string> activeLineKeys, out bool foundBreakdown)
         {
             foundBreakdown = false;
-            EnsureArrayListProxyPathCache();
+            GameObject sheets = FindGameObjectByPathIncludingInactive("Sheets");
+            if (sheets == null)
+                return false;
+
+            PlayMakerArrayListProxy[] proxies = sheets.GetComponentsInChildren<PlayMakerArrayListProxy>(true);
+            if (proxies == null || proxies.Length == 0)
+                return false;
 
             bool changed = false;
-            foreach (KeyValuePair<string, PlayMakerArrayListProxy> pair in arrayListProxyPathCache)
+            for (int i = 0; i < proxies.Length; i++)
             {
-                changed |= TranslateMechanicServiceBreakdownProxy(pair.Value, activeLineKeys, ref foundBreakdown);
+                changed |= TranslateMechanicServiceBreakdownProxy(proxies[i], activeLineKeys, ref foundBreakdown);
             }
 
             return changed;
@@ -1135,12 +1291,159 @@ namespace MWC_Localization_Core
             if (!IsFsmReady(fsm) || fsm.FsmName != "GetLine")
                 return false;
 
+            bool syncedFromArrayList;
+            if (TrySyncMechanicServiceLineFromArrayListGet(fsm, out syncedFromArrayList))
+                return syncedFromArrayList;
+
+            if (activeLineKeys == null)
+                return false;
+
             bool changed = false;
             changed |= TranslateMechanicServiceFsmVariables(fsm, activeLineKeys);
             changed |= TranslateMechanicServiceFsmActions(fsm, activeLineKeys);
             changed |= SyncMechanicServiceLineTextMesh(fsm, activeLineKeys);
 
             return changed;
+        }
+
+        private bool TrySyncMechanicServiceLineFromArrayListGet(PlayMakerFSM fsm, out bool changed)
+        {
+            changed = false;
+            HutongGames.PlayMaker.Actions.ArrayListGet action = GetMechanicServiceArrayListGetAction(fsm);
+            if (action == null)
+                return false;
+
+            int index = action.atIndex == null ? -1 : action.atIndex.Value;
+            PlayMakerArrayListProxy proxy = GetArrayListGetProxy(action);
+            if (proxy == null || proxy._arrayList == null)
+                return false;
+
+            if (index < 0 || index >= proxy._arrayList.Count || proxy._arrayList[index] == null)
+            {
+                changed = ClearMechanicServiceLine(fsm);
+                return true;
+            }
+
+            string sourceLine = proxy._arrayList[index].ToString();
+            if (string.IsNullOrEmpty(sourceLine))
+            {
+                changed = ClearMechanicServiceLine(fsm);
+                return true;
+            }
+
+            string displayLine = sourceLine;
+            string translated;
+            if (TryTranslateMechanicServiceLine(sourceLine, out translated))
+            {
+                displayLine = translated;
+                if (proxy._arrayList[index].ToString() != translated)
+                {
+                    proxy._arrayList[index] = translated;
+                    changed = true;
+                }
+            }
+
+            changed |= SetMechanicServiceLineValue(fsm, displayLine);
+            return true;
+        }
+
+        private HutongGames.PlayMaker.Actions.ArrayListGet GetMechanicServiceArrayListGetAction(PlayMakerFSM fsm)
+        {
+            HutongGames.PlayMaker.FsmState state = FindState(fsm, "State 1");
+            if (state == null || state.Actions == null || state.Actions.Length == 0)
+                return null;
+
+            HutongGames.PlayMaker.Actions.ArrayListGet action = state.Actions[0] as HutongGames.PlayMaker.Actions.ArrayListGet;
+            if (action == null || action.reference == null || !TextMatchesExact(action.reference.Value, ServicePaymentBreakdownReference))
+                return null;
+
+            return action;
+        }
+
+        private PlayMakerArrayListProxy GetArrayListGetProxy(HutongGames.PlayMaker.Actions.ArrayListGet action)
+        {
+            if (action == null)
+                return null;
+
+            FieldInfo proxyField = GetCachedField(action.GetType(), "proxy");
+            return proxyField == null ? null : proxyField.GetValue(action) as PlayMakerArrayListProxy;
+        }
+
+        private bool ClearMechanicServiceLine(PlayMakerFSM fsm)
+        {
+            return SetMechanicServiceLineValue(fsm, string.Empty);
+        }
+
+        private bool SetMechanicServiceLineValue(PlayMakerFSM fsm, string value)
+        {
+            if (fsm == null || fsm.gameObject == null)
+                return false;
+
+            bool changed = false;
+            HutongGames.PlayMaker.FsmString text = fsm.FsmVariables != null ? fsm.FsmVariables.GetFsmString("Text") : null;
+            changed |= SetFsmStringValue(text, value);
+
+            HutongGames.PlayMaker.FsmState state = FindState(fsm, "State 1");
+            if (state != null && state.Actions != null)
+            {
+                if (state.Actions.Length > 0)
+                {
+                    changed |= SetNestedFsmStringValue(state.Actions[0], value, "result", "namedVar");
+                }
+
+                if (state.Actions.Length > 1)
+                {
+                    changed |= SetNestedFsmStringValue(state.Actions[1], value, "targetProperty", "StringParameter");
+                }
+            }
+
+            TextMesh textMesh = fsm.gameObject.GetComponent<TextMesh>();
+            if (textMesh != null && textMesh.text != value)
+            {
+                textMesh.text = value;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private bool SetFsmStringValue(HutongGames.PlayMaker.FsmString target, string value)
+        {
+            if (target == null)
+                return false;
+
+            string safeValue = value ?? string.Empty;
+            if (target.Value == safeValue)
+                return false;
+
+            target.Value = safeValue;
+            return true;
+        }
+
+        private bool SetNestedFsmStringValue(object root, string value, params string[] fieldPath)
+        {
+            HutongGames.PlayMaker.FsmString target = GetNestedFsmString(root, fieldPath);
+            return SetFsmStringValue(target, value);
+        }
+
+        private HutongGames.PlayMaker.FsmString GetNestedFsmString(object root, params string[] fieldPath)
+        {
+            object current = root;
+            if (current == null || fieldPath == null || fieldPath.Length == 0)
+                return null;
+
+            for (int i = 0; i < fieldPath.Length; i++)
+            {
+                FieldInfo field = GetCachedField(current.GetType(), fieldPath[i]);
+                if (field == null)
+                    return null;
+
+                current = field.GetValue(current);
+                if (current == null)
+                    return null;
+            }
+
+            return current as HutongGames.PlayMaker.FsmString;
         }
 
         private bool TranslateMechanicServiceFsmVariables(PlayMakerFSM fsm, HashSet<string> activeLineKeys)
@@ -1200,25 +1503,6 @@ namespace MWC_Localization_Core
                 }
 
                 AddMechanicServiceActiveLine(values[i].ToString(), activeLineKeys);
-            }
-
-            return changed;
-        }
-
-        private bool TranslateMechanicServiceStringList(List<string> values)
-        {
-            if (values == null || values.Count == 0)
-                return false;
-
-            bool changed = false;
-            for (int i = 0; i < values.Count; i++)
-            {
-                string translated;
-                if (TryTranslateMechanicServiceLine(values[i], out translated))
-                {
-                    values[i] = translated;
-                    changed = true;
-                }
             }
 
             return changed;
@@ -1480,10 +1764,25 @@ namespace MWC_Localization_Core
             if (target == null || string.IsNullOrEmpty(target.ObjectPath))
                 return false;
 
-            PlayMakerFSM fsm = string.IsNullOrEmpty(target.FsmName)
-                ? FindFsmIncludingInactiveByPathAndState(target.ObjectPath, target.StateName)
-                : FindFsmIncludingInactiveByPathAndName(target.ObjectPath, target.FsmName);
+            PlayMakerFSM fsm = target.ComponentIndex >= 0
+                ? FindFsmIncludingInactiveByPathAndComponentIndex(target.ObjectPath, target.ComponentIndex)
+                : string.IsNullOrEmpty(target.FsmName)
+                    ? FindFsmIncludingInactiveByPathAndState(target.ObjectPath, target.StateName)
+                    : FindFsmIncludingInactiveByPathAndName(target.ObjectPath, target.FsmName);
             if (!IsFsmReady(fsm))
+            {
+                fsm = FindFsmByTargetPathPrefix(target);
+            }
+
+            if (!IsFsmReady(fsm))
+                return false;
+
+            return ApplyFsmTextTargetToFsm(fsm, target);
+        }
+
+        private bool ApplyFsmTextTargetToFsm(PlayMakerFSM fsm, FsmTextTarget target)
+        {
+            if (!IsFsmReady(fsm) || target == null)
                 return false;
 
             bool changed = false;
@@ -1491,6 +1790,9 @@ namespace MWC_Localization_Core
             {
                 case FsmTextTargetKind.BuildStringPart:
                     changed = ApplyFsmTextBuildStringPartTarget(fsm, target);
+                    break;
+                case FsmTextTargetKind.StringAddNewLinePart:
+                    changed = ApplyStringAddNewLineActionStringPartTranslation(fsm, target.StateName, target.ActionIndex, target.StringPartIndex);
                     break;
                 case FsmTextTargetKind.FsmVariable:
                     changed = ApplyFsmTextVariableTarget(fsm, target);
@@ -1500,6 +1802,32 @@ namespace MWC_Localization_Core
                     break;
                 case FsmTextTargetKind.TextMeshFromBuildString:
                     changed = ApplyFsmTextMeshFromBuildStringTarget(fsm, target);
+                    break;
+                case FsmTextTargetKind.ActionFsmStringField:
+                    changed = ApplyStateActionFsmStringFieldTranslation(
+                        fsm,
+                        target.StateName,
+                        target.ActionIndex,
+                        target.VariableName);
+                    break;
+                case FsmTextTargetKind.FirstStateSetPropertyStringParameter:
+                    changed = ApplyFirstStateSetPropertyStringParameterTranslation(fsm, target.ActionIndex);
+                    break;
+                case FsmTextTargetKind.SetPropertyStringParameter:
+                    changed = ApplyStateSetPropertyStringParameterTranslation(
+                        fsm,
+                        target.StateName,
+                        target.ActionIndex);
+                    break;
+                case FsmTextTargetKind.BuildStringTemplate:
+                    changed = ApplyBuildStringTemplateTranslation(
+                        fsm,
+                        target.StateName,
+                        target.ActionIndex,
+                        target.OriginalKey);
+                    break;
+                case FsmTextTargetKind.ExactFsmTranslation:
+                    changed = ApplyExactFsmTranslation(fsm, target.OriginalKey);
                     break;
                 case FsmTextTargetKind.TranslateAllBuildStringAndDisplayStrings:
                     changed = ApplyFsmTextActionTranslationTarget(fsm, target);
@@ -1514,6 +1842,37 @@ namespace MWC_Localization_Core
             return changed;
         }
 
+        private PlayMakerFSM FindFsmByTargetPathPrefix(FsmTextTarget target)
+        {
+            if (target == null || string.IsNullOrEmpty(target.ObjectPath))
+                return null;
+
+            List<PlayMakerFSM> fsms = GetFsmsByPathPrefix(target.ObjectPath);
+            if (fsms == null || fsms.Count == 0)
+                return null;
+
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (!IsFsmReady(fsm))
+                    continue;
+
+                if (!string.IsNullOrEmpty(target.FsmName) && fsm.FsmName != target.FsmName)
+                    continue;
+
+                if (string.IsNullOrEmpty(target.FsmName)
+                    && !string.IsNullOrEmpty(target.StateName)
+                    && !HasState(fsm, target.StateName))
+                {
+                    continue;
+                }
+
+                return fsm;
+            }
+
+            return null;
+        }
+
         private bool ApplyFsmTextBuildStringPartTarget(PlayMakerFSM fsm, FsmTextTarget target)
         {
             HutongGames.PlayMaker.FsmState state = FindState(fsm, target.StateName);
@@ -1525,7 +1884,9 @@ namespace MWC_Localization_Core
             if (parts == null || target.StringPartIndex < 0 || target.StringPartIndex >= parts.Length)
                 return false;
 
-            bool changed = TranslateFsmStringWithOriginalKey(parts[target.StringPartIndex], target.OriginalKey);
+            bool changed = string.IsNullOrEmpty(target.OriginalKey)
+                ? TranslateStringPart(parts[target.StringPartIndex])
+                : TranslateFsmStringWithOriginalKey(parts[target.StringPartIndex], target.OriginalKey);
             if (changed)
             {
                 ApplyBuildStringStoreResultFromParts(action, parts);
@@ -1549,12 +1910,22 @@ namespace MWC_Localization_Core
 
         private bool ApplyFsmTextMeshFromVariableTarget(PlayMakerFSM fsm, FsmTextTarget target)
         {
-            if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(target.VariableName) || string.IsNullOrEmpty(target.TextMeshPath))
+            if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(target.VariableName))
                 return false;
 
             HutongGames.PlayMaker.FsmString variable = fsm.FsmVariables.GetFsmString(target.VariableName);
             if (variable == null || string.IsNullOrEmpty(variable.Value))
                 return false;
+
+            if (string.IsNullOrEmpty(target.TextMeshPath))
+            {
+                TextMesh textMesh = fsm.gameObject != null ? fsm.gameObject.GetComponent<TextMesh>() : null;
+                if (textMesh == null || textMesh.text == variable.Value)
+                    return false;
+
+                textMesh.text = variable.Value;
+                return true;
+            }
 
             return SetTextMeshTextByPath(target.TextMeshPath, variable.Value);
         }
@@ -1589,9 +1960,6 @@ namespace MWC_Localization_Core
                 }
             }
 
-            changed |= TranslateActionFsmStringFieldsWithPattern(
-                action,
-                BuildFsmActionPatternPath(fsm, state.Name, target.ActionIndex));
             changed |= ApplyBuildStringStoreResultFromParts(action, parts);
 
             string combined = BuildCombinedText(parts);
@@ -1630,9 +1998,6 @@ namespace MWC_Localization_Core
                     }
                 }
 
-                changed |= TranslateActionFsmStringFieldsWithPattern(
-                    action,
-                    BuildFsmActionPatternPath(fsm, state.Name, target.ActionIndex));
                 changed |= ApplyBuildStringStoreResultFromParts(action, parts);
                 return changed;
             }
@@ -1644,9 +2009,6 @@ namespace MWC_Localization_Core
             }
 
             changed |= TranslateSetPropertyStringParameter(action);
-            changed |= TranslateActionFsmStringFieldsWithPattern(
-                action,
-                BuildFsmActionPatternPath(fsm, state.Name, target.ActionIndex));
             return changed;
         }
 
@@ -1689,7 +2051,7 @@ namespace MWC_Localization_Core
                 return cachedTextMesh;
             }
 
-            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            GameObject activeObject = FindGameObjectByPathIncludingInactive(objectPath);
             if (activeObject != null)
             {
                 TextMesh activeTextMesh = activeObject.GetComponent<TextMesh>();
@@ -1698,15 +2060,6 @@ namespace MWC_Localization_Core
                     textMeshPathCache[objectPath] = activeTextMesh;
                     return activeTextMesh;
                 }
-            }
-
-            EnsureTextMeshPathCache();
-
-            if (textMeshPathCache.TryGetValue(objectPath, out cachedTextMesh)
-                && cachedTextMesh != null
-                && cachedTextMesh.gameObject != null)
-            {
-                return cachedTextMesh;
             }
 
             return null;
@@ -1818,25 +2171,152 @@ namespace MWC_Localization_Core
             return index > 0 ? first.Substring(0, index) : null;
         }
 
-        private bool ApplyTvScheduleTitlePrefixTranslation(PlayMakerFSM fsm, string translatedPrefix)
+        private bool ApplyTvScheduleTitleTranslation(PlayMakerFSM fsm, string translatedPrefix, Dictionary<string, string> translatedDays)
         {
             HutongGames.PlayMaker.FsmState state = FindState(fsm, "State 11");
             if (state == null || state.Actions == null || state.Actions.Length == 0)
                 return false;
 
-            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(state.Actions[0]);
+            object action = state.Actions[0];
+            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
             if (parts == null || parts.Length == 0 || parts[0] == null)
                 return false;
 
-            string current = parts[0].Value;
-            if (current == translatedPrefix)
+            bool changed = false;
+            for (int i = 0; i < parts.Length; i++)
+            {
+                changed |= TranslateTvScheduleTitlePart(parts[i], translatedPrefix, translatedDays);
+            }
+
+            if (changed)
+            {
+                ApplyBuildStringStoreResultFromParts(action, parts);
+            }
+
+            changed |= TranslateTvScheduleBuildStringStoreResult(action, translatedPrefix, translatedDays);
+            changed |= TranslateTvScheduleTextMesh(fsm != null && fsm.gameObject != null ? fsm.gameObject.GetComponent<TextMesh>() : null, translatedPrefix, translatedDays);
+
+            return changed;
+        }
+
+        private bool TranslateTvScheduleTitlePart(HutongGames.PlayMaker.FsmString part, string translatedPrefix, Dictionary<string, string> translatedDays)
+        {
+            if (part == null || string.IsNullOrEmpty(part.Value))
                 return false;
 
-            if (!TextMatchesExact(current, TvSchedulePrefixOriginal))
+            string translated;
+            if (!TryTranslateTvScheduleTitleText(part.Value, translatedPrefix, translatedDays, out translated) || part.Value == translated)
                 return false;
 
-            parts[0].Value = translatedPrefix;
+            part.Value = translated;
             return true;
+        }
+
+        private bool TranslateTvScheduleBuildStringStoreResult(object action, string translatedPrefix, Dictionary<string, string> translatedDays)
+        {
+            if (action == null)
+                return false;
+
+            FieldInfo storeResultField = GetCachedField(action.GetType(), "storeResult");
+            if (storeResultField == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmString storeResult = storeResultField.GetValue(action) as HutongGames.PlayMaker.FsmString;
+            if (storeResult == null || string.IsNullOrEmpty(storeResult.Value))
+                return false;
+
+            string translated;
+            if (!TryTranslateTvScheduleTitleText(storeResult.Value, translatedPrefix, translatedDays, out translated) || storeResult.Value == translated)
+                return false;
+
+            storeResult.Value = translated;
+            return true;
+        }
+
+        private bool TranslateTvScheduleTitleTextMeshes(string translatedPrefix, Dictionary<string, string> translatedDays)
+        {
+            GameObject root = FindGameObjectByPathIncludingInactive(TvSchedulePathPrefix);
+            if (root == null)
+                return false;
+
+            bool changed = false;
+            TextMesh[] textMeshes = root.GetComponentsInChildren<TextMesh>(true);
+            if (textMeshes == null)
+                return false;
+
+            for (int i = 0; i < textMeshes.Length; i++)
+            {
+                changed |= TranslateTvScheduleTextMesh(textMeshes[i], translatedPrefix, translatedDays);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateTvScheduleTextMesh(TextMesh textMesh, string translatedPrefix, Dictionary<string, string> translatedDays)
+        {
+            if (textMesh == null || string.IsNullOrEmpty(textMesh.text))
+                return false;
+
+            string translated;
+            if (!TryTranslateTvScheduleTitleText(textMesh.text, translatedPrefix, translatedDays, out translated) || textMesh.text == translated)
+                return false;
+
+            textMesh.text = translated;
+            return true;
+        }
+
+        private bool TryTranslateTvScheduleTitleText(string original, string translatedPrefix, Dictionary<string, string> translatedDays, out string translated)
+        {
+            translated = original;
+            if (string.IsNullOrEmpty(original))
+                return false;
+
+            bool changed = false;
+            if (!string.IsNullOrEmpty(translatedPrefix))
+            {
+                translated = ReplaceOrdinalIgnoreCase(translated, TvSchedulePrefixOriginal, translatedPrefix, ref changed);
+            }
+
+            if (translatedDays != null && translatedDays.Count > 0)
+            {
+                for (int i = 0; i < TvScheduleOriginalDays.Length; i++)
+                {
+                    string translatedDay;
+                    if (!translatedDays.TryGetValue(MLCUtils.FormatUpperKey(TvScheduleOriginalDays[i]), out translatedDay)
+                        || string.IsNullOrEmpty(translatedDay))
+                    {
+                        continue;
+                    }
+
+                    translated = ReplaceOrdinalIgnoreCase(translated, TvScheduleOriginalDays[i], translatedDay, ref changed);
+                }
+            }
+
+            return changed;
+        }
+
+        private string ReplaceOrdinalIgnoreCase(string source, string search, string replacement, ref bool changed)
+        {
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(search) || replacement == null)
+                return source;
+
+            int index = source.IndexOf(search, System.StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                return source;
+
+            int start = 0;
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(source.Length);
+            while (index >= 0)
+            {
+                sb.Append(source, start, index - start);
+                sb.Append(replacement);
+                start = index + search.Length;
+                changed = true;
+                index = source.IndexOf(search, start, System.StringComparison.OrdinalIgnoreCase);
+            }
+
+            sb.Append(source, start, source.Length - start);
+            return sb.ToString();
         }
 
         private bool TranslateTvScheduleDaysArrays(Dictionary<string, string> translatedDays)
@@ -1845,12 +2325,9 @@ namespace MWC_Localization_Core
                 return false;
 
             bool changed = false;
+            List<PlayMakerArrayListProxy> allProxies = GetTvScheduleDayProxies();
 
-            PlayMakerArrayListProxy[] allProxies = Resources.FindObjectsOfTypeAll<PlayMakerArrayListProxy>();
-            if (allProxies == null)
-                return false;
-
-            for (int i = 0; i < allProxies.Length; i++)
+            for (int i = 0; i < allProxies.Count; i++)
             {
                 PlayMakerArrayListProxy proxy = allProxies[i];
                 if (proxy == null || proxy.gameObject == null || proxy.referenceName != "Days")
@@ -1865,6 +2342,36 @@ namespace MWC_Localization_Core
             }
 
             return changed;
+        }
+
+        private List<PlayMakerArrayListProxy> GetTvScheduleDayProxies()
+        {
+            bool shouldRescan = cachedTvScheduleDayProxies.Count == 0
+                || (Time.realtimeSinceStartup - lastTvScheduleDayProxyScanTime) >= TvScheduleDayProxyRescanInterval;
+            if (!shouldRescan)
+                return cachedTvScheduleDayProxies;
+
+            lastTvScheduleDayProxyScanTime = Time.realtimeSinceStartup;
+            cachedTvScheduleDayProxies.Clear();
+
+            PlayMakerArrayListProxy[] allProxies = Resources.FindObjectsOfTypeAll<PlayMakerArrayListProxy>();
+            if (allProxies == null)
+                return cachedTvScheduleDayProxies;
+
+            for (int i = 0; i < allProxies.Length; i++)
+            {
+                PlayMakerArrayListProxy proxy = allProxies[i];
+                if (proxy == null || proxy.gameObject == null || proxy.referenceName != "Days")
+                    continue;
+
+                string path = MLCUtils.GetGameObjectPath(proxy.gameObject);
+                if (string.IsNullOrEmpty(path) || !path.StartsWith(TvSchedulePathPrefix, System.StringComparison.Ordinal))
+                    continue;
+
+                cachedTvScheduleDayProxies.Add(proxy);
+            }
+
+            return cachedTvScheduleDayProxies;
         }
 
         private bool TranslateTvScheduleDayArrayList(ArrayList values, Dictionary<string, string> translatedDays)
@@ -1923,40 +2430,17 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGamePosFsmTranslations()
         {
-            bool anyChanged = false;
-            bool hasAnyTarget = false;
-            ApplyStrategyTargets(GamePosTargets, ref anyChanged, ref hasAnyTarget);
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME POS";
-            }
-
-            return anyChanged;
+            return ApplyFsmTextTargets(GamePosTargets);
         }
 
         private bool TryApplyGamePosFsmMappings()
         {
             bool anyChanged = false;
-
-            PlayMakerFSM noOsFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/POS/NoOS", "State 1");
-            if (IsFsmReady(noOsFsm))
-            {
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(noOsFsm, "State 1", 0);
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(noOsFsm, "State 3", 0);
-            }
-
-            PlayMakerFSM statusBarFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/TELEBBS/Software/StatusBar", "State 1");
-            if (IsFsmReady(statusBarFsm))
-            {
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(statusBarFsm, "State 1", 0);
-            }
-
             anyChanged |= ApplyTextMeshTranslationByPath("COMPUTER/SYSTEM/TELEBBS/Software/text");
 
             if (anyChanged)
             {
-                appliedTarget = "GAME POS";
+                appliedTarget = GamePosLabel;
             }
 
             return anyChanged;
@@ -1964,80 +2448,12 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGameTeletextBottomlineFsmTranslations()
         {
-            bool anyChanged = false;
-            bool hasAnyTarget = false;
-            ApplyStrategyTargets(GameTeletextTargets, ref anyChanged, ref hasAnyTarget);
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME Teletext Bottomline";
-            }
-
-            return anyChanged;
+            return ApplyFsmTextTargets(GameTeletextTargets);
         }
 
         private bool TryApplyGameTeletextSportsTemplateTranslations()
         {
-            bool anyChanged = false;
-
-            for (int i = 0; i < GameTeletextSportsTemplateTargets.Length; i++)
-            {
-                BuildStringTemplateTarget target = GameTeletextSportsTemplateTargets[i];
-                if (target == null)
-                    continue;
-
-                PlayMakerFSM fsm = FindFsmIncludingInactiveByPathAndName(target.ObjectPath, target.FsmName);
-                if (!IsFsmReady(fsm))
-                    continue;
-
-                if (ApplyBuildStringTemplateTranslation(fsm, target.StateName, target.ActionIndex, target.OriginalPattern))
-                {
-                    anyChanged = true;
-                    appliedTarget = target.AppliedLabel;
-                }
-            }
-
-            return anyChanged;
-        }
-
-        private bool TryApplyGameTeletextBuildStringPatternTranslations()
-        {
-            bool anyChanged = false;
-            List<PlayMakerFSM> teletextFsms = GetFsmsByPathPrefix("Systems/TV/Teletext");
-
-            for (int i = 0; i < teletextFsms.Count; i++)
-            {
-                PlayMakerFSM fsm = teletextFsms[i];
-                if (!IsFsmReady(fsm) || fsm.FsmStates == null)
-                    continue;
-
-                for (int stateIndex = 0; stateIndex < fsm.FsmStates.Length; stateIndex++)
-                {
-                    HutongGames.PlayMaker.FsmState state = fsm.FsmStates[stateIndex];
-                    if (state == null || state.Actions == null)
-                        continue;
-
-                    for (int actionIndex = 0; actionIndex < state.Actions.Length; actionIndex++)
-                    {
-                        object action = state.Actions[actionIndex];
-                        if (action == null)
-                            continue;
-
-                        string actionTypeName = action.GetType().Name;
-                        if (actionTypeName != "BuildStringFast" && actionTypeName != "BuildString")
-                            continue;
-
-                        anyChanged |= ApplyBuildStringActionPatternTranslationOnly(fsm, state.Name, actionIndex);
-                    }
-                }
-            }
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME Teletext Patterns";
-            }
-
-            return anyChanged;
+            return ApplyFsmTextTargets(GameTeletextSportsTemplateTargets);
         }
 
         private bool TryApplyGameTeletextControlTranslations()
@@ -2062,10 +2478,7 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGameTeletextWeatherUpdaterFsmTranslations()
         {
-            bool anyChanged = false;
-            bool hasAnyTarget = false;
-
-            ApplyStrategyTargets(GameTeletextWeatherTargets, ref anyChanged, ref hasAnyTarget);
+            bool anyChanged = ApplyFsmTextTargets(GameTeletextWeatherTargets);
 
             List<PlayMakerFSM> ennusteDataFsms = GetEnnusteDataFsms();
             for (int i = 0; i < ennusteDataFsms.Count; i++)
@@ -2075,6 +2488,7 @@ namespace MWC_Localization_Core
                     continue;
 
                 LogReadyOnce("TTX_WX_READY", "[FsmTextHook] Teletext weather updater FSM targets are ready.");
+                bool hasAnyTarget = false;
                 ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
             }
 
@@ -2088,51 +2502,12 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGameUnemployPaperFsmTranslations()
         {
-            bool anyChanged = false;
-            bool hasAnyTarget = false;
-
-            ApplyStrategyTargets(GameUnemployPaperTargets, ref anyChanged, ref hasAnyTarget);
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME UnemployPaper";
-            }
-
-            return anyChanged;
+            return ApplyFsmTextTargets(GameUnemployPaperTargets);
         }
 
         private bool TryApplyGameConlineInitializeTranslations()
         {
-            bool anyChanged = false;
-
-            PlayMakerFSM initializeFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/TELEBBS/CONLINE/Initialize", "Wait");
-            if (IsFsmReady(initializeFsm))
-            {
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(initializeFsm, "Wait", 0);
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(initializeFsm, "Too short", 0);
-            }
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME Conline";
-            }
-
-            return anyChanged;
-        }
-
-        private bool TryApplyGameConlineChatFsmTranslations()
-        {
-            bool anyChanged = false;
-            bool hasAnyTarget = false;
-
-            ApplyStrategyTargets(GameConlineTargets, ref anyChanged, ref hasAnyTarget);
-
-            if (anyChanged)
-            {
-                appliedTarget = "GAME Conline Chat";
-            }
-
-            return anyChanged;
+            return ApplyFsmTextTargets(GameConlineTargets);
         }
 
         private bool TryApplyGameConlineTextTranslations()
@@ -2152,282 +2527,17 @@ namespace MWC_Localization_Core
         {
             bool anyChanged = false;
 
-            anyChanged |= TryApplyKaappisFishgameTranslations();
-            anyChanged |= TryApplyKaappisGrilliTranslations();
-            anyChanged |= TryApplyProPilkkiTranslations();
-            anyChanged |= TryApplyKaappisWildvestTranslations();
-            anyChanged |= TryApplyRamiGameTranslations();
+            anyChanged |= ApplyFsmTextTargets(GameFishgameTargets);
+            anyChanged |= ApplyFsmTextTargets(GameProPilkkiTargets);
+            anyChanged |= TranslateArrayListProxyByPathAndIndex("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", 2);
+            anyChanged |= ApplyTextMeshTranslationByPaths(GameComputerTextMeshTargets);
 
             if (anyChanged)
             {
-                appliedTarget = "GAME Computer";
+                appliedTarget = GameComputerLabel;
             }
 
             return anyChanged;
-        }
-
-        private bool TryApplyKaappisFishgameTranslations()
-        {
-            bool anyChanged = false;
-
-            PlayMakerFSM beerCounterFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/Kaappis-Fishgame", "Reset");
-            if (IsFsmReady(beerCounterFsm))
-            {
-                string[] beerStates = new string[]
-                {
-                    "Reset",
-                    "kännikala 6",
-                    "Kalja 1",
-                    "Kalja 2",
-                    "Kalja 3",
-                    "Kalja 4",
-                    "Kalja 5"
-                };
-
-                for (int i = 0; i < beerStates.Length; i++)
-                {
-                    anyChanged |= ApplyStateSetPropertyStringParameterTranslation(beerCounterFsm, beerStates[i], 1);
-                }
-            }
-
-            PlayMakerFSM fishFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/Kaappis-Fishgame", "Peruskala");
-            if (IsFsmReady(fishFsm))
-            {
-                string[] fishStates = new string[]
-                {
-                    "Peruskala",
-                    "Karkasi",
-                    "Ahven",
-                    "Hauki",
-                    "Särki",
-                    "Lahna",
-                    "Kalakukko",
-                    "Sakko",
-                    "Kännikala",
-                    "Erikoiskala",
-                    "UKK",
-                    "Kultakala",
-                    "Rahasäkki",
-                    "Tonnikala",
-                    "Rosvo"
-                };
-
-                for (int i = 0; i < fishStates.Length; i++)
-                {
-                    anyChanged |= ApplyStateSetPropertyStringParameterTranslation(fishFsm, fishStates[i], 0);
-                }
-            }
-
-            PlayMakerFSM menuFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/Kaappis-Fishgame", "Play");
-            if (IsFsmReady(menuFsm))
-            {
-                anyChanged |= ApplyFirstStateSetPropertyStringParameterTranslation(menuFsm, 5);
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(menuFsm, "Play", 2);
-            }
-
-            return anyChanged;
-        }
-
-        private bool TryApplyKaappisGrilliTranslations()
-        {
-            bool anyChanged = false;
-
-            PlayMakerFSM grilliFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/Kaappis-Grilli", "Game over");
-            if (IsFsmReady(grilliFsm))
-            {
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(grilliFsm, "Game over", 0);
-            }
-
-            return anyChanged;
-        }
-
-        private bool TryApplyProPilkkiTranslations()
-        {
-            bool anyChanged = false;
-
-            PlayMakerFSM catchFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", "State 7");
-            if (IsFsmReady(catchFsm))
-            {
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(catchFsm, "State 7", 1);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(catchFsm, "State 8", 1);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(catchFsm, "State 11", 1);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(catchFsm, "State 16", 1);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(catchFsm, "State 21", 1);
-            }
-
-            PlayMakerFSM biggestFishFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/SuurinKala", "State 1");
-            if (IsFsmReady(biggestFishFsm))
-            {
-                anyChanged |= ApplyBuildStringActionStringPartTranslation(biggestFishFsm, "State 1", 5, 0);
-                anyChanged |= ApplyBuildStringActionStringPartTranslation(biggestFishFsm, "State 1", 5, 4);
-            }
-
-            PlayMakerFSM settingsFsm = FindFsmIncludingInactiveByPathAndComponentIndex("COMPUTER/SYSTEM/PROCYON-ProPilkki/Alkuvalikko/Asetukset", 1);
-            if (IsFsmReady(settingsFsm))
-            {
-                anyChanged |= TranslateFsmStringVariableExact(settingsFsm, "Name");
-                anyChanged |= ApplyStateActionFsmStringFieldTranslation(settingsFsm, "State 2", 0, "storeValue");
-            }
-
-            PlayMakerFSM cpuPlayersFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", "State 7");
-            if (!IsFsmReady(cpuPlayersFsm))
-                cpuPlayersFsm = FindFsmIncludingInactiveByPathAndName("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin", "Kilpailijat");
-            if (IsFsmReady(cpuPlayersFsm))
-            {
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(cpuPlayersFsm, "State 7", 0);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(cpuPlayersFsm, "State 8", 0);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(cpuPlayersFsm, "State 11", 0);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(cpuPlayersFsm, "State 16", 0);
-                anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(cpuPlayersFsm, "State 21", 0);
-            }
-
-            PlayMakerFSM resultsFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset", "Grammat");
-            if (IsFsmReady(resultsFsm))
-            {
-                anyChanged |= ApplyBuildStringActionStringPartTranslation(resultsFsm, "Grammat", 3, 1);
-                anyChanged |= ApplyBuildStringActionStringPartTranslation(resultsFsm, "Kalan paino", 2, 1);
-            }
-
-            anyChanged |= TranslateArrayListProxyByPathAndIndex("COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit", 2);
-
-            anyChanged |= ApplyTextMeshTranslationByPaths(
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Alkuvalikko/Asetukset/Nimi",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Osoitin/Nimi",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Ahven",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/FishName",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Kiiski",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Lahna",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Sarki",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Peli/Elementit/Saaliit/Siika",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/Fail/Otsikko",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetKisa/Numerot",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetKisa/Otsikko",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/Otsikko",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/SuurinKala",
-                "COMPUTER/SYSTEM/PROCYON-ProPilkki/Tulokset/TuloksetPelaaja/Yhteispaino");
-
-            return anyChanged;
-        }
-
-        private bool TryApplyKaappisWildvestTranslations()
-        {
-            bool anyChanged = false;
-
-            PlayMakerFSM wildvestFsm = FindFsmIncludingInactiveByPathAndState("COMPUTER/SYSTEM/Kaappis-Wildvest/Mekaanikka", "State 2");
-            if (IsFsmReady(wildvestFsm))
-            {
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(wildvestFsm, "State 2", 0);
-                anyChanged |= ApplyStateSetPropertyStringParameterTranslation(wildvestFsm, "Lose", 0);
-            }
-
-            return anyChanged;
-        }
-
-        private bool TryApplyRamiGameTranslations()
-        {
-            bool anyChanged = false;
-
-            anyChanged |= ApplyTextMeshTranslationByPath("COMPUTER/SYSTEM/RAMI-Simppa&Jokke/Seikailu-Tekstit/Text-Lersman-Antenna");
-            anyChanged |= ApplyTextMeshTranslationByPath("COMPUTER/SYSTEM/RAMI-Simppa&Jokke/ItemsHeld/Item09-WineBottle");
-            anyChanged |= ApplyTextMeshTranslationByPath("COMPUTER/SYSTEM/RAMI-Simppa&Jokke/Seikailu-Tekstit/Text-Lersman-Oven");
-
-            return anyChanged;
-        }
-
-        private void ApplyStrategyTargets(FsmStrategyTarget[] targets, ref bool anyChanged, ref bool hasAnyTarget)
-        {
-            if (targets == null || targets.Length == 0)
-                return;
-
-            for (int i = 0; i < targets.Length; i++)
-            {
-                FsmStrategyTarget target = targets[i];
-                if (target == null)
-                    continue;
-
-                PlayMakerFSM fsm = FindFsmIncludingInactiveByPathAndName(target.ObjectPath, target.FsmName);
-                if (!IsFsmReady(fsm))
-                    continue;
-
-                LogReadyOnce(target.ReadyLogKey, target.ReadyLogMessage);
-
-                ApplyStrategyForTarget(target, fsm, ref anyChanged, ref hasAnyTarget);
-            }
-        }
-
-        private void ApplyStrategyForTarget(FsmStrategyTarget target, PlayMakerFSM fsm, ref bool anyChanged, ref bool hasAnyTarget)
-        {
-            if (target == null || fsm == null)
-                return;
-
-            switch (target.Strategy)
-            {
-                case FsmStrategyType.PosUse:
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "State 1", 0, 0);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "State 3", 0, 2);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "State 4", 0, 1);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "State 5", 0, 1);
-                    hasAnyTarget |= HasAnyState(fsm, PosUseStateNames);
-                    break;
-
-                case FsmStrategyType.PosTyper:
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Error", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Format disk", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Format drive", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Copy disk", 1);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Data error", 1);
-                    anyChanged |= ApplyStateSetFsmStringActionTranslation(fsm, "Write new line 2", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Reset POS 2", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Error 2", 0);
-                    anyChanged |= ApplyStateSetFsmStringActionTranslation(fsm, "Calling...", 0);
-                    anyChanged |= ApplyStateSetFsmStringActionTranslation(fsm, "Waiting...", 0);
-                    anyChanged |= ApplyStateSetFsmStringActionTranslation(fsm, "Calling....", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Wrong number", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Incorrect", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "New baud", 0);
-                    anyChanged |= ApplyStateSetStringValueActionIndexesTranslation(fsm, "Mem error", 1);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "Copyying", 4, 0);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "Remove mem", 3, 0);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "Remove mem 2", 3, 0);
-                    anyChanged |= ApplyStringAddNewLineActionStringPartTranslation(fsm, "Dir list A", 3, 1);
-                    anyChanged |= ApplyStringAddNewLineActionStringPartTranslation(fsm, "Dir list C", 3, 1);
-                    anyChanged |= ApplyExactFsmTranslation(fsm, "Volume in drive A is A");
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "Spezzer", 1, 2);
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, "State 3", 1, 2);
-                    hasAnyTarget |= HasAnyState(fsm, PosTyperCommandStateNames);
-                    break;
-
-                case FsmStrategyType.TeletextBuildStringPattern:
-                    anyChanged |= ApplyBuildStringActionStringPartsTranslation(fsm, target.StateName, target.ActionIndex, true);
-                    hasAnyTarget |= HasState(fsm, target.StateName);
-                    break;
-
-                case FsmStrategyType.TeletextBuildStringSimple:
-                    // Translate only part[0] (e.g. "KLO " -> localized prefix) and leave the
-                    // dynamic time/date parts 1 and 2 untouched.
-                    anyChanged |= ApplyBuildStringActionStringPartTranslation(fsm, target.StateName, target.ActionIndex, 0);
-                    hasAnyTarget |= HasState(fsm, target.StateName);
-                    break;
-
-                case FsmStrategyType.TeletextWeatherUpdaterTokens:
-                    ApplyWeatherUpdaterTokenTranslations(fsm, ref anyChanged, ref hasAnyTarget);
-                    break;
-
-                case FsmStrategyType.UnemployPaperButtonVariables:
-                    anyChanged |= ApplyUnemployPaperButtonVariableTranslations(fsm);
-                    hasAnyTarget = true;
-                    break;
-
-                case FsmStrategyType.ConlineChatStatus:
-                    anyChanged |= ApplyConlineChatStatusTranslations(fsm);
-                    hasAnyTarget = true;
-                    break;
-            }
-
-            if (anyChanged && !string.IsNullOrEmpty(target.AppliedLabel))
-            {
-                appliedTarget = target.AppliedLabel;
-            }
         }
 
         private void LogReadyOnce(string key, string message)
@@ -2473,40 +2583,6 @@ namespace MWC_Localization_Core
             hasAnyTarget |= HasState(fsm, "State 4") || HasState(fsm, "State 6");
         }
 
-        private bool ApplyUnemployPaperButtonVariableTranslations(PlayMakerFSM fsm)
-        {
-            if (fsm == null)
-                return false;
-
-            bool changed = false;
-
-            changed |= TranslateFsmStringVariableExact(fsm, "jobNo");
-            changed |= TranslateFsmStringVariableExact(fsm, "JobNo");
-            changed |= TranslateFsmStringVariableExact(fsm, "jobYes");
-            changed |= TranslateFsmStringVariableExact(fsm, "JobYes");
-
-            return changed;
-        }
-
-        // Translate status strings written into a nested FsmString via setProperty actions
-        // inside the CHAT/Type FSM (Download + Fail states).
-        private bool ApplyConlineChatStatusTranslations(PlayMakerFSM fsm)
-        {
-            if (fsm == null || fsm.FsmStates == null)
-                return false;
-
-            bool changed = false;
-            changed |= ApplyConlineNestedTranslation(fsm, "Download", 1);
-            changed |= ApplyConlineNestedTranslation(fsm, "Fail", 0);
-            changed |= ApplyConlineNestedTranslation(fsm, "Upload", 1);
-            return changed;
-        }
-
-        private bool ApplyConlineNestedTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
-        {
-            return ApplyStateSetPropertyStringParameterTranslation(fsm, stateName, actionIndex);
-        }
-
         private bool TranslateFsmStringVariableExact(PlayMakerFSM fsm, string variableName)
         {
             if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(variableName))
@@ -2517,15 +2593,6 @@ namespace MWC_Localization_Core
                 return false;
 
             return TranslateFsmStringValue(target);
-        }
-
-        private bool TranslateFsmStringVariableWithPattern(PlayMakerFSM fsm, string variableName, string patternPath)
-        {
-            if (fsm == null || fsm.FsmVariables == null || string.IsNullOrEmpty(variableName))
-                return false;
-
-            HutongGames.PlayMaker.FsmString target = fsm.FsmVariables.GetFsmString(variableName);
-            return TranslateFsmStringValueWithPattern(target, patternPath);
         }
 
         private bool TranslateFsmStringValue(HutongGames.PlayMaker.FsmString target)
@@ -2664,20 +2731,6 @@ namespace MWC_Localization_Core
             return null;
         }
 
-        private bool HasAnyState(PlayMakerFSM fsm, string[] stateNames)
-        {
-            if (fsm == null || stateNames == null || stateNames.Length == 0)
-                return false;
-
-            for (int i = 0; i < stateNames.Length; i++)
-            {
-                if (HasState(fsm, stateNames[i]))
-                    return true;
-            }
-
-            return false;
-        }
-
         private PlayMakerFSM FindFsmWithState(GameObject obj, string stateName)
         {
             if (obj == null)
@@ -2739,31 +2792,12 @@ namespace MWC_Localization_Core
                 return cachedFsm;
             }
 
-            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            GameObject activeObject = FindGameObjectByPathIncludingInactive(objectPath);
             PlayMakerFSM activeFsm = FindFsmWithState(activeObject, stateName);
             if (activeFsm != null)
             {
                 fsmPathStateCache[cacheKey] = activeFsm;
                 return activeFsm;
-            }
-
-            EnsureFsmPathCache();
-
-            List<PlayMakerFSM> fsms;
-            if (!fsmsByPathCache.TryGetValue(objectPath, out fsms) || fsms == null)
-                return null;
-
-            for (int i = 0; i < fsms.Count; i++)
-            {
-                PlayMakerFSM fsm = fsms[i];
-                if (fsm == null || fsm.gameObject == null)
-                    continue;
-
-                if (IsFsmReady(fsm) && HasState(fsm, stateName))
-                {
-                    fsmPathStateCache[cacheKey] = fsm;
-                    return fsm;
-                }
             }
 
             return null;
@@ -2784,28 +2818,12 @@ namespace MWC_Localization_Core
                 return cachedFsm;
             }
 
-            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            GameObject activeObject = FindGameObjectByPathIncludingInactive(objectPath);
             PlayMakerFSM activeFsm = FindFsmWithName(activeObject, fsmName);
             if (activeFsm != null)
             {
                 fsmPathNameCache[cacheKey] = activeFsm;
                 return activeFsm;
-            }
-
-            EnsureFsmPathCache();
-
-            List<PlayMakerFSM> fsms;
-            if (!fsmsByPathCache.TryGetValue(objectPath, out fsms) || fsms == null)
-                return null;
-
-            for (int i = 0; i < fsms.Count; i++)
-            {
-                PlayMakerFSM fsm = fsms[i];
-                if (fsm == null || fsm.gameObject == null || fsm.FsmName != fsmName)
-                    continue;
-
-                fsmPathNameCache[cacheKey] = fsm;
-                return fsm;
             }
 
             return null;
@@ -2820,20 +2838,23 @@ namespace MWC_Localization_Core
             if (string.IsNullOrEmpty(pathPrefix) || string.IsNullOrEmpty(fsmName))
                 return;
 
-            EnsureFsmPathCache();
+            GameObject root = FindNearestGameObjectForPathPrefix(pathPrefix);
+            if (root == null)
+                return;
 
-            foreach (KeyValuePair<string, List<PlayMakerFSM>> pair in fsmsByPathCache)
+            PlayMakerFSM[] fsms = root.GetComponentsInChildren<PlayMakerFSM>(true);
+            if (fsms == null)
+                return;
+
+            for (int i = 0; i < fsms.Length; i++)
             {
-                if (string.IsNullOrEmpty(pair.Key) || !pair.Key.StartsWith(pathPrefix) || pair.Value == null)
-                    continue;
-
-                for (int i = 0; i < pair.Value.Count; i++)
+                PlayMakerFSM fsm = fsms[i];
+                if (fsm != null
+                    && fsm.gameObject != null
+                    && fsm.FsmName == fsmName
+                    && IsObjectPathUnderPrefix(fsm.gameObject, pathPrefix))
                 {
-                    PlayMakerFSM fsm = pair.Value[i];
-                    if (fsm != null && fsm.gameObject != null && fsm.FsmName == fsmName)
-                    {
-                        results.Add(fsm);
-                    }
+                    results.Add(fsm);
                 }
             }
         }
@@ -2844,20 +2865,20 @@ namespace MWC_Localization_Core
             if (string.IsNullOrEmpty(pathPrefix))
                 return results;
 
-            EnsureFsmPathCache();
+            GameObject root = FindNearestGameObjectForPathPrefix(pathPrefix);
+            if (root == null)
+                return results;
 
-            foreach (KeyValuePair<string, List<PlayMakerFSM>> pair in fsmsByPathCache)
+            PlayMakerFSM[] fsms = root.GetComponentsInChildren<PlayMakerFSM>(true);
+            if (fsms == null)
+                return results;
+
+            for (int i = 0; i < fsms.Length; i++)
             {
-                if (string.IsNullOrEmpty(pair.Key) || !pair.Key.StartsWith(pathPrefix) || pair.Value == null)
-                    continue;
-
-                for (int i = 0; i < pair.Value.Count; i++)
+                PlayMakerFSM fsm = fsms[i];
+                if (fsm != null && fsm.gameObject != null && IsObjectPathUnderPrefix(fsm.gameObject, pathPrefix))
                 {
-                    PlayMakerFSM fsm = pair.Value[i];
-                    if (fsm != null && fsm.gameObject != null)
-                    {
-                        results.Add(fsm);
-                    }
+                    results.Add(fsm);
                 }
             }
 
@@ -2878,7 +2899,7 @@ namespace MWC_Localization_Core
                 return cachedFsm;
             }
 
-            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            GameObject activeObject = FindGameObjectByPathIncludingInactive(objectPath);
             PlayMakerFSM indexedFsm = GetComponentAtIndex<PlayMakerFSM>(activeObject, componentIndex);
             if (indexedFsm != null)
             {
@@ -2886,17 +2907,7 @@ namespace MWC_Localization_Core
                 return indexedFsm;
             }
 
-            EnsureFsmPathCache();
-
-            List<PlayMakerFSM> fsms;
-            if (!fsmsByPathCache.TryGetValue(objectPath, out fsms) || fsms == null || fsms.Count == 0)
-                return null;
-
-            PlayMakerFSM indexedInactiveFsm = GetComponentAtIndex<PlayMakerFSM>(fsms[0].gameObject, componentIndex);
-            if (indexedInactiveFsm != null)
-                fsmPathComponentCache[cacheKey] = indexedInactiveFsm;
-
-            return indexedInactiveFsm;
+            return null;
         }
 
         private T GetComponentAtIndex<T>(GameObject obj, int componentIndex) where T : Component
@@ -2909,45 +2920,6 @@ namespace MWC_Localization_Core
                 return null;
 
             return components[componentIndex];
-        }
-
-        private void EnsureFsmPathCache()
-        {
-            float now = Time.realtimeSinceStartup;
-            if (fsmPathCacheBuilt && now - lastFsmPathCacheBuildTime < ObjectPathCacheRefreshInterval)
-                return;
-
-            fsmsByPathCache.Clear();
-            fsmPathStateCache.Clear();
-            fsmPathNameCache.Clear();
-            fsmPathComponentCache.Clear();
-
-            PlayMakerFSM[] allFsms = Resources.FindObjectsOfTypeAll<PlayMakerFSM>();
-            if (allFsms != null)
-            {
-                for (int i = 0; i < allFsms.Length; i++)
-                {
-                    PlayMakerFSM fsm = allFsms[i];
-                    if (fsm == null || fsm.gameObject == null)
-                        continue;
-
-                    string path = MLCUtils.GetGameObjectPath(fsm.gameObject);
-                    if (string.IsNullOrEmpty(path))
-                        continue;
-
-                    List<PlayMakerFSM> fsms;
-                    if (!fsmsByPathCache.TryGetValue(path, out fsms))
-                    {
-                        fsms = new List<PlayMakerFSM>();
-                        fsmsByPathCache[path] = fsms;
-                    }
-
-                    fsms.Add(fsm);
-                }
-            }
-
-            fsmPathCacheBuilt = true;
-            lastFsmPathCacheBuildTime = now;
         }
 
         private bool ApplyTextMeshTranslationByPath(string objectPath)
@@ -2963,7 +2935,7 @@ namespace MWC_Localization_Core
                 return TranslateTextMesh(cachedTextMesh);
             }
 
-            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            GameObject activeObject = FindGameObjectByPathIncludingInactive(objectPath);
             if (activeObject != null)
             {
                 TextMesh activeTextMesh = activeObject.GetComponent<TextMesh>();
@@ -2971,15 +2943,6 @@ namespace MWC_Localization_Core
                     textMeshPathCache[objectPath] = activeTextMesh;
 
                 return TranslateTextMesh(activeTextMesh);
-            }
-
-            EnsureTextMeshPathCache();
-
-            if (textMeshPathCache.TryGetValue(objectPath, out cachedTextMesh)
-                && cachedTextMesh != null
-                && cachedTextMesh.gameObject != null)
-            {
-                return TranslateTextMesh(cachedTextMesh);
             }
 
             return false;
@@ -2997,35 +2960,6 @@ namespace MWC_Localization_Core
             }
 
             return changed;
-        }
-
-        private void EnsureTextMeshPathCache()
-        {
-            float now = Time.realtimeSinceStartup;
-            if (textMeshPathCacheBuilt && now - lastTextMeshPathCacheBuildTime < ObjectPathCacheRefreshInterval)
-                return;
-
-            textMeshPathCache.Clear();
-
-            TextMesh[] allTextMeshes = MLCUtils.GetAllTextMeshesIncludingInactive();
-            if (allTextMeshes != null)
-            {
-                for (int i = 0; i < allTextMeshes.Length; i++)
-                {
-                    TextMesh textMesh = allTextMeshes[i];
-                    if (textMesh == null || textMesh.gameObject == null)
-                        continue;
-
-                    string path = MLCUtils.GetGameObjectPath(textMesh.gameObject);
-                    if (string.IsNullOrEmpty(path) || textMeshPathCache.ContainsKey(path))
-                        continue;
-
-                    textMeshPathCache[path] = textMesh;
-                }
-            }
-
-            textMeshPathCacheBuilt = true;
-            lastTextMeshPathCacheBuildTime = now;
         }
 
         private bool TranslateTextMesh(TextMesh textMesh)
@@ -3080,7 +3014,7 @@ namespace MWC_Localization_Core
                 return cachedProxy;
             }
 
-            GameObject activeObject = MLCUtils.FindGameObjectCached(objectPath);
+            GameObject activeObject = FindGameObjectByPathIncludingInactive(objectPath);
             PlayMakerArrayListProxy indexedProxy = GetComponentAtIndex<PlayMakerArrayListProxy>(activeObject, componentIndex);
             if (indexedProxy != null)
             {
@@ -3088,59 +3022,7 @@ namespace MWC_Localization_Core
                 return indexedProxy;
             }
 
-            EnsureArrayListProxyPathCache();
-
-            if (arrayListProxyPathCache.TryGetValue(cacheKey, out cachedProxy)
-                && cachedProxy != null
-                && cachedProxy.gameObject != null)
-            {
-                return cachedProxy;
-            }
-
             return null;
-        }
-
-        private void EnsureArrayListProxyPathCache()
-        {
-            float now = Time.realtimeSinceStartup;
-            if (arrayListProxyPathCacheBuilt && now - lastArrayListProxyPathCacheBuildTime < ObjectPathCacheRefreshInterval)
-                return;
-
-            arrayListProxyPathCache.Clear();
-
-            PlayMakerArrayListProxy[] allProxies = Resources.FindObjectsOfTypeAll<PlayMakerArrayListProxy>();
-            if (allProxies != null)
-            {
-                for (int i = 0; i < allProxies.Length; i++)
-                {
-                    PlayMakerArrayListProxy proxy = allProxies[i];
-                    if (proxy == null || proxy.gameObject == null)
-                        continue;
-
-                    string path = MLCUtils.GetGameObjectPath(proxy.gameObject);
-                    if (string.IsNullOrEmpty(path))
-                        continue;
-
-                    PlayMakerArrayListProxy[] proxies = proxy.gameObject.GetComponents<PlayMakerArrayListProxy>();
-                    if (proxies == null)
-                        continue;
-
-                    for (int componentIndex = 0; componentIndex < proxies.Length; componentIndex++)
-                    {
-                        if (proxies[componentIndex] == null)
-                            continue;
-
-                        string cacheKey = path + "|" + componentIndex.ToString();
-                        if (!arrayListProxyPathCache.ContainsKey(cacheKey))
-                        {
-                            arrayListProxyPathCache[cacheKey] = proxies[componentIndex];
-                        }
-                    }
-                }
-            }
-
-            arrayListProxyPathCacheBuilt = true;
-            lastArrayListProxyPathCacheBuildTime = now;
         }
 
         private bool TranslateArrayListValues(ArrayList arrayList)
@@ -3271,22 +3153,6 @@ namespace MWC_Localization_Core
             return changed;
         }
 
-        private bool ApplyStateSetFsmStringActionTranslation(PlayMakerFSM fsm, string stateName, int actionIndex)
-        {
-            if (fsm == null || fsm.FsmStates == null || string.IsNullOrEmpty(stateName))
-                return false;
-
-            HutongGames.PlayMaker.FsmState targetState = FindState(fsm, stateName);
-            if (targetState == null || targetState.Actions == null || actionIndex < 0 || actionIndex >= targetState.Actions.Length)
-                return false;
-
-            object action = targetState.Actions[actionIndex];
-            if (action == null || action.GetType().Name != "SetFsmString")
-                return false;
-
-            return TranslateActionFsmStringField(action, "setValue");
-        }
-
         private bool ApplyStateActionFsmStringFieldTranslation(PlayMakerFSM fsm, string stateName, int actionIndex, string fieldName)
         {
             if (fsm == null || fsm.FsmStates == null || string.IsNullOrEmpty(stateName) || string.IsNullOrEmpty(fieldName))
@@ -3366,27 +3232,6 @@ namespace MWC_Localization_Core
             }
 
             return changed;
-        }
-
-        private bool ApplyBuildStringActionPatternTranslationOnly(PlayMakerFSM fsm, string stateName, int actionIndex)
-        {
-            if (fsm == null || fsm.FsmStates == null || string.IsNullOrEmpty(stateName))
-                return false;
-
-            HutongGames.PlayMaker.FsmState targetState = FindState(fsm, stateName);
-            if (targetState == null || targetState.Actions == null || actionIndex < 0 || actionIndex >= targetState.Actions.Length)
-                return false;
-
-            object action = targetState.Actions[actionIndex];
-            if (action == null)
-                return false;
-
-            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
-            if (parts == null || parts.Length < 3)
-                return false;
-
-            bool resolved;
-            return ApplyBuildStringPatternTranslationCore(fsm, stateName, actionIndex, parts, false, out resolved);
         }
 
         private bool ApplyBuildStringStoreResultFromParts(object action, HutongGames.PlayMaker.FsmString[] parts)
@@ -3541,58 +3386,6 @@ namespace MWC_Localization_Core
 
             translated = translatedPrefix + remainder;
             return translated != original;
-        }
-
-        private bool ApplyBuildStringActionStringPartsTranslation(PlayMakerFSM fsm, string stateName, int actionIndex, bool allowPatternSplit, params int[] skipPartIndexes)
-        {
-            if (fsm == null || fsm.FsmStates == null)
-                return false;
-
-            HutongGames.PlayMaker.FsmState targetState = null;
-            for (int i = 0; i < fsm.FsmStates.Length; i++)
-            {
-                if (fsm.FsmStates[i] != null && fsm.FsmStates[i].Name == stateName)
-                {
-                    targetState = fsm.FsmStates[i];
-                    break;
-                }
-            }
-
-            if (targetState == null || targetState.Actions == null || actionIndex < 0 || actionIndex >= targetState.Actions.Length)
-                return false;
-
-            object action = targetState.Actions[actionIndex];
-            if (action == null)
-                return false;
-
-            HutongGames.PlayMaker.FsmString[] parts = GetBuildStringParts(action);
-            if (parts == null || parts.Length == 0)
-                return false;
-
-            bool changed = false;
-            bool patternResolved = false;
-            if (allowPatternSplit)
-            {
-                patternResolved = ApplyBuildStringFastPatternTranslation(fsm, stateName, actionIndex, parts);
-                changed = patternResolved;
-            }
-
-            // If the pattern path rewrote parts[0]/parts[2] around parts[1], DON'T then
-            // run per-part translation - it would double-translate the already rewritten
-            // prefix/suffix and corrupt the result. Only fall back to per-part when no
-            // pattern matched.
-            if (!patternResolved)
-            {
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    if (ShouldSkipIndex(i, skipPartIndexes))
-                        continue;
-
-                    changed |= TranslateStringPart(parts[i]);
-                }
-            }
-
-            return changed;
         }
 
         private bool ApplyBuildStringFastPatternTranslation(PlayMakerFSM fsm, string stateName, int actionIndex, HutongGames.PlayMaker.FsmString[] parts)
@@ -3984,64 +3777,6 @@ namespace MWC_Localization_Core
 
             return (char.IsLetter(previous) && char.IsDigit(current))
                 || (char.IsDigit(previous) && char.IsLetter(current));
-        }
-
-        private bool ApplyAllStateSetStringValueTranslation(PlayMakerFSM fsm, params string[] skipStateNames)
-        {
-            if (fsm == null || fsm.FsmStates == null)
-                return false;
-
-            bool changed = false;
-
-            for (int i = 0; i < fsm.FsmStates.Length; i++)
-            {
-                HutongGames.PlayMaker.FsmState state = fsm.FsmStates[i];
-                if (state == null || state.Actions == null)
-                    continue;
-
-                if (ShouldSkipState(state.Name, skipStateNames))
-                    continue;
-
-                for (int j = 0; j < state.Actions.Length; j++)
-                {
-                    HutongGames.PlayMaker.Actions.SetStringValue action = state.Actions[j] as HutongGames.PlayMaker.Actions.SetStringValue;
-                    if (action == null || action.stringValue == null || string.IsNullOrEmpty(action.stringValue.Value))
-                        continue;
-
-                    changed |= TranslateSetStringValue(action);
-                }
-            }
-
-            return changed;
-        }
-
-        private bool ApplyAllStateSetFsmStringTranslation(PlayMakerFSM fsm, params string[] skipStateNames)
-        {
-            if (fsm == null || fsm.FsmStates == null)
-                return false;
-
-            bool changed = false;
-
-            for (int i = 0; i < fsm.FsmStates.Length; i++)
-            {
-                HutongGames.PlayMaker.FsmState state = fsm.FsmStates[i];
-                if (state == null || state.Actions == null)
-                    continue;
-
-                if (ShouldSkipState(state.Name, skipStateNames))
-                    continue;
-
-                for (int j = 0; j < state.Actions.Length; j++)
-                {
-                    object action = state.Actions[j];
-                    if (action == null || action.GetType().Name != "SetFsmString")
-                        continue;
-
-                    changed |= TranslateActionFsmStringField(action, "setValue");
-                }
-            }
-
-            return changed;
         }
 
         private bool TranslateSetStringValue(HutongGames.PlayMaker.Actions.SetStringValue action)
