@@ -44,6 +44,10 @@ namespace MWC_Localization_Core
         private const string TvSchedulePathPrefix = "Systems/TV/TVGraphics/GFXTanaan";
         private const string TvSchedulePrefixOriginal = "ohjelmat ";
         private const string RallyPenaltyPath = "Sheets/RallyResults/PlayerPenalties";
+        private const string AtmMoneyPathPrefix = "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM";
+        private const string AtmTransactionsPathPrefix = "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat";
+        private const string AtmTransactionDescriptionPath = "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite";
+        private const string AtmTransactionDescriptionReference = "Selite";
         private const string ServicePaymentPathPrefix = "Sheets/ServicePayment";
         private const string ServicePaymentLinePathPrefix = "Sheets/ServicePayment/Line";
         private const string ServicePaymentBreakdownReference = "Breakdown";
@@ -708,6 +712,7 @@ namespace MWC_Localization_Core
             if (currentScene == "GAME")
             {
                 bool immediateChanged = ApplyImmediateRallyTranslations();
+                immediateChanged |= ApplyImmediateAtmTransactionTranslations();
                 immediateChanged |= ApplyImmediateMechanicServiceTranslations();
                 if (!force && !ShouldPoll(ref lastGamePollTime, MaintenancePollInterval))
                     return immediateChanged;
@@ -739,6 +744,7 @@ namespace MWC_Localization_Core
             anyChanged |= TryApplyGameTvGraphicsScheduleTranslations();
             anyChanged |= TryApplyGameRallyTemplateTranslations();
             anyChanged |= TryApplyGameTicketTranslations();
+            anyChanged |= TryApplyGameAtmTransactionTranslations();
             anyChanged |= TryApplyGameMechanicServiceTranslations();
             anyChanged |= TryApplyGameTeletextSportsTemplateTranslations();
             anyChanged |= TryApplyGameTeletextBottomlineFsmTranslations();
@@ -852,6 +858,143 @@ namespace MWC_Localization_Core
         private bool TryApplyGameTicketTranslations()
         {
             return ApplyFsmTextTargets(GameTicketTargets);
+        }
+
+        private bool TryApplyGameAtmTransactionTranslations()
+        {
+            bool anyChanged = false;
+            anyChanged |= TranslateAtmTransactionDescriptionArrays();
+            anyChanged |= TranslateAtmTransactionDescriptionFsms();
+
+            if (anyChanged)
+            {
+                appliedTarget = "GAME ATM transactions";
+            }
+
+            return anyChanged;
+        }
+
+        private bool ApplyImmediateAtmTransactionTranslations()
+        {
+            bool anyChanged = false;
+            anyChanged |= TranslateActiveAtmTransactionDescriptionArrays();
+            anyChanged |= TranslateAtmTransactionDescriptionFsms();
+
+            if (anyChanged)
+            {
+                appliedTarget = "GAME ATM transactions";
+            }
+
+            return anyChanged;
+        }
+
+        private bool TranslateActiveAtmTransactionDescriptionArrays()
+        {
+            GameObject moneyAtm = MLCUtils.FindGameObjectCached(AtmMoneyPathPrefix);
+            if (moneyAtm == null)
+                return false;
+
+            PlayMakerArrayListProxy[] proxies = moneyAtm.GetComponentsInChildren<PlayMakerArrayListProxy>(true);
+            if (proxies == null || proxies.Length == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < proxies.Length; i++)
+            {
+                changed |= TranslateAtmTransactionDescriptionProxy(proxies[i], null);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateAtmTransactionDescriptionArrays()
+        {
+            EnsureArrayListProxyPathCache();
+
+            bool changed = false;
+            foreach (KeyValuePair<string, PlayMakerArrayListProxy> pair in arrayListProxyPathCache)
+            {
+                changed |= TranslateAtmTransactionDescriptionProxy(pair.Value, pair.Key);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateAtmTransactionDescriptionProxy(PlayMakerArrayListProxy proxy, string cachePath)
+        {
+            if (proxy == null
+                || proxy.gameObject == null
+                || !string.Equals(proxy.referenceName, AtmTransactionDescriptionReference, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string path = string.IsNullOrEmpty(cachePath) ? MLCUtils.GetGameObjectPath(proxy.gameObject) : cachePath;
+            if (string.IsNullOrEmpty(path) || !path.StartsWith(AtmMoneyPathPrefix, System.StringComparison.Ordinal))
+                return false;
+
+            bool changed = false;
+            changed |= TranslateArrayListValues(proxy._arrayList);
+            changed |= TranslateStringListValues(proxy.preFillStringList);
+            return changed;
+        }
+
+        private bool TranslateAtmTransactionDescriptionFsms()
+        {
+            List<PlayMakerFSM> fsms = GetFsmsByPathPrefix(AtmTransactionDescriptionPath);
+            if (fsms == null || fsms.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (!IsFsmReady(fsm) || fsm.FsmName != "GetData" || fsm.gameObject == null)
+                    continue;
+
+                string path = MLCUtils.GetGameObjectPath(fsm.gameObject);
+                if (string.IsNullOrEmpty(path) || !path.StartsWith(AtmTransactionDescriptionPath, System.StringComparison.Ordinal))
+                    continue;
+
+                changed |= TranslateAtmTransactionDescriptionFsm(fsm);
+            }
+
+            return changed;
+        }
+
+        private bool TranslateAtmTransactionDescriptionFsm(PlayMakerFSM fsm)
+        {
+            if (!IsFsmReady(fsm))
+                return false;
+
+            bool changed = false;
+            changed |= TranslateFsmStringVariableExact(fsm, "Data");
+            changed |= ApplyStateActionFsmStringFieldTranslation(fsm, "State 1", 0, "result");
+            changed |= ApplyStateSetPropertyStringParameterTranslation(fsm, "State 1", 1);
+            changed |= SyncAtmTransactionDescriptionTextMesh(fsm);
+            return changed;
+        }
+
+        private bool SyncAtmTransactionDescriptionTextMesh(PlayMakerFSM fsm)
+        {
+            if (fsm == null || fsm.FsmVariables == null || fsm.gameObject == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmString data = fsm.FsmVariables.GetFsmString("Data");
+            if (data == null || string.IsNullOrEmpty(data.Value))
+                return false;
+
+            TextMesh textMesh = fsm.gameObject.GetComponent<TextMesh>();
+            if (textMesh == null)
+                return false;
+
+            string translated;
+            string nextText = TryTranslateString(data.Value, out translated) ? translated : data.Value;
+            if (string.IsNullOrEmpty(nextText) || textMesh.text == nextText)
+                return false;
+
+            textMesh.text = nextText;
+            return true;
         }
 
         private bool TryApplyGameMechanicServiceTranslations()

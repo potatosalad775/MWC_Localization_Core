@@ -21,6 +21,7 @@ namespace MWC_Localization_Core
             "Sheets/RallyResults",
             "Sheets/ServiceBrochure",
             "Sheets/ServicePayment",
+            "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat",
             "Sheets/RallyRegistration"
         };
 
