@@ -736,7 +736,7 @@ namespace MWC_Localization_Core
 
         private bool ApplyVisibleImmediateRallyTranslations()
         {
-            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults")
+            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults", "Sheets/RallyRegistration/Functions/Class")
                 ? ApplyImmediateRallyTranslations()
                 : false;
         }
@@ -898,7 +898,7 @@ namespace MWC_Localization_Core
 
         private bool TryApplyGameRallyTemplateTranslations()
         {
-            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults")
+            return IsAnyPathActiveInHierarchy(RallyPenaltyPath, "Sheets/RallyResults", "Sheets/RallyRegistration/Functions/Class")
                 ? ApplyFsmTextTargets(GameRallyTargets)
                 : false;
         }
@@ -3342,7 +3342,9 @@ namespace MWC_Localization_Core
 
             return TryTranslateRallyClassSegment(original, out translated)
                 || TryTranslateRallyClassPrefix(original, "Junior", out translated)
-                || TryTranslateRallyClassPrefix(original, "Amateur", out translated);
+                || TryTranslateRallyClassPrefix(original, "Amateur", out translated)
+                || TryTranslateRallyClassNamePrefix(original, "Junior", out translated)
+                || TryTranslateRallyClassNamePrefix(original, "Amateur", out translated);
         }
 
         private bool TryTranslateRallyClassSegment(string original, out string translated)
@@ -3386,6 +3388,57 @@ namespace MWC_Localization_Core
 
             translated = translatedPrefix + remainder;
             return translated != original;
+        }
+
+        private bool TryTranslateRallyClassNamePrefix(string original, string className, out string translated)
+        {
+            translated = null;
+            if (string.IsNullOrEmpty(original) || string.IsNullOrEmpty(className))
+                return false;
+
+            string translatedClassName;
+            if (!TryGetTranslationValue(className, out translatedClassName)
+                || TextMatchesExact(translatedClassName, className))
+            {
+                return false;
+            }
+
+            string leadingWhitespace = GetLeadingWhitespace(original);
+            string core = original.Substring(leadingWhitespace.Length);
+            if (!core.StartsWith(className, System.StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (core.Length > className.Length
+                && char.IsLetterOrDigit(core[className.Length]))
+            {
+                return false;
+            }
+
+            string remainder = core.Substring(className.Length);
+            if (!string.IsNullOrEmpty(remainder) && !HasRallyClassContext(remainder))
+                return false;
+
+            translated = leadingWhitespace + translatedClassName + remainder;
+            return translated != original;
+        }
+
+        private bool HasRallyClassContext(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return true;
+
+            string normalized = MLCUtils.FormatUpperKey(text);
+            if (normalized.IndexOf(MLCUtils.FormatUpperKey("Class"), System.StringComparison.Ordinal) >= 0)
+                return true;
+
+            string translatedClassSegment;
+            if (TryTranslateRallyClassSegment(" - Class", out translatedClassSegment)
+                && normalized.IndexOf(MLCUtils.FormatUpperKey(translatedClassSegment), System.StringComparison.Ordinal) >= 0)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private bool ApplyBuildStringFastPatternTranslation(PlayMakerFSM fsm, string stateName, int actionIndex, HutongGames.PlayMaker.FsmString[] parts)
