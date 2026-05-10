@@ -213,13 +213,17 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day/Time", "Clock", "State 3", 2, "KLO");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day/Time", "Clock", "", -1, "KLO");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "ohjelmat");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "maanantai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "tiistai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "keskiviikko");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "torstai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "perjantai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "ohjelmat");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "ohjelmat");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "lauantai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "sunnuntai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "ohjelmat");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "ohjelmat");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "lauantai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "sunnuntai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Moderator", "Text", "State 11", 1, "Valvojana:");
@@ -456,10 +460,6 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Sheets/ServicePayment/Line", "GetLine", "", -1, "Peltity\u00f6t / sheet metal work");
             AddTargetRule(byKey, "Sheets/ServicePayment/Line", "GetLine", "", -1, "Vinyylikaton poisto / vinyl removal");
             AddTargetRule(byKey, "Sheets/ServicePayment/Line", "GetLine", "", -1, "Mittatilausjouset / Coil spring order");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "lauantai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "sunnuntai");
         }
 
         private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source)
