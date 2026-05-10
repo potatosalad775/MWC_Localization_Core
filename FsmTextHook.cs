@@ -37,6 +37,7 @@ namespace MWC_Localization_Core
         private int pendingTargetIndex;
         private float lastWeatherEnnusteDataFsmScanTime = -1000f;
         private FsmTarget servicePaymentLineTarget;
+        private FsmTarget atmTransactionDescriptionTarget;
         private bool unemployPaperResolved;
 
         private static readonly string[] UnemployPaperGroups = new string[] { "2A", "2B", "2C", "2D" };
@@ -121,6 +122,7 @@ namespace MWC_Localization_Core
                     return false;
 
                 bool runtimeChanged = TryApplyFleetariServicePaymentBreakdownSource();
+                runtimeChanged |= TryApplyAtmTransactionDescriptionSource();
                 runtimeChanged |= ApplyRuntimeDynamicTargets(currentScene, RuntimeDynamicTargetBatchSize);
                 runtimeChanged |= TryApplyGameTeletextWeatherUpdaterDirectTranslations();
                 if (!unemployPaperResolved)
@@ -138,6 +140,7 @@ namespace MWC_Localization_Core
             if (isGame)
             {
                 changed |= TryApplyFleetariServicePaymentBreakdownSource();
+                changed |= TryApplyAtmTransactionDescriptionSource();
                 changed |= TryApplyGameTeletextWeatherUpdaterDirectTranslations();
 
                 bool resolved;
@@ -159,6 +162,7 @@ namespace MWC_Localization_Core
             runtimeDynamicTargets.Clear();
             translationCache.Clear();
             servicePaymentLineTarget = null;
+            atmTransactionDescriptionTarget = null;
 
             Dictionary<string, FsmTarget> byKey = new Dictionary<string, FsmTarget>();
             AddBuiltInTargets(byKey);
@@ -172,6 +176,9 @@ namespace MWC_Localization_Core
 
                 if (IsServicePaymentLineTarget(targets[i]))
                     servicePaymentLineTarget = targets[i];
+
+                if (IsAtmTransactionDescriptionTarget(targets[i]))
+                    atmTransactionDescriptionTarget = targets[i];
             }
         }
 
@@ -321,39 +328,6 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "", -1, "Palkka");
             AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "", -1, "Talletuskorko");
             AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "", -1, "Talletus");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Vuokra");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Jakopalkkio");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Nosto");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Asumistuki");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "PSKPerajarviAutom");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "PSK Pera Autom.");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Ty\u00f6tt\u00f6myystuki");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "TaksiPalkka");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Palkka");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Talletuskorko");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 0, "Talletus");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Vuokra");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Jakopalkkio");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Nosto");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Asumistuki");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "PSKPerajarviAutom");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "PSK Pera Autom.");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Ty\u00f6tt\u00f6myystuki");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "TaksiPalkka");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Palkka");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Talletuskorko");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite", "GetData", "State 1", 1, "Talletus");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Vuokra");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Jakopalkkio");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Nosto");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Asumistuki");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "PSKPerajarviAutom");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "PSK Pera Autom.");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Ty\u00f6tt\u00f6myystuki");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "TaksiPalkka");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Palkka");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Talletuskorko");
-            AddTargetRule(byKey, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", "", "", -1, "Talletus");
             AddTargetRule(byKey, "COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 1", 0, "Starting RS-POS...");
             AddTargetRule(byKey, "COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 3", 0, "HIMEM is testing extended memory...done.");
             AddTargetRule(byKey, "COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 4", 0, "Copyright (C) Royalsoft Corp 1982-1991. All Rights Reserved.");
@@ -1056,6 +1030,51 @@ namespace MWC_Localization_Core
             return changed;
         }
 
+        private bool TryApplyAtmTransactionDescriptionSource()
+        {
+            FsmTarget target = atmTransactionDescriptionTarget;
+            if (target == null)
+                return false;
+
+            GameObject bankAccount = FindGameObjectByPath("Systems/BankAccount");
+            if (bankAccount == null)
+                return false;
+
+            bool changed = false;
+            PlayMakerArrayListProxy[] proxies = bankAccount.GetComponents<PlayMakerArrayListProxy>();
+            for (int i = 0; i < proxies.Length; i++)
+            {
+                PlayMakerArrayListProxy proxy = proxies[i];
+                if (proxy == null || !TextMatchesExact(proxy.referenceName, "Selite"))
+                    continue;
+
+                changed |= TranslateArrayListProxy(proxy, target);
+            }
+
+            if (changed)
+                changed |= SyncAtmTransactionDescriptionLines(target);
+
+            return changed;
+        }
+
+        private bool SyncAtmTransactionDescriptionLines(FsmTarget target)
+        {
+            if (target == null)
+                return false;
+
+            List<PlayMakerFSM> fsms = GetFsmsForWholeTarget(target);
+            if (fsms.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                changed |= SyncIndexedLineFromArrayList(fsms[i], target);
+            }
+
+            return changed;
+        }
+
         private bool TryTranslateTvScheduleTarget(FsmTarget target, out bool handled, out bool resolved)
         {
             handled = false;
@@ -1518,8 +1537,7 @@ namespace MWC_Localization_Core
                 return false;
 
             string path = target.ObjectPath;
-            return path.IndexOf("Tapahtumat/Tapahtumat/Selite", System.StringComparison.OrdinalIgnoreCase) >= 0
-                || path.IndexOf("TVGraphics/GFXTanaan", System.StringComparison.OrdinalIgnoreCase) >= 0
+            return path.IndexOf("TVGraphics/GFXTanaan", System.StringComparison.OrdinalIgnoreCase) >= 0
                 || path.IndexOf("Sheets/RallyResults/PlayerResults", System.StringComparison.OrdinalIgnoreCase) >= 0
                 || path.IndexOf("Sheets/RallyRegistration/Functions/Class", System.StringComparison.OrdinalIgnoreCase) >= 0;
         }
@@ -1529,6 +1547,14 @@ namespace MWC_Localization_Core
             return target != null
                 && TextMatchesExact(target.ObjectPath, "Sheets/ServicePayment/Line")
                 && TextMatchesExact(target.FsmName, "GetLine")
+                && target.WholeFsm;
+        }
+
+        private static bool IsAtmTransactionDescriptionTarget(FsmTarget target)
+        {
+            return target != null
+                && TextMatchesExact(target.ObjectPath, "PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat/Tapahtumat/Selite")
+                && TextMatchesExact(target.FsmName, "GetData")
                 && target.WholeFsm;
         }
 
