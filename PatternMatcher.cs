@@ -30,25 +30,6 @@ namespace MWC_Localization_Core
         {
             patterns.Clear();
             patternSignatures.Clear();
-            InitializeBuiltInPatterns();
-        }
-
-        /// <summary>
-        /// Initialize built-in patterns (can be overridden by config file)
-        /// </summary>
-        private void InitializeBuiltInPatterns()
-        {
-            // Multi-line Computer command text handler
-            var pcScreenPattern = new TranslationPattern(
-                "PCMultiLine",
-                TranslationMode.CustomHandler,
-                "",
-                ""
-            );
-            pcScreenPattern.PathMatcher = path => path.Contains("COMPUTER/SYSTEM/POS/Command");
-            pcScreenPattern.TextMatcher = text => text.Contains("\n");
-            pcScreenPattern.CustomHandler = TranslateMultilineScreen;
-            AddPatternInternal(pcScreenPattern, true);
         }
 
         /// <summary>
@@ -201,53 +182,6 @@ namespace MWC_Localization_Core
             string original = pattern.OriginalPattern ?? string.Empty;
             string translated = pattern.TranslatedTemplate ?? string.Empty;
             return ((int)pattern.Mode).ToString() + "|" + original + "|" + translated;
-        }
-
-        /// <summary>
-        /// Custom handler for multi-line computer screen text
-        /// Splits lines and translates each line individually
-        private TranslationPattern.CustomHandlerResult TranslateMultilineScreen(string text, string path, Dictionary<string, string> translations)
-        {
-            try
-            {
-                string[] lines = text.Split(new string[] { "\n" }, System.StringSplitOptions.None);
-                List<string> translatedLines = new List<string>();
-                bool anyTranslated = false;
-
-                foreach (string line in lines)
-                {
-                    string trimmed = line.Trim();
-                    
-                    if (string.IsNullOrEmpty(trimmed))
-                    {
-                        translatedLines.Add("");  // Preserve empty lines
-                        continue;
-                    }
-
-                    // Try to translate this line
-                    string key = MLCUtils.FormatUpperKey(trimmed);
-                    if (translations.TryGetValue(key, out string translation))
-                    {
-                        translatedLines.Add(translation);
-                        anyTranslated = true;
-                    }
-                    else
-                    {
-                        translatedLines.Add(trimmed);  // Keep original if not found
-                    }
-                }
-
-                if (anyTranslated)
-                {
-                    return new TranslationPattern.CustomHandlerResult(true, string.Join("\n", translatedLines.ToArray()));
-                }
-            }
-            catch (System.Exception ex)
-            {
-                CoreConsole.Warning($"Failed to translate multi-line screen: {ex.Message}");
-            }
-
-            return new TranslationPattern.CustomHandlerResult(false, null);
         }
 
     }
