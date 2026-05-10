@@ -139,6 +139,11 @@ namespace MWC_Localization_Core
             // Apply the font once and stop monitoring - no translation pass would ever succeed here.
             AddPathRule("Systems/TV/TVGraphics/CHAT/Generated", MonitoringStrategy.LateApplyFontOnce);
             AddPathRule("Systems/TV/TVGraphics/CHAT/Day/Time", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Sheets/ServicePayment", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Sheets/RallyRegistration/Functions/Class", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Systems/TV/TVGraphics/GFXTanaanWeek/Text", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Systems/TV/TVGraphics/GFXTanaanSat1/Text", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Systems/TV/TVGraphics/GFXTanaanSun1/Text", MonitoringStrategy.LateApplyFontOnce);
 
             // Magazine / Sheets - persistent monitoring due to dynamic content changes and rebuilds
             AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.Persistent);
