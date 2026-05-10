@@ -143,7 +143,9 @@ namespace MWC_Localization_Core
             AddPathRule("Sheets/RallyRegistration/Functions/Class", MonitoringStrategy.LateApplyFontOnce);
             AddPathRule("Systems/TV/TVGraphics/GFXTanaanWeek/Text", MonitoringStrategy.LateApplyFontOnce);
             AddPathRule("Systems/TV/TVGraphics/GFXTanaanSat1/Text", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Systems/TV/TVGraphics/GFXTanaanSat2/Text", MonitoringStrategy.LateApplyFontOnce);
             AddPathRule("Systems/TV/TVGraphics/GFXTanaanSun1/Text", MonitoringStrategy.LateApplyFontOnce);
+            AddPathRule("Systems/TV/TVGraphics/GFXTanaanSun2/Text", MonitoringStrategy.LateApplyFontOnce);
 
             // Magazine / Sheets - persistent monitoring due to dynamic content changes and rebuilds
             AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.Persistent);
