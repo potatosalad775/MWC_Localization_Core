@@ -473,7 +473,7 @@ namespace MWC_Localization_Core
                 fsmTextHook = new FsmTextHook();
             }
 
-            fsmTextHook.Initialize(translations, GetPatternTranslationFiles());
+            fsmTextHook.Initialize(translations, GetFsmTranslationFiles());
             CoreConsole.Print($"[{Name}] FsmTextHook initialized for scene '{Application.loadedLevelName}'");
         }
 
@@ -490,15 +490,12 @@ namespace MWC_Localization_Core
             }
         }
 
-        private string[] GetPatternTranslationFiles()
+        private string[] GetFsmTranslationFiles()
         {
             string assetsFolder = ModLoader.GetModAssetsFolder(this);
             return new string[]
             {
-                Path.Combine(assetsFolder, "translate_msc.txt"),
-                Path.Combine(assetsFolder, "translate.txt"),
-                Path.Combine(assetsFolder, "translate_mod.txt"),
-                Path.Combine(assetsFolder, "translate_teletext.txt")
+                Path.Combine(assetsFolder, "translate_fsm.txt")
             };
         }
 

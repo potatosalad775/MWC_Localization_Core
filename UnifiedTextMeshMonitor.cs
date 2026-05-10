@@ -143,6 +143,7 @@ namespace MWC_Localization_Core
             // Magazine / Sheets - persistent monitoring due to dynamic content changes and rebuilds
             AddPathRule("Sheets/YellowPagesMagazine/Page1", MonitoringStrategy.Persistent);
             AddPathRule("Sheets/YellowPagesMagazine/Page2", MonitoringStrategy.Persistent);
+            AddPathRule("PERAPORTTI/ActiveFunctions/ATMs/MoneyATM/Screen/Tapahtumat", MonitoringStrategy.Persistent);
 
             // Magazine product list - parent rebuilds children while sheet is open.
             AddPathRule("Sheets/Magazine/Products", MonitoringStrategy.PersistentRebuilding);
