@@ -62,6 +62,7 @@ Systems/TV/TVGraphics/GFXTanaanWeek/Text|Text||-1|torstai = quinta
 Systems/TV/TVGraphics/GFXTanaanWeek/Text|Text||-1|perjantai = sexta
 Systems/TV/TVGraphics/GFXTanaanSat2/Text|Text||-1|lauantai = sábado
 Systems/TV/TVGraphics/GFXTanaanSun2/Text|Text||-1|sunnuntai = domingo
+Systems/TV/TVGraphics/CHAT/Moderator|Text|State 11|1|Valvojana:  = Como supervisor: 
 
 # Rally class sheets
 Sheets/RallyResults/PlayerResults|Data||-1|Junior = Júnior
