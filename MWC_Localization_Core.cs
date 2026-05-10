@@ -23,7 +23,15 @@ namespace MWC_Localization_Core
             "Systems/TV/Teletext/VKTekstiTV/PAGES",
             "Systems/TV/Teletext/VKTekstiTV/HEADER",
             "COMPUTER/SYSTEM/POS",
-            "Sheets/UnemployPaper"
+            "Sheets/UnemployPaper",
+            "Systems/TV/TVGraphics/CHAT",
+            "Sheets/ServicePayment",
+            "Sheets/RallyRegistration/Functions/Class",
+            "Systems/TV/TVGraphics/GFXTanaanWeek/Text",
+            "Systems/TV/TVGraphics/GFXTanaanSat1/Text",
+            "Systems/TV/TVGraphics/GFXTanaanSat2/Text",
+            "Systems/TV/TVGraphics/GFXTanaanSun1/Text",
+            "Systems/TV/TVGraphics/GFXTanaanSun2/Text"
         };
 
         // Core handlers

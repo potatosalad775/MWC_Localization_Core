@@ -211,7 +211,13 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Systems/Teletext", "", "State 1", 4, "stop");
             AddTargetRule(byKey, "Systems/Teletext", "", "State 1", 4, "haku");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day/Time", "Clock", "State 3", 2, "KLO");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day/Time", "Clock", "", -1, "KLO");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "maanantai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "tiistai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "keskiviikko");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "torstai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "perjantai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "lauantai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "sunnuntai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "ohjelmat");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "maanantai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "tiistai");
