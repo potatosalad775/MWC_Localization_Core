@@ -43,19 +43,11 @@ namespace MWC_Localization_Core
 
         private sealed class FsmRule
         {
-            public readonly string ObjectPath;
-            public readonly string FsmName;
-            public readonly string StateName;
-            public readonly int ActionIndex;
             public readonly string Source;
             public readonly string Translation;
 
-            public FsmRule(string objectPath, string fsmName, string stateName, int actionIndex, string source, string translation)
+            public FsmRule(string source, string translation)
             {
-                ObjectPath = objectPath;
-                FsmName = fsmName;
-                StateName = stateName;
-                ActionIndex = actionIndex;
                 Source = source;
                 Translation = translation;
             }
@@ -256,10 +248,14 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 6, "sec.");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 7, "Parc Ferme violation:");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 8, "Jump start violation:");
-            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 4, "DUI. Alc breath test");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 4, "DUI. Alc. breath test");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 4, "Rattijuopumus. Puhelluskokeessa");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 4, "per mille.");
-            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 5, "Rattijuopumus. Puhalluskokeessa");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 4, "promillea.");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 5, "Rattijuopumus. Puhelluskokeessa");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 5, "DUI. Alc. breath test");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 5, "promillea.");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 5, "per mille.");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 2", 6, "Ylinopeus. 80km/h rajoitusalueella");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "100kmh", 4, "Ylinopeus.");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "100kmh", 4, "Ylinopeus. 80km/h rajoitusalueella");
@@ -280,8 +276,8 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "45kmh", 5, "km/h at 80km/h limit zone.");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "45kmh", 6, "Ylinopeus. 80km/h rajoitusalueella");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Calc fine 4", 10, "Ylinopeus. 80km/h rajoitusalueella");
-            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "DUI. Alc breath test");
-            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "Rattijuopumus. Puhalluskokeessa");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "DUI. Alc. breath test");
+            AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "Rattijuopumus. Puhelluskokeessa");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "per mille.");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "promillea.");
             AddTargetRule(byKey, "Sheets/TrafficTicket/TicketData", "Data", "Fetch data", 11, "Speeding.");
@@ -442,8 +438,9 @@ namespace MWC_Localization_Core
                 byKey[key] = target;
             }
 
-            target.Rules.Add(new FsmRule(objectPath, fsmName, stateName, actionIndex, source, translation));
+            target.Rules.Add(new FsmRule(source, translation));
         }
+
         private static string BuildKey(string objectPath, string fsmName, string stateName, int actionIndex)
         {
             return (objectPath ?? string.Empty)
