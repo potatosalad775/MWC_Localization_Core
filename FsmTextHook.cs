@@ -36,6 +36,7 @@ namespace MWC_Localization_Core
         private int runtimeDynamicTargetIndex;
         private int pendingTargetIndex;
         private float lastWeatherEnnusteDataFsmScanTime = -1000f;
+        private FsmTarget servicePaymentLineTarget;
         private bool unemployPaperResolved;
 
         private static readonly string[] UnemployPaperGroups = new string[] { "2A", "2B", "2C", "2D" };
@@ -119,7 +120,8 @@ namespace MWC_Localization_Core
                 if (!isGame || !ShouldPoll(ref lastRuntimeDynamicPollTime, RuntimeDynamicPollInterval))
                     return false;
 
-                bool runtimeChanged = ApplyRuntimeDynamicTargets(currentScene, RuntimeDynamicTargetBatchSize);
+                bool runtimeChanged = TryApplyFleetariServicePaymentBreakdownSource();
+                runtimeChanged |= ApplyRuntimeDynamicTargets(currentScene, RuntimeDynamicTargetBatchSize);
                 runtimeChanged |= TryApplyGameTeletextWeatherUpdaterDirectTranslations();
                 if (!unemployPaperResolved)
                 {
@@ -135,6 +137,7 @@ namespace MWC_Localization_Core
             bool changed = false;
             if (isGame)
             {
+                changed |= TryApplyFleetariServicePaymentBreakdownSource();
                 changed |= TryApplyGameTeletextWeatherUpdaterDirectTranslations();
 
                 bool resolved;
@@ -155,6 +158,7 @@ namespace MWC_Localization_Core
             targets.Clear();
             runtimeDynamicTargets.Clear();
             translationCache.Clear();
+            servicePaymentLineTarget = null;
 
             Dictionary<string, FsmTarget> byKey = new Dictionary<string, FsmTarget>();
             AddBuiltInTargets(byKey);
@@ -165,6 +169,9 @@ namespace MWC_Localization_Core
                 SortRules(targets[i].Rules);
                 if (ShouldRuntimeRefreshTarget(targets[i]))
                     runtimeDynamicTargets.Add(targets[i]);
+
+                if (IsServicePaymentLineTarget(targets[i]))
+                    servicePaymentLineTarget = targets[i];
             }
         }
 
@@ -1018,6 +1025,37 @@ namespace MWC_Localization_Core
             return changed;
         }
 
+        private bool TryApplyFleetariServicePaymentBreakdownSource()
+        {
+            FsmTarget target = servicePaymentLineTarget;
+            if (target == null)
+                return false;
+
+            GameObject orderFleetari = FindGameObjectByPath("REPAIRSHOP/OrderFleetari");
+            if (orderFleetari == null)
+                return false;
+
+            bool changed = false;
+            PlayMakerArrayListProxy[] proxies = orderFleetari.GetComponents<PlayMakerArrayListProxy>();
+            for (int i = 0; i < proxies.Length; i++)
+            {
+                PlayMakerArrayListProxy proxy = proxies[i];
+                if (proxy == null || !TextMatchesExact(proxy.referenceName, "Breakdown"))
+                    continue;
+
+                changed |= TranslateArrayListProxy(proxy, target);
+            }
+
+            if (changed)
+            {
+                bool handled;
+                bool resolved;
+                changed |= TryTranslateIndexedLineTarget(target, out handled, out resolved);
+            }
+
+            return changed;
+        }
+
         private bool TryTranslateTvScheduleTarget(FsmTarget target, out bool handled, out bool resolved)
         {
             handled = false;
@@ -1480,11 +1518,18 @@ namespace MWC_Localization_Core
                 return false;
 
             string path = target.ObjectPath;
-            return path.IndexOf("ServicePayment/Line", System.StringComparison.OrdinalIgnoreCase) >= 0
-                || path.IndexOf("Tapahtumat/Tapahtumat/Selite", System.StringComparison.OrdinalIgnoreCase) >= 0
+            return path.IndexOf("Tapahtumat/Tapahtumat/Selite", System.StringComparison.OrdinalIgnoreCase) >= 0
                 || path.IndexOf("TVGraphics/GFXTanaan", System.StringComparison.OrdinalIgnoreCase) >= 0
                 || path.IndexOf("Sheets/RallyResults/PlayerResults", System.StringComparison.OrdinalIgnoreCase) >= 0
                 || path.IndexOf("Sheets/RallyRegistration/Functions/Class", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsServicePaymentLineTarget(FsmTarget target)
+        {
+            return target != null
+                && TextMatchesExact(target.ObjectPath, "Sheets/ServicePayment/Line")
+                && TextMatchesExact(target.FsmName, "GetLine")
+                && target.WholeFsm;
         }
 
         private static bool IsTargetForScene(FsmTarget target, string currentScene)
