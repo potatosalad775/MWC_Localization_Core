@@ -63,6 +63,7 @@ namespace MWC_Localization_Core
             public readonly string StateName;
             public readonly int ActionIndex;
             public readonly bool WholeFsm;
+            public bool RuntimeDynamic;
             public readonly List<FsmRule> Rules = new List<FsmRule>();
 
             public FsmTarget(string objectPath, string fsmName, string stateName, int actionIndex)
@@ -171,7 +172,7 @@ namespace MWC_Localization_Core
             for (int i = 0; i < targets.Count; i++)
             {
                 SortRules(targets[i].Rules);
-                if (ShouldRuntimeRefreshTarget(targets[i]))
+                if (targets[i].RuntimeDynamic)
                     runtimeDynamicTargets.Add(targets[i]);
 
                 if (IsServicePaymentLineTarget(targets[i]))
@@ -232,27 +233,27 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "perjantai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "lauantai");
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Day", "Text", "State 11", 0, "sunnuntai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "maanantai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "tiistai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "keskiviikko");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "torstai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "perjantai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "lauantai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "sunnuntai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "ohjelmat");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "lauantai");
-            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "sunnuntai");
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "ohjelmat", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "maanantai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "tiistai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "keskiviikko", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "torstai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanWeek/Text", "Text", "", -1, "perjantai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "ohjelmat", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "ohjelmat", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat1/Text", "Text", "", -1, "lauantai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun1/Text", "Text", "", -1, "sunnuntai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "ohjelmat", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "ohjelmat", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSat2/Text", "Text", "", -1, "lauantai", runtimeDynamic: true);
+            AddTargetRule(byKey, "Systems/TV/TVGraphics/GFXTanaanSun2/Text", "Text", "", -1, "sunnuntai", runtimeDynamic: true);
             AddTargetRule(byKey, "Systems/TV/TVGraphics/CHAT/Moderator", "Text", "State 11", 1, "Valvojana:");
-            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "", -1, "Junior");
-            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "", -1, "Amateur");
-            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "", -1, "- Class");
-            AddTargetRule(byKey, "Sheets/RallyRegistration/Functions/Class", "Data", "", -1, "Junior");
-            AddTargetRule(byKey, "Sheets/RallyRegistration/Functions/Class", "Data", "", -1, "Amateur");
-            AddTargetRule(byKey, "Sheets/RallyRegistration/Functions/Class", "Data", "", -1, "- Class");
+            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "", -1, "Junior", runtimeDynamic: true);
+            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "", -1, "Amateur", runtimeDynamic: true);
+            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "", -1, "- Class", runtimeDynamic: true);
+            AddTargetRule(byKey, "Sheets/RallyRegistration/Functions/Class", "Data", "", -1, "Junior", runtimeDynamic: true);
+            AddTargetRule(byKey, "Sheets/RallyRegistration/Functions/Class", "Data", "", -1, "Amateur", runtimeDynamic: true);
+            AddTargetRule(byKey, "Sheets/RallyRegistration/Functions/Class", "Data", "", -1, "- Class", runtimeDynamic: true);
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "", -1, "Time penalty:");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "", -1, "sec.");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "", -1, "Parc Ferme violation:");
@@ -438,7 +439,7 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "Sheets/ServicePayment/Line", "GetLine", "", -1, "Mittatilausjouset / Coil spring order");
         }
 
-        private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source)
+        private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source, bool runtimeDynamic = false)
         {
             if (byKey == null || string.IsNullOrEmpty(objectPath) || string.IsNullOrEmpty(source))
                 return;
@@ -454,6 +455,9 @@ namespace MWC_Localization_Core
                 target = new FsmTarget(objectPath, fsmName, stateName, actionIndex);
                 byKey[key] = target;
             }
+
+            if (runtimeDynamic)
+                target.RuntimeDynamic = true;
 
             target.Rules.Add(new FsmRule(source, translation));
         }
@@ -1518,17 +1522,6 @@ namespace MWC_Localization_Core
                 return;
 
             resolvedTargets.Add(target.Key);
-        }
-
-        private static bool ShouldRuntimeRefreshTarget(FsmTarget target)
-        {
-            if (target == null || string.IsNullOrEmpty(target.ObjectPath))
-                return false;
-
-            string path = target.ObjectPath;
-            return path.IndexOf("TVGraphics/GFXTanaan", System.StringComparison.OrdinalIgnoreCase) >= 0
-                || path.IndexOf("Sheets/RallyResults/PlayerResults", System.StringComparison.OrdinalIgnoreCase) >= 0
-                || path.IndexOf("Sheets/RallyRegistration/Functions/Class", System.StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static bool IsServicePaymentLineTarget(FsmTarget target)
