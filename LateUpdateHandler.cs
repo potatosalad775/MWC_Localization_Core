@@ -65,8 +65,7 @@ namespace MWC_Localization_Core
                 // Throttled array monitoring (teletext, PlayMaker ArrayLists).
                 // Each category still runs once per ARRAY_MONITOR_INTERVAL, but
                 // the work is staggered across four smaller passes.
-                float arrayMonitorStepInterval = LocalizationConstants.ARRAY_MONITOR_INTERVAL / 4f;
-                if (Time.time - lastArrayMonitorStepTime >= arrayMonitorStepInterval)
+                if (Time.time - lastArrayMonitorStepTime >= LocalizationConstants.ARRAY_MONITOR_STEP_INTERVAL)
                 {
                     if (arrayMonitorStep == 0)
                     {

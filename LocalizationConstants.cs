@@ -11,5 +11,6 @@ namespace MWC_Localization_Core
         public const float SLOW_POLLING_INTERVAL = 1.0f;            // Once per second
         public const float VISIBILITY_POLLING_INTERVAL = 0.35f;     // ~3 times per second
         public const float ARRAY_MONITOR_INTERVAL = 2.0f;           // Check arrays every 2 seconds
+        public const float ARRAY_MONITOR_STEP_INTERVAL = ARRAY_MONITOR_INTERVAL / 4f;
     }
 }
