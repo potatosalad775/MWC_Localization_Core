@@ -140,7 +140,6 @@ namespace MWC_Localization_Core
                 changed |= TryApplyFleetariServicePaymentBreakdownSource();
                 changed |= TryApplyAtmTransactionDescriptionSource();
                 changed |= TryApplyTvChatDaySource();
-                changed |= TryApplyRallyClassSources();
                 changed |= TryApplyGameTeletextWeatherUpdaterDirectTranslations();
             }
 
@@ -735,6 +734,14 @@ namespace MWC_Localization_Core
             changed |= TryApplyRallyClassSource(rallyPlayerResultsTarget, "State 1", 5);
             changed |= TryApplyRallyClassSource(rallyRegistrationClassTarget, "State 1", 3);
             return changed;
+        }
+
+        internal bool ApplyRallyClassSourcesForCurrentScene()
+        {
+            if (Application.loadedLevelName != "GAME")
+                return false;
+
+            return TryApplyRallyClassSources();
         }
 
         private bool TryApplyRallyClassSource(FsmTarget target, string stateName, int actionIndex)
@@ -1726,6 +1733,47 @@ namespace MWC_Localization_Core
             resolvedTargets.Clear();
             warnedTargets.Clear();
             initializedFsmIds.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Targeted per-frame repair for rally class labels. This keeps the broad FSM
+    /// hook on its normal cadence while catching the exact frame where the sheet
+    /// rebuilds the visible rally class text.
+    /// </summary>
+    public class RallyClassTextHook : ITranslationSurface
+    {
+        public string Name { get { return "RallyClassTextHook"; } }
+        public SurfaceCadence Cadence { get { return SurfaceCadence.PerFrame; } }
+        public bool IsComplete { get { return false; } }
+
+        private readonly FsmTextHook fsmTextHook;
+
+        public RallyClassTextHook(FsmTextHook fsmTextHook)
+        {
+            this.fsmTextHook = fsmTextHook;
+        }
+
+        public void Initialize(TranslationContext ctx)
+        {
+        }
+
+        public int InitialPass()
+        {
+            return MonitorTick(0f);
+        }
+
+        public int MonitorTick(float deltaTime)
+        {
+            return fsmTextHook != null && fsmTextHook.ApplyRallyClassSourcesForCurrentScene() ? 1 : 0;
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void ClearTranslations()
+        {
         }
     }
 }
