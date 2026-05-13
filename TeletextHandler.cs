@@ -22,6 +22,13 @@ namespace MWC_Localization_Core
     {
         public string Name { get { return "TeletextHandler"; } }
         public SurfaceCadence Cadence { get { return SurfaceCadence.Slow; } }
+        public bool IsComplete { get { return IsStaticArrayMonitoringComplete; } }
+        public bool IsStaticArrayMonitoringComplete { get; private set; }
+
+        // Dynamic TV chat is split into TeletextChatHandler (Medium cadence). This handler
+        // owns the loaded translation data; the chat handler reads it via TryGetChatTranslations.
+        public const string ChatMessagesPath = "Systems/TV/ChatMessages";
+        public const string ChatMessagesCategoryName = "ChatMessages.Messages";
 
         private TranslationDictionary sharedTranslations;
         private string teletextFilePath;
@@ -40,11 +47,13 @@ namespace MWC_Localization_Core
         // Total translations loaded on the most recent LoadTeletextTranslations call.
         private int lastLoadedTranslationCount = 0;
         
-        // GameObject path to category mapping
+        // GameObject path to category mapping.
+        // ChatMessagesPath is registered so the alias setup still applies, but
+        // MonitorAndTranslateArrays skips it — TeletextChatHandler owns the chat tick.
         private Dictionary<string, string> pathPrefixes = new Dictionary<string, string>
         {
             { "Systems/TV/Teletext/VKTekstiTV/Database", "" },  // Use referenceName directly
-            { "Systems/TV/ChatMessages", "ChatMessages" },      // Prefix with "ChatMessages."
+            { ChatMessagesPath, "ChatMessages" },               // Prefix with "ChatMessages."
         };
         
         // Path Prefix Proxy cache
@@ -125,23 +134,46 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
+        /// Exposes the loaded chat-messages translation tables for TeletextChatHandler.
+        /// Returns false if no chat data was loaded from translate_teletext.txt.
+        /// </summary>
+        public bool TryGetChatTranslations(out Dictionary<string, string> exact, out List<string> indexed)
+        {
+            categoryTranslations.TryGetValue(ChatMessagesCategoryName, out exact);
+            indexBasedTranslations.TryGetValue(ChatMessagesCategoryName, out indexed);
+            return exact != null && exact.Count > 0;
+        }
+
+        /// <summary>
         /// Monitor and translate teletext arrays
         /// Returns number of new items translated
         /// </summary>
         public int MonitorAndTranslateArrays()
         {
+            if (IsStaticArrayMonitoringComplete)
+                return 0;
+
             try
             {
                 int totalTranslated = 0;
+                bool allStaticArraysComplete = true;
 
                 foreach (var pathPrefix in pathPrefixes.Keys)
                 {
+                    // Dynamic TV chat is handled by TeletextChatHandler at Medium cadence.
+                    if (pathPrefix == ChatMessagesPath)
+                        continue;
+
                     PlayMakerArrayListProxy[] proxies;
                     if (!proxyCache.ContainsKey(pathPrefix))
                     {
                         // First time accessing this path - cache proxies
                         GameObject dataObject = LocalizationUtils.FindGameObjectCached(pathPrefix);
-                        if (dataObject == null) continue;
+                        if (dataObject == null)
+                        {
+                            allStaticArraysComplete = false;
+                            continue;
+                        }
 
                         proxies = dataObject.GetComponents<PlayMakerArrayListProxy>();
                         proxyCache[pathPrefix] = proxies;
@@ -163,17 +195,15 @@ namespace MWC_Localization_Core
                         // Create unique key for this array
                         string arrayKey = $"{pathPrefix}[{i}]:{refName}";
 
-                        // Try translating only if not already done
+                        // Try translating only if not already done. Chat is excluded above,
+                        // so everything reaching here is static and can be marked done.
                         if (!translatedArrays.Contains(arrayKey))
                         {
                             int translated = TranslateArrayListProxy(proxies[i], categoryName);
 
-                            // Mark as processed
-                            // ... if it doesn't require constant monitoring...
-                            bool isDynamic = categoryName == "ChatMessages.Messages";
-                            // ... or if the array is already populated ...
+                            // Mark as processed if it's already populated, or there are no translations
+                            // available (to avoid repeated checks).
                             bool isPopulated = proxies[i] != null && proxies[i]._arrayList != null && proxies[i]._arrayList.Count > 0;
-                            // ... or if there are no translations available (to avoid repeated checks)
                             bool isTranslationAvailable = categoryTranslations.ContainsKey(categoryName) &&
                                                           categoryTranslations[categoryName].Count > 0;
 
@@ -184,11 +214,17 @@ namespace MWC_Localization_Core
                                     CoreConsole.Print($"[TeletextHandler] Translated '{categoryName}' with {translated} items");
                                     totalTranslated += translated;
                                 }
-                                if (!isDynamic) translatedArrays.Add(arrayKey); // Mark as translated
+                                translatedArrays.Add(arrayKey);
                             }
                         }
+
+                        if (!translatedArrays.Contains(arrayKey))
+                            allStaticArraysComplete = false;
                     }
                 }
+
+                if (allStaticArraysComplete)
+                    IsStaticArrayMonitoringComplete = true;
 
                 return totalTranslated;
             }
@@ -287,6 +323,7 @@ namespace MWC_Localization_Core
         {
             translatedArrays.Clear();
             proxyCache.Clear();
+            IsStaticArrayMonitoringComplete = false;
         }
     }
 }

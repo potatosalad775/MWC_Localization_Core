@@ -11,6 +11,7 @@ namespace MWC_Localization_Core
     {
         public string Name { get { return "GuiTextMonitor"; } }
         public SurfaceCadence Cadence { get { return SurfaceCadence.PerFrame; } }
+        public bool IsComplete { get { return false; } }
 
         private class GuiTextEntry
         {

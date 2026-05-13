@@ -6,8 +6,7 @@ using System.Text;
 namespace MWC_Localization_Core
 {
     /// <summary>
-    /// String normalization, GameObject path/find caching, and inactive-FSM lookup helpers
-    /// used throughout the localization pipeline.
+    /// String normalization and GameObject path/find caching used throughout the localization pipeline.
     /// </summary>
     public static class LocalizationUtils
     {
@@ -40,10 +39,6 @@ namespace MWC_Localization_Core
         private static Dictionary<GameObject, string> pathCache = new Dictionary<GameObject, string>();
         // Cache for expensive GameObject.Find(path) lookups
         private static Dictionary<string, GameObject> gameObjectFindCache = new Dictionary<string, GameObject>();
-        // Scene-local FSM index for inactive lookup helpers (resolved via Resources.FindObjectsOfTypeAll)
-        private static Dictionary<string, PlayMakerFSM> inactiveFsmPathNameCache = new Dictionary<string, PlayMakerFSM>();
-        private static bool fsmIndexBuilt = false;
-        private static float lastFsmIndexBuildTime = -1000f;
 
         // Reusable scratch buffers for path construction. Unity is single-threaded so no locking needed.
         private static Transform[] pathChain = new Transform[32];
@@ -121,95 +116,6 @@ namespace MWC_Localization_Core
         }
 
         /// <summary>
-        /// Find PlayMakerFSM by object path + FSM name, including inactive objects.
-        /// Uses a cache and falls back to Resources.FindObjectsOfTypeAll when needed.
-        /// </summary>
-        public static PlayMakerFSM FindFsmIncludingInactiveByPathAndName(string objectPath, string fsmName)
-        {
-            if (string.IsNullOrEmpty(objectPath) || string.IsNullOrEmpty(fsmName))
-                return null;
-
-            string cacheKey = objectPath + "|" + fsmName;
-
-            EnsureFsmIndexFresh();
-
-            PlayMakerFSM cachedFsm;
-            if (inactiveFsmPathNameCache.TryGetValue(cacheKey, out cachedFsm)
-                && cachedFsm != null
-                && cachedFsm.gameObject != null)
-            {
-                return cachedFsm;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Find PlayMakerFSMs by path prefix + FSM name, including inactive objects.
-        /// Results are written into the provided list to avoid per-call allocations.
-        /// </summary>
-        public static void FindFsmsIncludingInactiveByPathPrefixAndName(string pathPrefix, string fsmName, List<PlayMakerFSM> results)
-        {
-            if (results == null)
-                return;
-
-            results.Clear();
-            if (string.IsNullOrEmpty(pathPrefix) || string.IsNullOrEmpty(fsmName))
-                return;
-
-            EnsureFsmIndexFresh();
-
-            foreach (PlayMakerFSM fsm in inactiveFsmPathNameCache.Values)
-            {
-                if (fsm == null || fsm.gameObject == null)
-                    continue;
-
-                if (fsm.FsmName != fsmName)
-                    continue;
-
-                string path = GetGameObjectPath(fsm.gameObject);
-                if (path.StartsWith(pathPrefix))
-                {
-                    results.Add(fsm);
-                }
-            }
-        }
-
-        private static void EnsureFsmIndexFresh()
-        {
-            float now = Time.realtimeSinceStartup;
-            if (fsmIndexBuilt && now - lastFsmIndexBuildTime < LocalizationConstants.FSM_INDEX_REFRESH_INTERVAL)
-                return;
-
-            RebuildFsmIndex(now);
-        }
-
-        private static void RebuildFsmIndex(float timestamp)
-        {
-            inactiveFsmPathNameCache.Clear();
-            lastFsmIndexBuildTime = timestamp;
-            fsmIndexBuilt = true;
-
-            PlayMakerFSM[] allFsms = Resources.FindObjectsOfTypeAll<PlayMakerFSM>();
-            if (allFsms == null)
-                return;
-
-            for (int i = 0; i < allFsms.Length; i++)
-            {
-                PlayMakerFSM fsm = allFsms[i];
-                if (fsm == null || fsm.gameObject == null || string.IsNullOrEmpty(fsm.FsmName))
-                    continue;
-
-                string path = GetGameObjectPath(fsm.gameObject);
-                string key = path + "|" + fsm.FsmName;
-                if (!inactiveFsmPathNameCache.ContainsKey(key))
-                {
-                    inactiveFsmPathNameCache[key] = fsm;
-                }
-            }
-        }
-
-        /// <summary>
         /// Shared accessor for all TextMeshes including inactive ones.
         /// </summary>
         public static TextMesh[] GetAllTextMeshesIncludingInactive()
@@ -225,13 +131,10 @@ namespace MWC_Localization_Core
         {
             pathCache.Clear();
             gameObjectFindCache.Clear();
-            inactiveFsmPathNameCache.Clear();
-            fsmIndexBuilt = false;
-            lastFsmIndexBuildTime = -1000f;
         }
 
         /// <summary>
-        /// Drop only entries that reference destroyed Unity objects, and reset the scene-scoped FSM index.
+        /// Drop only entries that reference destroyed Unity objects.
         /// Lets stable paths (HUD, indicators) survive a MainMenu->GAME transition cold-start free.
         /// </summary>
         public static void PruneCaches()
@@ -267,11 +170,6 @@ namespace MWC_Localization_Core
                 for (int i = 0; i < staleFindKeys.Count; i++)
                     gameObjectFindCache.Remove(staleFindKeys[i]);
             }
-
-            // FSM index is scene-scoped; force a rebuild on next access.
-            inactiveFsmPathNameCache.Clear();
-            fsmIndexBuilt = false;
-            lastFsmIndexBuildTime = -1000f;
         }
     }
 

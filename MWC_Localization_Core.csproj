@@ -79,6 +79,7 @@
     <Compile Include="TextAdjustment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeletextHandler.cs" />
+    <Compile Include="TeletextChatHandler.cs" />
     <Compile Include="TextMeshTranslator.cs" />
     <Compile Include="TranslationDictionary.cs" />
     <Compile Include="TranslationFileParser.cs" />

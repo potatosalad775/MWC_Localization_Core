@@ -13,6 +13,8 @@ namespace MWC_Localization_Core
     {
         public string Name { get { return "HashTableProxyHandler"; } }
         public SurfaceCadence Cadence { get { return SurfaceCadence.Slow; } }
+        public bool IsComplete { get { return IsMonitoringComplete; } }
+        public bool IsMonitoringComplete { get { return translatedPaths.Count >= targetPaths.Count; } }
 
         private MagazineTextHandler magazineHandler;
         private readonly HashSet<string> targetPaths = new HashSet<string>();

@@ -12,11 +12,11 @@ namespace MWC_Localization_Core
     /// </summary>
     public static class LocalizationConstants
     {
-        public const float ARRAY_MONITOR_INTERVAL = 2.0f;                                  // Check arrays every 2 seconds
+        public const float ARRAY_MONITOR_INTERVAL = 4.0f;                                  // Check arrays every 4 seconds
         public const float ARRAY_MONITOR_STEP_INTERVAL = ARRAY_MONITOR_INTERVAL / 4f;      // Four staggered passes share one full array/proxy monitoring cycle.
-        public const float FSM_SOURCE_POLL_INTERVAL = 0.2f;                                // Check dynamic FSM sources 5 times per second
+        public const float CHAT_MONITOR_INTERVAL = 1.0f;                                   // Check dynamic TV chat messages once per second
+        public const float FSM_SOURCE_POLL_INTERVAL = 5.0f;                                // Check Fleetari/ATM FSM dynamic sources once every 5 seconds
         public const float GUI_MONITOR_RETRY_INTERVAL = 1.0f;                              // Retry missing GUI TextMesh references once per second
-        public const float FSM_INDEX_REFRESH_INTERVAL = 1.0f;                              // Refresh inactive FSM lookup index every 1s
     }
 
     /// <summary>

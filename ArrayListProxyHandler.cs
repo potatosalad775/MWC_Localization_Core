@@ -11,6 +11,12 @@ namespace MWC_Localization_Core
     {
         public string Name { get { return "ArrayListProxyHandler"; } }
         public SurfaceCadence Cadence { get { return SurfaceCadence.Slow; } }
+        public bool IsComplete { get { return IsArrayMonitoringComplete && IsFontMonitoringComplete; } }
+        public bool IsArrayMonitoringComplete { get { return translatedArrays.Count >= arrayPaths.Count; } }
+        public bool IsFontMonitoringComplete
+        {
+            get { return parentSearchPaths != null && completedParentPaths.Count >= parentSearchPaths.Count; }
+        }
 
         // Reference to main translation dictionary (from Plugin)
         private TranslationDictionary mainTranslations;

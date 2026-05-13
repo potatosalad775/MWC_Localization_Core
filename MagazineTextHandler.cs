@@ -15,6 +15,7 @@ namespace MWC_Localization_Core
     {
         public string Name { get { return "MagazineTextHandler"; } }
         public SurfaceCadence Cadence { get { return SurfaceCadence.Slow; } }
+        public bool IsComplete { get { return yellowPagesSourcesResolved; } }
 
         private Dictionary<string, string> magazineTranslations = new Dictionary<string, string>();
         private bool yellowPagesSourcesResolved;

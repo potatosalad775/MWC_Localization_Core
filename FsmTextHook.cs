@@ -14,6 +14,7 @@ namespace MWC_Localization_Core
     {
         public string Name { get { return "FsmTextHook"; } }
         public SurfaceCadence Cadence { get { return SurfaceCadence.Fast; } }
+        public bool IsComplete { get { return false; } }
 
         public int InitialPass()
         {
@@ -50,7 +51,6 @@ namespace MWC_Localization_Core
         private readonly HashSet<string> warnedTargets = new HashSet<string>();
         private readonly HashSet<int> initializedFsmIds = new HashSet<int>();
 
-        private float lastSourcePollTime = -10f;
         private int pendingTargetIndex;
         private FsmTarget servicePaymentLineTarget;
         private FsmTarget atmTransactionDescriptionTarget;
@@ -100,7 +100,6 @@ namespace MWC_Localization_Core
 
         public void ResetRuntimeState()
         {
-            lastSourcePollTime = -10f;
             pendingTargetIndex = 0;
             ClearRuntimeCaches();
         }
@@ -120,23 +119,17 @@ namespace MWC_Localization_Core
             if (!isMainMenu && !isGame)
                 return false;
 
-            // Match the ExtraTranslateSource129 execution model: FSM sources are patched
-            // during explicit scene/reload passes. Runtime calls only touch small dynamic
-            // sources that the game rebuilds after opening a screen.
+            // Runtime polling only handles sources that are known to be rebuilt while
+            // their sheets are open. Other FSM sources are patched by scene/reload passes.
+            // Scheduler (LateUpdateHandler) already paces this surface at FSM_SOURCE_POLL_INTERVAL.
             if (!force)
             {
                 if (!isGame)
                     return false;
 
-                bool immediateChanged = TryApplyRallyClassSources();
-                if (!ShouldPoll(ref lastSourcePollTime, LocalizationConstants.FSM_SOURCE_POLL_INTERVAL))
-                    return immediateChanged;
-
-                bool runtimeChanged = immediateChanged;
+                bool runtimeChanged = false;
                 runtimeChanged |= TryApplyFleetariServicePaymentBreakdownSource();
                 runtimeChanged |= TryApplyAtmTransactionDescriptionSource();
-                runtimeChanged |= TryApplyTvChatDaySource();
-                runtimeChanged |= TryApplyGameTeletextWeatherUpdaterDirectTranslations();
 
                 return runtimeChanged;
             }
@@ -1749,15 +1742,6 @@ namespace MWC_Localization_Core
         private static bool IsTranslatableDirectStringField(string fieldName)
         {
             return fieldName == "stringValue" || fieldName == "text" || fieldName == "m_stringGenerated";
-        }
-
-        private static bool ShouldPoll(ref float lastPollTime, float interval)
-        {
-            if (Time.realtimeSinceStartup - lastPollTime < interval)
-                return false;
-
-            lastPollTime = Time.realtimeSinceStartup;
-            return true;
         }
 
         private void ClearRuntimeCaches()

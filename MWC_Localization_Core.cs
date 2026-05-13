@@ -99,11 +99,15 @@ namespace MWC_Localization_Core
 
             // MagazineTextHandler is both a service (used by other surfaces via ctx.Magazine)
             // and itself a surface, so the same instance appears in both places.
+            // TeletextChatHandler reads chat translation data from TeletextHandler, so it
+            // takes a reference to the shared instance.
+            var teletext = new TeletextHandler();
             surfaces = new List<ITranslationSurface>
             {
                 new GuiTextMonitor(),
                 magazineHandler,
-                new TeletextHandler(),
+                teletext,
+                new TeletextChatHandler(teletext),
                 new ArrayListProxyHandler(),
                 new HashTableProxyHandler(),
                 new FsmTextHook(),
