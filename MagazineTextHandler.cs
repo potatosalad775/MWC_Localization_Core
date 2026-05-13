@@ -19,6 +19,7 @@ namespace MWC_Localization_Core
 
         private Dictionary<string, string> magazineTranslations = new Dictionary<string, string>();
         private bool yellowPagesSourcesResolved;
+        private readonly List<PlayMakerFSM> yellowLineFsmCache = new List<PlayMakerFSM>();
         private string assetsFolder;
 
         public void Initialize(TranslationContext ctx)
@@ -107,6 +108,7 @@ namespace MWC_Localization_Core
         public void ResetRuntimeState()
         {
             yellowPagesSourcesResolved = false;
+            yellowLineFsmCache.Clear();
         }
 
         public int TranslateAllSources()
@@ -192,6 +194,80 @@ namespace MWC_Localization_Core
 
             translated += SyncMagazineYellowLineDisplay(fsm);
             return translated;
+        }
+
+        internal int SyncYellowLineDisplaysForCurrentScene(out bool foundDisplayLine)
+        {
+            foundDisplayLine = false;
+            if (Application.loadedLevelName != "GAME")
+                return 0;
+
+            List<PlayMakerFSM> fsms = GetYellowLineFsms();
+            int changed = 0;
+            for (int i = 0; i < fsms.Count; i++)
+            {
+                if (HasYellowLineDisplayValue(fsms[i]))
+                    foundDisplayLine = true;
+
+                changed += SyncMagazineYellowLineDisplay(fsms[i]);
+            }
+
+            return changed;
+        }
+
+        private List<PlayMakerFSM> GetYellowLineFsms()
+        {
+            if (AreYellowLineFsmsValid())
+                return yellowLineFsmCache;
+
+            yellowLineFsmCache.Clear();
+
+            GameObject root = LocalizationUtils.FindGameObjectCached("Sheets/YellowPagesMagazine");
+            if (root == null)
+                return yellowLineFsmCache;
+
+            PlayMakerFSM[] fsms = root.GetComponentsInChildren<PlayMakerFSM>(true);
+            if (fsms == null || fsms.Length == 0)
+                return yellowLineFsmCache;
+
+            for (int i = 0; i < fsms.Length; i++)
+            {
+                PlayMakerFSM fsm = fsms[i];
+                if (fsm == null || fsm.gameObject == null || FsmUtils.GetFsmName(fsm) != "Generate")
+                    continue;
+
+                string path = LocalizationUtils.GetGameObjectPath(fsm.gameObject);
+                if (string.IsNullOrEmpty(path) || path.IndexOf("/Lines/YellowLine", System.StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+
+                yellowLineFsmCache.Add(fsm);
+            }
+
+            return yellowLineFsmCache;
+        }
+
+        private bool AreYellowLineFsmsValid()
+        {
+            if (yellowLineFsmCache.Count == 0)
+                return false;
+
+            for (int i = 0; i < yellowLineFsmCache.Count; i++)
+            {
+                PlayMakerFSM fsm = yellowLineFsmCache[i];
+                if (fsm == null || fsm.gameObject == null)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool HasYellowLineDisplayValue(PlayMakerFSM fsm)
+        {
+            if (fsm == null || fsm.gameObject == null || fsm.FsmVariables == null)
+                return false;
+
+            HutongGames.PlayMaker.FsmString line = fsm.FsmVariables.GetFsmString("Line");
+            return line != null && !string.IsNullOrEmpty(line.Value);
         }
 
         private int SyncMagazineYellowLineDisplay(PlayMakerFSM fsm)
@@ -349,6 +425,77 @@ namespace MWC_Localization_Core
             }
 
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Per-frame repair pass for Yellow Pages display lines that are rebuilt while the magazine is open.
+    /// Keeps the broader magazine source scan on its normal slow cadence.
+    /// </summary>
+    public class MagazineYellowLineHook : ITranslationSurface
+    {
+        public string Name { get { return "MagazineYellowLineHook"; } }
+        public SurfaceCadence Cadence { get { return SurfaceCadence.PerFrame; } }
+        public bool IsComplete { get { return isComplete; } }
+
+        private readonly MagazineTextHandler magazineHandler;
+        private bool isComplete;
+        private bool hasFoundDisplayLine;
+        private float settleTimer;
+        private const float SettleSeconds = 5.0f;
+
+        public MagazineYellowLineHook(MagazineTextHandler magazineHandler)
+        {
+            this.magazineHandler = magazineHandler;
+        }
+
+        public void Initialize(TranslationContext ctx)
+        {
+        }
+
+        public int InitialPass()
+        {
+            return MonitorTick(0f);
+        }
+
+        public int MonitorTick(float deltaTime)
+        {
+            if (isComplete || magazineHandler == null)
+                return 0;
+
+            bool foundDisplayLine;
+            int changed = magazineHandler.SyncYellowLineDisplaysForCurrentScene(out foundDisplayLine);
+            if (foundDisplayLine)
+                hasFoundDisplayLine = true;
+
+            if (!hasFoundDisplayLine)
+                return changed;
+
+            if (changed > 0)
+            {
+                settleTimer = 0f;
+                return changed;
+            }
+
+            settleTimer += deltaTime > 0f ? deltaTime : 0.02f;
+            if (settleTimer >= SettleSeconds)
+                isComplete = true;
+
+            return changed;
+        }
+
+        public void Reset()
+        {
+            isComplete = false;
+            hasFoundDisplayLine = false;
+            settleTimer = 0f;
+        }
+
+        public void ClearTranslations()
+        {
+            isComplete = false;
+            hasFoundDisplayLine = false;
+            settleTimer = 0f;
         }
     }
 }

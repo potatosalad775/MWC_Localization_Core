@@ -102,15 +102,18 @@ namespace MWC_Localization_Core
             // TeletextChatHandler reads chat translation data from TeletextHandler, so it
             // takes a reference to the shared instance.
             var teletext = new TeletextHandler();
+            var fsmTextHook = new FsmTextHook();
             surfaces = new List<ITranslationSurface>
             {
                 new GuiTextMonitor(),
                 magazineHandler,
+                new MagazineYellowLineHook(magazineHandler),
                 teletext,
                 new TeletextChatHandler(teletext),
                 new ArrayListProxyHandler(),
                 new HashTableProxyHandler(),
-                new FsmTextHook(),
+                fsmTextHook,
+                new RallyClassTextHook(fsmTextHook),
             };
 
             for (int i = 0; i < surfaces.Count; i++)
