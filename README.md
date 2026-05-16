@@ -4,6 +4,9 @@ A MSCLoader plugin system for My Summer Car that enables automatic localization 
 
 See at [NexusMods](https://www.nexusmods.com/mysummercar/mods/197)
 
+> [!NOTE]
+> If you are looking for a My Winter Car version of this plugin, please refer to [here](https://github.com/potatosalad775/MWC_Localization_Core)
+
 ## Quick Start
 
 ### For Language Pack Creators
