@@ -22,9 +22,12 @@ See at [NexusMods](https://www.nexusmods.com/mysummercar/mods/197)
 
 ### For Developers
 
+```powershell
+.\build.ps1                     # Release (default)
+.\build.ps1 -Configuration Debug
 ```
-dotnet build -c Release
-```
+
+See the wiki: [Setting up development environment](https://github.com/potatosalad775/MWC_Localization_Core/wiki/Setting-up-development-environment).
 
 ## Features
 
@@ -260,6 +263,9 @@ Press **F8** in-game to reload all configuration and translation files instantly
 
 ### Building the Plugin
 
-```bash
-dotnet build -c Release
+```powershell
+.\build.ps1                     # Release (default)
+.\build.ps1 -Configuration Debug
 ```
+
+`dotnet build` is **not** supported — the project is a legacy .NET Framework 3.5 csproj. `build.ps1` uses Visual Studio 2022's `MSBuild.exe` and auto-detects your My Winter Car install via the Steam registry + `libraryfolders.vdf`. Full details: [Setting up development environment](https://github.com/potatosalad775/MWC_Localization_Core/wiki/Setting-up-development-environment).
