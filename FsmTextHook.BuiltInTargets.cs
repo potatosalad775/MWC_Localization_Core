@@ -38,16 +38,17 @@ namespace MSC_Localization_Core
 
             // Sheets: Rally results / registration / penalties
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "State 1", 0, "Junior Cup");
+            AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "State 3", 2, "Amateur Cup");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "State 1", 0, " - Class points");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 6, "Time penalty:");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 6, "sec.");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 7, "Parc Ferme violation:");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerPenalties", "Data", "State 1", 8, "Jump start violation:");
             // Rally class name source values (SetStringValue.stringValue) the sheets read back from
-            AddTargetRule(byKey, "RACES/RALLY/ResultsWeekend", "Data", "State 5", 2, "Amateur");
-            AddTargetRule(byKey, "RACES/RALLY/ResultsWeekend", "Data", "State 6", 2, "Junior");
-            AddTargetRule(byKey, "RACES/RALLY/ResultsWeekend", "Data", "State 8", 2, "Amateur");
-            AddTargetRule(byKey, "RACES/RALLY/ResultsWeekend", "Data", "State 9", 2, "Junior");
+            AddTargetRule(byKey, "RALLY/ResultsWeekend", "Data", "State 5", 2, "Amateur");
+            AddTargetRule(byKey, "RALLY/ResultsWeekend", "Data", "State 6", 2, "Junior");
+            AddTargetRule(byKey, "RALLY/ResultsWeekend", "Data", "State 8", 2, "Amateur");
+            AddTargetRule(byKey, "RALLY/ResultsWeekend", "Data", "State 9", 2, "Junior");
             AddTargetRule(byKey, "Sheets/RallyResults/PlayerResults", "Data", "State 2", 5, "Junior");
 
             // Sheets: Traffic Ticket (DUI / speeding fine descriptions)
@@ -75,6 +76,10 @@ namespace MSC_Localization_Core
             AddTargetRule(byKey, "Sheets/EnviroCrime/TicketData", "Data", "Calc fine 5", 8, "litraa lietett\u00e4 kaadettu maastoon.");
             AddTargetRule(byKey, "Sheets/EnviroCrime/TicketData", "Data", "Calc fine 5", 9, "Illegal dumping of waste,");
             AddTargetRule(byKey, "Sheets/EnviroCrime/TicketData", "Data", "Calc fine 5", 9, "litres.");
+
+            // Sheets: Arrest Warrant
+            AddTargetRule(byKey, "Sheets/Arrestwarrant/Texts/Description", "Data", "State 1", 2, "n. 180cm,");
+            AddTargetRule(byKey, "Sheets/Arrestwarrant/Texts/Description", "Data", "State 1", 2, "kg / likainen");
 
             // COMPUTER: POS boot / shell command output
             AddTargetRule(byKey, "YARD/Building/BEDROOM1/COMPUTER/SYSTEM/POS/BootSequence", "Use", "State 1", 0, "Starting RS-POS...");

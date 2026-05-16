@@ -42,11 +42,11 @@ namespace MSC_Localization_Core
             "GUI/Indicators/Gear",
             "GUI/Indicators/Subtitles",
             // Sheets
-            "Sheets/RallyRegistration/Functions/Class",
             "Sheets/ServicePayment",
             "Sheets/TrafficTicket",
-            "Sheets/UnemployPaper",
-            "Sheets/YellowPagesMagazine",
+            "Sheets/RallyResults",
+            "Sheets/Arrestwarrant",
+            "Sheets/EnviroCrime",
             // TV / Teletext
             "Systems/Teletext/VKTekstiTV/PAGES",
             "Systems/Teletext/VKTekstiTV/HEADER",

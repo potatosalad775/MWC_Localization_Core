@@ -25,6 +25,15 @@ THURSDAY = 목요일
 FRIDAY = 금요일
 SATURDAY = 토요일
 SUNDAY = 일요일
+
+maanantai = 월요일
+tiistai = 화요일
+keskiviikko = 수요일
+torstai = 목요일
+perjantai = 금요일
+lauantai = 토요일
+sunnuntai = 일요일
+
 MORTAL = 필멸모드
 THIRST = 갈증
 HUNGER = 허기
@@ -273,6 +282,11 @@ STOP BUS = 버스 정차벨
 PICK STRAWBERRY = 딸기 따기
 DROP STRAWBERRY = 딸기 넣기
 DRINK FROM STASH = 술 더미에서 꺼내 마시기
+PRICE TOTAL: {0} = 총 금액: {0}
+TAKE MONEY {0} = 돈 가져가기: {0}
+PAY POST ORDER {0} = 택배비 납부: {0}
+UNPAID FINES, {0} = 미납부 벌금: {0}
+SCRAP PAYMENT {0} = 고철 판매 수익: {0}
 
 //Shop
 FUEL PUMP {0} MK = 연료 펌프 {0} MK
@@ -431,6 +445,7 @@ LUOKKAKOHTAISET TULOKSET = 클래스 별 결과
 Junior = 주니어
 Amateur = 아마추어
 Junior Cup = 주니어 컵
+Amateur Cup = 아마추어 컵
 - Class points = - 클래스 포인트
 Time penalty: {0} sec. = 시간 패널티: {0}초
 Parc Ferme violation: {0}x = 주정차 영역 이탈: {0}x
@@ -454,10 +469,8 @@ Ylinopeus. {0}km/h 45km/h rajoituksella. = 과속. {0}km/h로 45km/h 제한 구�
 //Ventti (Pigman) 
 YOU LOSE = 졌습니다
 YOU WIN = 이겼습니다
-CURRENT BET 0 MK (CARS) = 현재 배팅액 0 MK (자동차)
-CURRENT BET 0 MK (HOUSE) = 현재 배팅액 0 MK (집)
-ТЕКУЩАЯ СТАВКА: 0 MK (CARS) = 현재 배팅액 0 MK (자동차)
-ТЕКУЩАЯ СТАВКА: 0 MK (HOUSE) = 현재 배팅액 0 MK (집)
+CURRENT BET {0} = 현재 베팅 {0}
+STAND AT {0} = {0}에서 중단
 YOU WON THIS CABIN = 오두막을 얻었습니다
 YOU WON A CAR = 차를 얻었습니다
 YOU LOST THE SATSUMA = 사쓰마를 잃었습니다
@@ -563,6 +576,7 @@ Reckless or dangerous driving, using non-registered motor vehicle, without drivi
 Liikenteen vaarantaminen rekisteröimättömällä moottoriajoneuvolla ilman ajo-oikeutta. = 운행 허가를 받지 않은 미등록 차량 및 난폭 운전
 Vehicle taxation offence. Tax sticker missing. = 자동차세 법령 위반. 차동차세 납부 스티커 미부착.
 Ajoneuvoverorikkomus. Tuulilasin verotarra puuttuu. = 자동차세 법령 위반. 차동차세 납부 스티커 미부착.
+n. 180cm, {0}kg / likainen = 키 약 180cm, 몸무게 {0}kg / 더러움
 
 //Wiring
 AMPLIFIER POWER = 앰프 전원
@@ -1213,7 +1227,6 @@ Suurin kala: = 가장 큰 물고기:
 Sij. Nimi                        g    Määrä = 등수 이름                                          g      수
 Myöhästyit punnituksesta! Tuloksesi mitätöitiin. = 너무 늦었습니다! 당신은 실격되었습니다.
 1. 2. 3. 4. 5. 6. 7. 8. = 1. 2. 3. 4. 5. 6. 7. 8.
-TELEBBS v2.73h RoyalSoft 1992 = TELEBBS v2.73h RoyalSoft 1992
 PICVIEW v0.7 (c) Peter Teffelgren 1993 = PICVIEW v0.7 (c) Peter Teffelgren 1993
 640x480 - 8-bit colour = 640x480 - 8-bit colour
 Open File = 파일 열기
@@ -1221,16 +1234,6 @@ Exit = 나가기
 UNKNOWN ERROR = 알 수 없는 오류
 @ Emmanuelle Kunt Educational Entertainment = @ Emmanuelle Kunt Educational Entertainment
 © Set Put Place Productions = © Set Put Place Productions
-Copying... 0% = 복사 중... 0%
-Data error reading drive A = A드라이브를 읽는 중 오류가 발생했습니다
-Incorrect command. = 잘못된 명령입니다.
-The system cannot find the path specified. = 지정된 경로를 찾을 수 없습니다.
-Formatting... 0% = 포맷 중... 0%
-INCORRECT BAUD SETTING = 잘못된 BAUD 설정입니다
-Not enough memory = 잔액이 부족합니다
-BAUD SETTING CHANGED = BAUD 설정이 변경되었습니다
-CONNECTION CLOSED = 연결이 끊어졌습니다
-COULD NOT CONNECT = 연결할 수 없습니다
 Starting RS-POS... = RS-POS 시작하는 중...
 HIMEM is testing extended memory...done. = HIMEM이 확장 메모리를 확인하는 중...완료.
 Copyright (C) Royalsoft Corp 1982-1991. All Rights Reserved. = Copyright (C) 로얄소프트 Corp 1982-1991. All Rights Reserved.
