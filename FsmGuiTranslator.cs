@@ -278,11 +278,26 @@ namespace MSC_Localization_Core
             TextMesh textMesh = ResolveTargetTextMesh(targetProperty);
             if (textMesh == null) return null;
 
+            // Mirror the host SetProperty's everyFrame flag. When SetProperty is one-shot,
+            // it self-Finishes and the state can transition on FINISHED only if we
+            // Finish() too. When it's per-frame, it never Finishes (and rewrites the
+            // source every frame), so we must stay un-finished to keep OnUpdate firing
+            // and re-translating. Default to one-shot (Finish) if the field is missing
+            // so a renamed PlayMaker field can't silently block FINISHED transitions.
+            bool sourceEveryFrame = false;
+            FieldInfo everyFrameField = FsmUtils.GetField(setPropertyAction.GetType(), "everyFrame");
+            if (everyFrameField != null)
+            {
+                object v = everyFrameField.GetValue(setPropertyAction);
+                if (v is bool b) sourceEveryFrame = b;
+            }
+
             return new TranslateTextMeshAction
             {
                 target = textMesh,
                 translations = translations,
                 label = textMesh.gameObject != null ? textMesh.gameObject.name : "?",
+                finishOnEnter = !sourceEveryFrame,
             };
         }
 
@@ -314,11 +329,13 @@ namespace MSC_Localization_Core
         /// translates the TextMesh's text in place before any subsequent action or
         /// reader sees it.
         ///
-        /// Both OnEnter and OnUpdate translate, and Finish() is deliberately not
-        /// called: if the preceding SetProperty has everyFrame=true (Interaction's
-        /// FSM does), it rewrites Finnish into the TextMesh every frame the state
-        /// is active, so we have to re-translate every frame too. The dict lookup
-        /// is LRU-cached so the per-frame cost is a hash hit plus a TextMesh.text
+        /// Finish behavior mirrors the host SetProperty's everyFrame flag (set by
+        /// BuildInjectionAction). One-shot SetProperty: Finish() in OnEnter so the
+        /// state's FINISHED event can fire and drive the configured transition
+        /// (e.g. Thrist/Pivot:Scale/State 3 -> White). Per-frame SetProperty: skip
+        /// Finish() so OnUpdate keeps re-translating each frame, since SetProperty
+        /// keeps overwriting the TextMesh with the Finnish source. The dict lookup
+        /// is LRU-cached, so the per-frame cost is a hash hit plus a TextMesh.text
         /// assignment.
         /// </summary>
         public class TranslateTextMeshAction : HutongGames.PlayMaker.FsmStateAction
@@ -326,10 +343,12 @@ namespace MSC_Localization_Core
             public TextMesh target;
             public TranslationDictionary translations;
             public string label;
+            public bool finishOnEnter;
 
             public override void OnEnter()
             {
                 TranslateNow();
+                if (finishOnEnter) Finish();
             }
 
             public override void OnUpdate()
