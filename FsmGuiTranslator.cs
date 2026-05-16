@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace MWC_Localization_Core
+namespace MSC_Localization_Core
 {
     /// <summary>
     /// Translates the HUD Interaction and Subtitles meshes by splicing a translation
@@ -55,9 +55,6 @@ namespace MWC_Localization_Core
             new IndicatorTarget("GUI/Indicators/RallyCountdown", "SetText",  "State 1"),
             new IndicatorTarget("GUI/Indicators/Gear",           "SetText",  "State 1"),
             new IndicatorTarget("GUI/Indicators/Subtitles",      "SetText",  "State 3"),
-            new IndicatorTarget("GUI/Indicators/TaxiGUI",        "SetText",  "State 1"),
-            new IndicatorTarget("GUI/HUD/Thrist/Pivot",          "Scale",    "State 2"),
-            new IndicatorTarget("GUI/HUD/Thrist/Pivot",          "Scale",    "State 3"),
         };
 
         private readonly HashSet<string> processedTargets = new HashSet<string>();

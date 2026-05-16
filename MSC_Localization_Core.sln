@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36623.8 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MWC_Localization_Core", "MWC_Localization_Core.csproj", "{83FB4CB2-8D82-D38E-C2AC-05DAAAC6E090}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSC_Localization_Core", "MSC_Localization_Core.csproj", "{83FB4CB2-8D82-D38E-C2AC-05DAAAC6E090}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

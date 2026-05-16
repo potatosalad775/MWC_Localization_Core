@@ -4,11 +4,11 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-namespace MWC_Localization_Core
+namespace MSC_Localization_Core
 {
     /// <summary>
     /// Translates PlayMakerArrayListProxy content that is populated by the SplitTextToArrayList
-    /// FSM action (teletext news + TV chat in vanilla MWC).
+    /// FSM action (teletext news + TV chat in vanilla MSC).
     ///
     /// Strategy:
     ///   1. At InitialPass, walk every PlayMakerFSM on each tracked GameObject. For every
@@ -42,8 +42,7 @@ namespace MWC_Localization_Core
 
         private readonly HashSet<string> targetPaths = new HashSet<string>
         {
-            "Systems/TV/Teletext/VKTekstiTV/Database",
-            "Systems/TV/ChatMessages",
+            "Systems/Teletext/VKTekstiTV/Database",
         };
 
         private readonly HashSet<string> processedPaths = new HashSet<string>();

@@ -1,4 +1,4 @@
-# My Winter Car - Localization Configuration
+# My Summer Car - Localization Configuration
 # This file configures language-specific settings for the localization plugin
 
 # Language metadata
@@ -42,32 +42,16 @@ BLUEHIGD = D2Coding
 [POSITION_ADJUSTMENTS]
 ## HUD labels
 Contains(GUI/HUD/) & EndsWith(/HUDLabel) = 0,-0.05,0
-## Money ATM screen (excluding row elements)
-Contains(PERAPORTTI/ATMs/MoneyATM/Screen) & !Contains(/Row) & EndsWith(/Text) = 0,0.25,0
-## Fuel ATM screen header
-Contains(PERAPORTTI/ATMs/FuelATM/Screen) & !Contains(/Row) & EndsWith(/Text) = 0,0.45,0
-## Fuel ATM screen rows
-Contains(PERAPORTTI/ATMs/FuelATM/Screen) & Contains(/Row) & EndsWith(/Text) = 0,-0.25,0
-## Teletext TV
-Contains(Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Ennuste/Temp) & EndsWith(/Short) = 1,-0.2,0
-Contains(Systems/TV/Teletext/VKTekstiTV/PAGES/188/Texts/Updater/Nyt) & EndsWith(/Short) = -1,0,0
-## TV Chat
-Contains(Systems/TV/TVGraphics/CHAT/Generated/Lines) = 0,0,0,,,0.07
 ## Options
 Contains(Systems/OptionsMenu) & Contains(/GUITextlabel) = 0,0,0,0.07
 Contains(Systems/OptionsMenu) & Contains(/GUITextLabel) = 0,0,0,0.07
 Contains(Systems/OptionsMenu) & Contains(/GUITextHeader) = 0,0,0,0.08
+## Parts Magazine
+Contains(Sheets/Magazine/List) = 0,0,0,0.002
 ## Fleetari Service Payment Sheet
 Contains(Sheets/ServicePayment) & EndsWith(ServicePayment/Text) = 0,-0.01,0,0.005
 Contains(Sheets/ServicePayment) & EndsWith(ServicePayment/Text/Text) = 0,0.01,0
 Contains(Sheets/ServicePayment/Line) = 0,0.002,0
-## Unemployment Sheet
-Contains(Sheets/UnemployPaper/2) = -0.01,0,0
-Contains(Sheets/UnemployCancelPaper/EN) = 0,0,0,,1.1
-Contains(Sheets/UnemployCancelPaper/FI) = 0,0,0,,1.1
-GameObjectEquals(Sheets/UnemployCancelPaper/CheatedDays) = -0.07,0.005,0
-GameObjectEquals(Sheets/UnemployCancelPaper/CheatedDays/CheatedCost) = 0.02,-0.005,0
-GameObjectEquals(Sheets/UnemployCancelPaper/CheatedDays/PayButton) = 0.07,-0.005,0
 ## Computer
 Contains(COMPUTER/SYSTEM/POS/) & EndsWith(/BIOS) = 0,0,0,2,
 Contains(COMPUTER/SYSTEM/POS/) & EndsWith(/Text) = 0,0,0,2,

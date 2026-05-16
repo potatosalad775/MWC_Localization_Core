@@ -1,8 +1,8 @@
-# MWC Localization Core
+# MSC Localization Core
 
-A MSCLoader plugin system for My Winter Car that enables automatic localization without code modifications.
+A MSCLoader plugin system for My Summer Car that enables automatic localization without code modifications.
 
-See at [NexusMods](https://www.nexusmods.com/mywintercar/mods/197)
+See at [NexusMods](https://www.nexusmods.com/mysummercar/mods/197)
 
 ## Quick Start
 
@@ -12,8 +12,6 @@ See at [NexusMods](https://www.nexusmods.com/mywintercar/mods/197)
 2. **Edit `l10n_assets/config.txt`** with your language settings
 3. **Update translation files**:
    - `translate.txt` - Main UI text
-   - `translate_msc.txt (optional)` - previous My Summer Car text
-   - `translate_magazine.txt` - Classified Magazine keywords and price/phone format label
    - `translate_teletext.txt` - TV/Teletext content
    - `translate_mod.txt (optional)` - Mod content
 4. **(Optional)** Create custom fonts in `fonts.unity3d`
@@ -43,12 +41,10 @@ BepInEx/plugins/dist/
 ├── l10n_assets/
 │   ├── config.txt                  # Language configuration
 │   ├── translate.txt               # Main UI translations
-│   ├── translate_magazine.txt      # Yellow Pages keywords and price/phone format label
 │   ├── translate_teletext.txt      # TV/Teletext content translations
-│   ├── translate_msc.txt           # Optional: My Summer Car compatibility
 │   ├── translate_mod.txt           # Optional: Mod content translations
 │   └── fonts.unity3d               # Optional: Custom font asset bundle
-└── MWC_Localization_Core.dll       # Core plugin module
+└── MSC_Localization_Core.dll       # Core plugin module
 ```
 
 ## Configuration (config.txt)
@@ -83,7 +79,7 @@ Font assets must exist in `fonts.unity3d` with matching names (right side values
 
 ### translate.txt - Main UI Translations
 
-Main translation file that covers My Winter Car lines.
+Main translation file that covers My Summer Car lines.
 
 ```
 # Comments use #
@@ -95,27 +91,8 @@ MONDAY = 월요일
 WITHDRAWAL = 출금
 
 # Multiline support (Use \n)
-Welcome to My Winter Car = 마이 윈터 카에\n오신 것을 환영합니다
+Welcome to My Summer Car = 마이 윈터 카에\n오신 것을 환영합니다
 ```
-
-### translate_magazine.txt - Classified Magazine Format
-
-This file keeps legacy Yellow Pages keyword translations plus the phone-label syntax for the price line format. The entries are loaded into the shared translation dictionary; generalized ArrayList/HashTable/FSM paths apply them at runtime.
-
-```
-# Magazine abbreviations (comma-separated)
-headlgh.l = 좌.전조등
-headgskt. = 헤.가스켓
-supp.arm = 서스.암
-
-# Phone label for price lines
-# Used in lines like "h.149,- puh.123456" -> "149 MK, ${PHONE} - (08)123456"
-PHONE = 전화
-```
-
-The loader derives the FSM `BuildString` pieces from this entry:
-- `h.` becomes empty
-- `,- puh.` becomes ` MK, ${PHONE} - `
 
 ### translate_teletext.txt - TV/Teletext Content
 
@@ -159,12 +136,6 @@ Headline here
 - `kulttuuri` - Culture
 
 Please note that few TV lines might not 'look translated' due to the reason mentioned above.
-
-### translate_msc.txt - My Summer Car Compatibility (Optional)
-
-You can reuse translation files from My Summer Car as a base. Many UI texts are shared between games.
-
-Contents from `translate.txt` (MWC-specific) will override `translate_msc.txt` entries.
 
 ## Text Adjustments (Optional)
 
@@ -238,7 +209,7 @@ A few sheets (e.g. `Sheets/Magazine/Products`) can have their transform rewritte
 For languages requiring special font support (better readability, special characters, etc.):
 
 1. **Prepare fonts** - TrueType (.ttf) or OpenType (.otf)
-2. **Create Unity assets** - Use Unity 5.0.0f4 (same version as My Winter Car)
+2. **Create Unity assets** - Use Unity 5.0.0f4 (same version as My Summer Car)
 3. **Build AssetBundle** - Name it `fonts.unity3d`
 4. **Match names** - Font asset names must match `config.txt` [FONTS] section values
 5. **Place in l10n_assets** - Put `fonts.unity3d` alongside other translation files

@@ -1,10 +1,10 @@
 using MSCLoader;
 using System;
 
-namespace MWC_Localization_Core
+namespace MSC_Localization_Core
 {
     /// <summary>
-    /// Core console utilities for MWC Localization Core mod
+    /// Core console utilities for MSC Localization Core mod
     /// </summary>
     public static class CoreConsole
     {
@@ -25,7 +25,7 @@ namespace MWC_Localization_Core
         public static void Print(string message)
         {
             if (getShowDebugLogs == null || getShowDebugLogs())
-                ModConsole.Print("[MWC_LC] " + message);
+                ModConsole.Print("[MSC_LC] " + message);
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace MWC_Localization_Core
         public static void Warning(string message)
         {
             if (getShowWarningLogs == null || getShowWarningLogs())
-                ModConsole.Warning("[MWC_LC] " + message);
+                ModConsole.Warning("[MSC_LC] " + message);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace MWC_Localization_Core
         public static void Error(string message)
         {
             if (getShowWarningLogs == null || getShowWarningLogs())
-                ModConsole.Error("[MWC_LC] " + message);
+                ModConsole.Error("[MSC_LC] " + message);
         }
     }
 }

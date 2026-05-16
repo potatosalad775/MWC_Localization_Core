@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MWC_Localization_Core
+namespace MSC_Localization_Core
 {
     /// <summary>
     /// Defines which translation method to use.

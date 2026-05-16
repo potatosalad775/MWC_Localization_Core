@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
-namespace MWC_Localization_Core
+namespace MSC_Localization_Core
 {
     /// <summary>
     /// Centralized timing constants for the localization system.
@@ -34,14 +34,13 @@ namespace MWC_Localization_Core
         public static readonly string[] ForcedFontPathPrefixes = new string[]
         {
             // Computer
-            "COMPUTER/SYSTEM/POS",
+            "YARD/Building/BEDROOM1/COMPUTER/SYSTEM/POS",
             // GUI
             "GUI/Indicators/Partname",
             "GUI/Indicators/Interaction",
             "GUI/Indicators/RallyCountdown",
             "GUI/Indicators/Gear",
             "GUI/Indicators/Subtitles",
-            "GUI/Indicators/TaxiGUI",  
             // Sheets
             "Sheets/RallyRegistration/Functions/Class",
             "Sheets/ServicePayment",
@@ -49,14 +48,8 @@ namespace MWC_Localization_Core
             "Sheets/UnemployPaper",
             "Sheets/YellowPagesMagazine",
             // TV / Teletext
-            "Systems/TV/TVGraphics/CHAT",
-            "Systems/TV/TVGraphics/GFXTanaanWeek/Text",
-            "Systems/TV/TVGraphics/GFXTanaanSat1/Text",
-            "Systems/TV/TVGraphics/GFXTanaanSat2/Text",
-            "Systems/TV/TVGraphics/GFXTanaanSun1/Text",
-            "Systems/TV/TVGraphics/GFXTanaanSun2/Text",
-            "Systems/TV/Teletext/VKTekstiTV/PAGES",
-            "Systems/TV/Teletext/VKTekstiTV/HEADER",
+            "Systems/Teletext/VKTekstiTV/PAGES",
+            "Systems/Teletext/VKTekstiTV/HEADER",
         };
 
         public static bool IsForcedFontPath(string path)

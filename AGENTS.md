@@ -4,7 +4,7 @@ This file provides guidance to AI agents when working with code in this reposito
 
 ## Project
 
-MSCLoader mod for **My Winter Car** (Unity 5.0.0f4 + PlayMaker FSM). Acts as a generic localization framework — community language packs ship the `.txt` files and `fonts.unity3d` under `Mods/Assets/MWC_Localization_Core/`, this DLL applies them.
+MSCLoader mod for **My Summer Car** (Unity 5.0.0f4 + PlayMaker FSM). Acts as a generic localization framework — community language packs ship the `.txt` files and `fonts.unity3d` under `Mods/Assets/MSC_Localization_Core/`, this DLL applies them.
 
 End-user docs (translation file formats, position adjustment syntax, F8 reload workflow) live in [README.md](README.md). This file covers the runtime architecture and the moving parts that aren't obvious from the file tree.
 
@@ -15,24 +15,24 @@ dotnet build -c Release
 ```
 
 - Target framework: **.NET 3.5 / Unity Full v3.5** with `LangVersion 13` (newer C# syntax compiles down — but no BCL APIs added after .NET 3.5).
-- Assembly references in [MWC_Localization_Core.csproj](MWC_Localization_Core.csproj) are **hard-coded to `D:\SteamLibrary\steamapps\common\My Winter Car\mywintercar_Data\Managed\*.dll`**. Update the `<HintPath>` entries if the game lives elsewhere; the build fails otherwise.
-- The `PostBuildEvent` block copies the resulting DLL/PDB into the game's `Mods` folder (and optionally `MSCMODSFOLDER` / `MWCMODSFOLDER` if those MSBuild properties are set). It also invokes `debug.bat` in that folder when present — that's MSCLoader's auto-debug hook. Releases skip the PDB and the debug.bat call.
+- Assembly references in [MSC_Localization_Core.csproj](MSC_Localization_Core.csproj) are **hard-coded to `D:\SteamLibrary\steamapps\common\My Summer Car\mysummercar_Data\Managed\*.dll`**. Update the `<HintPath>` entries if the game lives elsewhere; the build fails otherwise.
+- The `PostBuildEvent` block copies the resulting DLL/PDB into the game's `Mods` folder (and optionally `MSCMODSFOLDER` / `MSCMODSFOLDER` if those MSBuild properties are set). It also invokes `debug.bat` in that folder when present — that's MSCLoader's auto-debug hook. Releases skip the PDB and the debug.bat call.
 - No tests, no lint. CI is GitHub Actions only for releases — local verification = build + load into the game.
 
 ## Runtime architecture
 
 ### MSCLoader lifecycle wiring
 
-[MWC_Localization_Core.cs](MWC_Localization_Core.cs) registers callbacks in `ModSetup()` — that method must stay logic-free. Real work happens in:
+[MSC_Localization_Core.cs](MSC_Localization_Core.cs) registers callbacks in `ModSetup()` — that method must stay logic-free. Real work happens in:
 
 | Callback | When | Responsibility |
 |---|---|---|
 | `Mod_Settings` | once, settings UI build | F8 reload keybind, debug-log toggles |
 | `Mod_OnMenuLoad` | each MainMenu enter | Load config + fonts + main translation files, build the surface list, run initial passes for MainMenu |
-| `Mod_PostLoad` | once after GAME loads | Translate scene, run initial passes for GAME, spawn the `MWC_LateUpdateHandler` GameObject |
+| `Mod_PostLoad` | once after GAME loads | Translate scene, run initial passes for GAME, spawn the `MSC_LateUpdateHandler` GameObject |
 | `Mod_Update` | every frame | F8 hotkey, scene-change detection (cache prune + LateUpdateHandler teardown), initial pass after hot reload — **not** continuous monitoring |
 
-**Important:** `LateUpdate` and `FixedUpdate` declared on a `Mod` subclass do **not** auto-run. Continuous per-frame work is delegated to [LateUpdateHandler.cs](LateUpdateHandler.cs), a `MonoBehaviour` hosted on a created GameObject `MWC_LateUpdateHandler`. This MonoBehaviour is destroyed and recreated on every scene change.
+**Important:** `LateUpdate` and `FixedUpdate` declared on a `Mod` subclass do **not** auto-run. Continuous per-frame work is delegated to [LateUpdateHandler.cs](LateUpdateHandler.cs), a `MonoBehaviour` hosted on a created GameObject `MSC_LateUpdateHandler`. This MonoBehaviour is destroyed and recreated on every scene change.
 
 ### Why LateUpdate matters
 
@@ -66,10 +66,8 @@ Each surface declares a `SurfaceCadence` so the scheduler knows how often to tic
 
 1. **Config** ([LocalizationConfig.cs](LocalizationConfig.cs)) — parses `config.txt`: language metadata, `[FONTS]` mapping (original font name → custom font asset name), and `[POSITION_ADJUSTMENTS]` rules into [TextAdjustment.cs](TextAdjustment.cs) instances. Also hosts `LocalizationConstants` (polling intervals) and `LocalizationConfig.ForcedFontPathPrefixes` / `IsForcedFontPath` (see "Forced-font path prefixes" below).
 2. **Translation files** — loaded in this order, later files override earlier:
-   - `translate_msc.txt` (optional My Summer Car base) — main class
    - `translate.txt` (main) — main class
    - `translate_mod.txt` (optional mod content) — main class
-   - `translate_magazine.txt` → main class compatibility shim (bulk-imports Yellow Pages keyword translations into the shared dictionary, then derives the price/phone `BuildString` pieces used by `FsmTextHook` from `PHONE`)
    - `translate_teletext.txt` → `FsmArrayTranslator.Initialize` (category-section INI format kept for backward compatibility; entries are merged into a single flat dictionary at load time, multi-line news keys normalized via `TranslationFileParser.NormalizeMultiLineKey`). Teletext file also feeds FSM patterns into the shared dictionary. At lookup time the FsmArrayTranslator tries its teletext dict first, then falls back to the global `TranslationDictionary` (translate.txt etc.), so shared phrases don't have to be duplicated into `translate_teletext.txt`.
    - All key=value files are normalized by `LocalizationUtils.FormatUpperKey` (uppercase, strip whitespace) at insertion into `TranslationDictionary`. `\=` escapes `=`; `\n` becomes a newline in values.
 3. **Pattern translations** — Entries with `{0}`/`{1}` placeholders are detected during pattern-load scans and become `TranslationPattern`s stored inside `TranslationDictionary`. Modes: `FsmPattern` (literal replacement), `FsmPatternWithTranslation` (extracted params translated through the dictionary), `CustomHandler` (code-only delegate).
@@ -92,7 +90,7 @@ Each row below is one `ITranslationSurface` implementation. The "Component" colu
 
 ### Hot reload (F8)
 
-`ReloadTranslations()` in [MWC_Localization_Core.cs](MWC_Localization_Core.cs) is the canonical "reset everything" path. The full sequence:
+`ReloadTranslations()` in [MSC_Localization_Core.cs](MSC_Localization_Core.cs) is the canonical "reset everything" path. The full sequence:
 
 1. `translations.Clear()` + `translations.ResetPatterns()` + `foreach surface.ClearTranslations()`
 2. `LocalizationUtils.ClearCaches()` + `translator.ClearRuntimeCaches()` + `config.ClearTextAdjustmentCaches()` + `foreach surface.Reset()`
@@ -132,4 +130,4 @@ When adding new state to a surface, ensure both `Reset()` (runtime caches) and `
 
 ## Output layout
 
-The shipping mod is `MWC_Localization_Core.dll` plus the contents of [dist/Assets/MWC_Localization_Core/](dist/Assets/MWC_Localization_Core/) (the Korean reference language pack), which the game expects under `Mods/Assets/MWC_Localization_Core/` at runtime. `ModLoader.GetModAssetsFolder(this)` resolves to that path.
+The shipping mod is `MSC_Localization_Core.dll` plus the contents of [dist/Assets/MSC_Localization_Core/](dist/Assets/MSC_Localization_Core/) (the Korean reference language pack), which the game expects under `Mods/Assets/MSC_Localization_Core/` at runtime. `ModLoader.GetModAssetsFolder(this)` resolves to that path.

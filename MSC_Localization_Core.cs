@@ -3,21 +3,20 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 
-namespace MWC_Localization_Core
+namespace MSC_Localization_Core
 {
-    public class MWC_Localization_Core : Mod
+    public class MSC_Localization_Core : Mod
     {
         // Mod metadata
-        public override string ID => "MWC_Localization_Core";
-        public override string Name => "MWC_Localization_Core";
+        public override string ID => "MSC_Localization_Core";
+        public override string Name => "MSC_Localization_Core";
         public override string Author => "potatosalad775";
-        public override string Version => "1.1.0";
-        public override string Description => "Multi-language core localization framework for My Winter Car";
-        public override Game SupportedGames => Game.MyWinterCar;
+        public override string Version => "1.0.0";
+        public override string Description => "Multi-language core localization framework for My Summer Car";
+        public override Game SupportedGames => Game.MySummerCar;
 
         private static readonly string[] MainTranslationFiles = new string[]
         {
-            "translate_msc.txt",
             "translate.txt",
             "translate_mod.txt"
         };
@@ -86,7 +85,6 @@ namespace MWC_Localization_Core
             translator = new TextMeshTranslator(translations, customFonts, config);
 
             LoadAllMainTranslationFiles();
-            LoadMagazineFormatTranslations();
 
             ctx = new TranslationContext(
                 translations,
@@ -123,7 +121,7 @@ namespace MWC_Localization_Core
             config.ApplyGameObjectAdjustments();
 
             // ALL continuous monitoring runs in LateUpdate to get correct timing relative to game updates.
-            lateUpdateHandlerObject = new GameObject("MWC_LateUpdateHandler");
+            lateUpdateHandlerObject = new GameObject("MSC_LateUpdateHandler");
             lateUpdateHandler = lateUpdateHandlerObject.AddComponent<LateUpdateHandler>();
             lateUpdateHandler.Initialize(surfaces, () => HasSceneBeenTranslated("GAME"));
         }
@@ -240,29 +238,6 @@ namespace MWC_Localization_Core
             }
         }
 
-        private void LoadMagazineFormatTranslations()
-        {
-            string path = Path.Combine(ModLoader.GetModAssetsFolder(this), "translate_magazine.txt");
-            Dictionary<string, string> loaded = TranslationFileParser.ParseKeyValueFile(
-                path,
-                normalizeKeys: true,
-                overwriteExisting: true);
-
-            string phoneLabel;
-            if (!loaded.TryGetValue("PHONE", out phoneLabel) || string.IsNullOrEmpty(phoneLabel))
-                phoneLabel = "PHONE";
-
-            translations.AddAll(loaded);
-            translations.Add("h.", string.Empty);
-            translations.Add(",- puh.", " MK, " + phoneLabel + " -");
-            hasLoadedTranslations = true;
-
-            if (File.Exists(path))
-                CoreConsole.Print($"[{Name}] Loaded {loaded.Count} magazine translations from translate_magazine.txt");
-            else
-                CoreConsole.Warning($"[{Name}] Magazine format file not found: {path}; using default phone label");
-        }
-
         bool LoadCustomFonts()
         {
             CoreConsole.Print($"[{Name}] Loading fonts...");
@@ -342,7 +317,6 @@ namespace MWC_Localization_Core
             customFonts.Clear();
             LoadCustomFonts();
             LoadAllMainTranslationFiles();
-            LoadMagazineFormatTranslations();
 
             // Re-init surfaces (each loads its own translation files in Initialize)
             for (int i = 0; i < surfaces.Count; i++)

@@ -1,0 +1,1205 @@
+[day]
+MAANANTAI = 월요일
+TIISTAI = 화요일
+KESKIVIIKKO = 수요일
+TORSTAI = 목요일
+PERJANTAI = 금요일
+LAUANTAI = 토요일
+SUNNUNTAI = 일요일
+
+[ulkomaat]
+VIRON SOTAUHKAUS AIHEETON
+Vuorokauden ajan jännitteitä nostanut
+sotauhkaus on vedetty takaisin.
+Viro uhkasi sekä Suomea että Venäjää
+sodalla, mikäli vaatimuksiin ei suos-
+tuttaisi. Vaatimuksia ei saatukaan
+koskaan kuulla ja kyse olikin Viron
+puolustusministeri Kuimo Allin
+hetkellisestä ylilyönnistä pieleen
+menneiden autokauppojen jälkeen. 
+= 
+에스토니아의 전쟁 위협.. 결국 없던 일로\n
+24시간 동안 긴장을 고조시켰던 전쟁 
+위협은 결국 없던 일이되었습니다.
+에스토니아는 핀란드와 러시아 양국에 
+요구 사항이 충족되지 않을 경우 전쟁을
+선포하겠다고 위협했지만, 이러한 요구는
+깔끔하게 무시되었습니다. 이는 에스토니아
+국방부 장관이 자동차 거래 문제 이후
+보인 일시적인 과잉 반응이었다는 관측이
+나오고 있습니다.
+
+KORJAUS UUTISEEN
+Uutinen, jonka mukaan ulkomailta oli
+löytynyt ankka, ja jonka mukaan
+kukaan ei tiennyt mistä ankka oli
+tullut ja minne ankka oli menossa,
+olikin uutis-ankka.
+Pahoittelemme virhettä. 
+= 
+정정 보도 드립니다.\n
+앞서 해외에서 희귀한 물고기가 낚였고,
+그 정체를 알 수 없다는 뉴스를
+전해드린 바 있습니다만, 알고 보니
+그 뉴스 자체가 대형 낚시였습니다.
+시청자 여러분께 사과드립니다.
+
+UUSI MANNER LÖYTYNYT?
+Arvostettu kansainvälinen maantieteel-
+linen julkaisu Geology Future julkaisi
+artikkelin jossa todetaan uuden mante-
+reen löytyneen Australian itäpuolelta. 
+Tiedeyhteisö ei pääse yhteisymmärryk-
+seen siitä pitääkö mannerta nimetessä
+käyttää "New" -etuliitettä ja millä
+kielellä. Kriittisen kannan mukaan
+tärkempää on mantereen löytyminen kuin
+sen nimeämisestä noussut kiista. 
+= 
+새로운 대륙 발견?\n
+권위 있는 국제 지리학 저널인
+Geology Future는 호주 동쪽에서
+새로운 대륙이 발견되었다고 보도했습니다.
+학계에서는 이 대륙의 명칭에
+"New"라는 접두사를 붙여야 하는지,
+어떤 언어로 불러야 하는지에 대해 
+의견이 분분합니다.
+그러나 중요한 것은 명칭 논쟁보다
+대륙이 발견되었다는 사실입니다.
+
+ITALIA SYYTTÄÄ UUTTA-SEELANTIA
+Italian parlamentti vaatii Uudelta-
+Seelannilta korvauksia kopioinnista. 
+Taustalla on löydös jossa osoitetaan 
+Uuden-Seelannin valtion kopioineen
+Italian alueen tunnetun saapas-muodon. 
+Uuden-Seelannin valtio vastaa että
+kyseessä ei ole kopio sillä alue on
+peilikuva ja se on halkaistu meri-
+alueella. Kiista on menossa YK:n
+tuomioistuimeen. 
+= 
+이탈리아, 뉴질랜드에 저작권 소송 제기\n
+이탈리아 의회는 뉴질랜드를 상대로 저작권
+침해에 대한 배상을 요구하고 나섰습니다.
+뉴질랜드가 이탈리아의 유명한 부츠 모양
+영토를 복제했다는 주장입니다. 뉴질랜드
+정부는 해당 영토가 대칭 형태이며 해협을
+중심으로 두 섬이 분할된 모습을 띄기에
+저작권 침해가 아니라고 반박하고 있습니다. 
+이 분쟁은 현재 유엔 법원으로 넘어간
+상태입니다.
+
+ÖLJY-YHTIÖ EI USKO ESIINTYMÄÄN
+Norjan johtava öljy-yhtiö uskoo, että
+Tukholmalaisen kauppakeskuksen parkki-
+paikalta löytynyt öljyesiintymä ei ole
+kaupallisesti hyödynnettävissä. Yhtiö 
+perustelee kantaansa sillä, että
+esiintymä on peräisin paikalla
+seisseestä autosta.
+= 
+정유사, 새 유전은 상업적 가치 없어\n
+노르웨이의 주요 정유사는 최근 스톡홀름의
+한 쇼핑몰 주차장에서 발견된 석유 유전이
+상업적으로 가치가 없다고 보고 있습니다.
+회사는 해당 유전이 그 자리에 주차되어
+있던 자동차에서 유래한 것이라는 설명을
+남겼습니다.
+
+[kotimaa]
+MAKELIN TOIMINNANJOHTAJA EROTETTIIN
+Maatalouden kehitysliitto irtisanoo
+toiminnanjohtajansa Asko Alisukevan
+mielipidekirjoituskohun johdosta. 
+Alisukeva kirjoitti Ylivetelän kunnan-
+talon ilmoitustaululle asioita, joita
+ei tässä yhteydessä voi mainita. 
+Poliisin mukaan ilmoitustaululla ei 
+ole mitään nähtävää.
+=
+마켈린 운영 이사 해임\n
+농업 개발 협회는 최근 인터넷 게시글 
+논란이 불거진 Asko Alisukevan 운영
+이사를 전격 해임했습니다. 알리수케바는
+일베텔라 시청 게시판에 공개적으로 
+언급하기 어려운 내용의 글을 남겼습니다. 
+경찰에 따르면 게시판에는 아무런 내용도
+없었다고 합니다.
+
+SOKERIJUURIKASSATO JÄÄ PIENEKSI
+Sokerijuurikastuottajien etuliitto
+varoittaa huonosta juurikassadosta. 
+Sokerijuurikkaat kasvavat hitaasti ja
+tulevat jäämään odotettua pienemmiksi.
+Satoa on verottanut Suomen valtio.
+=
+사탕무 수확량 감소 경고\n
+사탕무 생산자 협회는 올해 사탕무 수확량이
+감소할 것이라고 경고했습니다. 사탕무는
+성장 속도가 느리고 예상보다 작게 자랄
+것으로 보입니다. 수확량 감소에는 핀란드
+정부의 정책도 영향을 준 것으로 보입니다.
+
+VEROHALLINTO KIISTÄÄ ONGELMAT
+Verohallinnon alipäällikkö Hauni 
+Kuivala kiistää että sokerijuurikas-
+verotuspäätöksessä olis mitään poik-
+keuksellista. "Kuten yleensä liike-
+toiminnassa, niin kasvusta syntyvä 
+tulos verotetaan normaalisti progres-
+sion mukaan."
+=
+국세청, 사탕무 과세 기준이 정당하다고 주장\n
+국세청 부국장 Hauni Kuivala는 사탕무에
+매겨지는 세금에 이상이 없다고 주장했습니다.
+"일반적인 사업 활동과 마찬가지로, 성장을
+통해 얻는게 있다면 거기에 세금을 매기는
+일은 지극히 당연한 이치입니다."
+
+"PITÄÄKÖ IHMISTÄKIN VEROTTAA?"
+Biologi Usko Kasvisto ihmettelee
+verottajan kantaa. Kasviston mukaan on
+arveluttavaa verottaa kasvia kasvami-
+sesta, koska kasvi ei omaan kasvuunsa 
+voi vaikuttaa. "Entäs ihmiset sitten, 
+pitääkö ihmistäkin verottaa kasvamise-
+sestaan?" Kasviston mukaan valtiossa
+ei voi olla instanssia joka mielival-
+taisesti päättää biosfäärioikeuksista.
+=
+"사람도 세금을 내야 하나요?"\n
+생물학자 Usko Kasvisto는 국세청의 입장에
+의문을 제기했습니다. Kasvisto는 식물이
+자라는 것에 세금을 부과하는 것은 문제가
+있다고 말했습니다. 식물은 스스로의 성장을
+조절할 수 없기 때문입니다. 그는 이어서
+"사람은 어떡하죠? 사람도 나이를 먹을때마다
+세금을 내야 하나요?" 라고 말했습니다. 
+Kasvisto는 생물권을 임의로 결정하는 국가
+기관이 있어서는 안 된다고 주장했습니다.
+
+EKI:N MAVELA IHMETTELEE KOHUA
+EKI:n kansliapuuhisti Raija Mavela 
+on yllättynyt sokerijuurikaskohusta.
+"Verottaja verottaa kasvusta, myös
+ihmistä. Kun ihminen kasvaa, se syö
+ja kuluttaa suhteessa enemmän. Tuosta
+kulutuksesta maksetaan välillisiä
+veroja." On arvioitu että kansantalou-
+dellisesti ihmisten kasvun merkitys
+on miljardeja markkoja vuodessa.
+=
+EKI의 Mavela, 논란에 놀라\n
+EKI의 사무국장 Raija Mavela는 사탕무
+세금 논란에 놀랐다고 밝혔습니다. "세금은
+성장하는 모든 것에 부과됩니다. 사람도
+마찬가지입니다. 사람이 성장하면 더 많은
+음식을 먹고 더 많은 자원을 소비하게 됩니다.
+그 소비에 대해서는 간접세가 부과됩니다."
+경제적으로 사람의 성장의 중요성은 연간
+수십억 마르카에 달하는 것으로 추정됩니다.
+
+JUURIKASVILJELIJÄT UHKAAVAT LAKOLLA
+Sokerijuurikkaan viljelijät uhkaavat
+lakolla mikäli verottaja ei peru 
+juurikkaan verotuspäätöstä. "Maksam-
+me jo nyt veroa juurikkaan myynnis-
+tä. Vasta kasvavaan juurikkaaseen 
+kohdistuva verotus on naurettavaa.
+Jos ei muu auta niin menemme sitten 
+lakkoon", uhkaa Kusvalainen viljelijä
+Aito-Kauno Valio.
+=
+사탕무 재배자, 세금 철회 안 하면 파업 예고\n
+사탕무 재배자들은 국세청이 사탕무에 대한
+세금 부과 결정을 철회하지 않으면 파업에
+돌입하겠다고 위협했습니다. "우리는 이미
+사탕무 판매에 대한 세금을 내고 있습니다.
+성장하는 사탕무에 세금을 부과하는 것은
+터무니없습니다. 다른 방법이 없다면
+파업이라도 하겠습니다." 라고 한 농부는
+말했습니다.
+
+"JUURIKKAAT VOISIVAT MENNÄ LAKKOON"
+Pääministeri Kulkeron kanta juurikas-
+tuottajien lakkoon on kielteinen. 
+"Eihän tässä viljelijää veroteta,
+vaan juurikasta. Jos jonkun pitää 
+ryhtyä lakkoon niin niiden juurik-
+kaiden. Onko niistä sitten lakkoon, 
+enpä usko." Pääministeri uskoo myös
+että verottaja on tehnyt asiassa 
+oikean linjauksen.
+=
+"사탕무가 파업에 들어갈 수도 있다"\n
+총리 Kulkeron은 사탕무 재배자들의 파업에
+대해 부정적인 입장을 보였습니다. "여기서
+세금을 내는 것은 농부가 아니라 사탕무입니다.
+파업을 해야 한다면 사탕무가 해야겠죠.
+사탕무가 정말 파업에 들어갈까요? 저는
+그렇게 생각하지 않습니다." 총리는 또한
+국세청이 이 문제에 대해 올바른 결정을
+내렸다고 믿고 있습니다.
+
+PAUKOSTA TAAS EX-LOTTOMILJONÄÄRI
+Kertaalleen lottovoittonsa juonut
+Tauno Paukko voitti jälleen loton
+päävoiton. Mannu Larpon tv-ohjelmasta
+kansalle tuttu Paukko kertoo
+juoneensa jo nämäkin voitot.
+Leipäjonosta tavoitettu Paukko sanoo:
+"Jos voitan vielä kolmannen kerran,
+lupaan lopettaa juomisen. Muuten en."
+=
+또 다시 복권 대박을 터뜨린 전 복권 당첨자\n
+이미 복권에 당첨된 Tauno Paukko가 다시
+복권 대박을 터뜨렸습니다. TV 프로그램에서
+유명세를 얻은 Paukko는 이번에도 복권에
+당첨되었다고 말했습니다. 복권 당첨자 
+대기줄에서 만난 Paukko씨는 "세 번째로
+당첨된다면 술을 끊겠다고 약속하겠습니다.
+설마 그럴 일이 있겠어요" 라고 말했습니다.
+
+KÄYKYLÄN MURHATUTKINNASSA KÄÄNNE
+Käykylässä sattuneen henkirikoksen
+tutkinnassa on tapahtunut yllättävä
+käänne. Poliisijohtaja Yli-Tempulan
+mukaan mitään rikosta ei olekaan
+tapahtunut. "Teon tunnustanut olikin
+kännissä. Teon todistanut oli myös
+kännissä. Oletettu uhrikin oli vain
+harvinaisen kännissä. Vaikuttaa siltä
+että osa tutkijoistakin oli kännissä"
+selventää Yli-Tempula.
+=
+Käykylä에서 발생한 살인 사건 수사에 반전\n
+Käykylä에서 발생한 살인 사건 수사에
+예상치 못한 반전이 일어났습니다. 경찰청장에
+따르면, 실제로는 아무런 범죄도 일어나지
+않았다고 합니다. "범행을 자백한 사람도
+취해 있었고, 범행을 목격한 사람도 술에
+취해 있었습니다. 피해자로 추정된 사람도
+매우 취해 있었죠. 수사관들 중 일부도 술에
+취해 있었던 것 같습니다." 라는 설명입니다.
+
+SUOMEEN EI SITTENKÄÄN KUNINGASTA
+Lakialoite Suomen muuttamisesta ku-
+ningaskunnaksi on hylätty. Aloitteen
+mukaan ensimmäiseksi kuninkaaksi
+olisi valittu se henkilö, joka ensim-
+mäisenä ajaa kaikki valtion tiet itse
+läpi. Ehdotus hylättiin välittömästi,
+kun kerrottiin, että taksia ei saa
+käyttää tehtävän läpivientiin. "Kuka
+hullu nyt omalla autollaan itse ajaa"
+toteaa pääministeri Kulkero.
+=
+핀란드를 왕국으로 바꾸자는 법안, 결국 부결\n
+핀란드를 왕국으로 바꾸자는 법안이 결국
+부결되었습니다. 법안에 따르면, 첫 번째
+왕은 국가의 모든 도로를 자신의 차로 직접
+운전해서 통과하는 사람이 될 것이라고
+합니다. 택시를 이용해서는 안 된다는 사실이
+알려지자 제안은 즉시 거부되었습니다.
+"누가 자기 차로 직접 운전해서 도로를
+통과하겠어요?" 라고 총리는 말했습니다.
+
+DEMENTIAEPIDEMIA EDUSKUNNASSA
+Yli puolella eduskunnan jäsenistä on
+todettu joko alkava tai vakavassa
+vaiheessa oleva dementia. Eduskunnan
+puhemiehen mukaan syytä huoleen ei
+ole: "Ei tämä ole mitään muutosta
+tuonut eduskunnan toimiin. Ihan en-
+tiseen malliin kaikki ovat työnsä
+tehneet. Jos nyt muistan oikein, niin
+jotkut jopa muistavat hyvinkin paljon
+sanomisiaan ja tekemisiään."
+=
+의회에서 치매 유행\n
+의회 의원의 절반 이상이 초기 또는 심각한
+단계의 치매 진단을 받은 것이 알려졌습니다.
+의회 의장은 이에 대해 걱정할 필요가 없다고
+말했습니다. "의회 운영에 아무런 변화가
+없을 것입니다. 모두 예전과 같이 일하고
+있습니다. 제가 기억하기로는, 어떤 의원들은
+자신의 발언과 행동을 아주 잘 기억하는 것
+같습니다."라고 말했습니다.
+
+MARKKINAVOITTAJALLE TYÖTARJOUKSIA
+Vuoden paskanpuhujaksi Ääviön
+Paskamarkkinoilla valittu Pauni
+Vetokumpu on saanut runsaasti työ-
+tarjouksia. Viihdemarkkinointiyritys-
+ten lisäksi runsaasti tarjouksia ovat
+tehneet puhelinmarkkinointiyritykset,
+oikeuslaitos ja eduskunta.
+=
+올해의 허풍쟁이에게 쏟아지는 일자리 제안\n
+올해의 허풍쟁이로 선정된 Pauni
+Vetokumpu가 수 많은 영입 제안을 받고
+있습니다. 엔터테인먼트 마케팅 회사뿐만
+아니라, 텔레마케팅 회사, 사법 기관,
+의회에서도 많은 제안을 받고 있는 것으로
+알려졌습니다.
+
+VENÄLÄINEN PALKKAMURHAAJA KIINNI
+Verohallintolaitos ilmiantoi venäläi-
+sen palkkamurhaajan, kun tämä anoi
+Suomen kaksoiskansalaisuutta, mutta
+ei ollut maksanut tarpeeksi veroja.
+"Emme me muuten olisi hänestä
+välittäneet paskan vertaa, mutta kun
+nämä veroasiat olivat hänellä pieles-
+sä", toteaa verokarhu K. Ontio.
+=
+러시아인 청부 살인범 체포\n
+국세청은 최근 러시아인 청부 살인범을
+체포했습니다. 이 살인범은 핀란드 이중
+국적을 신청했지만 충분한 세금을 내지 않은
+것으로 드러났습니다. "우리가 그 사람에게
+관심을 가졌던 것은 세금 문제 때문이지,
+다른 이유는 전혀 없었습니다."라고
+국세청 관계자 K. Ontio는 말했습니다.
+
+PERNARUTTOEPIDEMIAEPÄILY AIHEETON
+Aiemmin uutisoitu pernaruttovaara
+on ohi. Poliisiylijohtaja Vauno
+Lato-Naippa oli puhtaaksikirjoitus-
+vaiheessa kirjoittanut maanviljelijän
+lähettämän perunaruttoilmoituksen
+väärin. Poliisiavustaja kommentoi:
+"Ei johtajia pitäisi koskaan päästää
+kirjoittamaan mitään. Emme tiedä
+miksi näin pääsi käymään. Joko innos-
+tui liikaa tai oli kännissä."
+=
+탄저균 유행 의심, 결국 오보로 밝혀져\n
+이전에 보도된 탄저균 유행은 결국
+오보로 밝혀졌습니다. 경찰청장은 농부가 보낸
+감자 마름병 신고서를 잘못 처리한데서 실수가
+발생했다고 밝혔습니다. 경찰 보좌관은
+"절대 높으신 분들이 글을 쓰게 해서는
+안 됩니다. 왜 이런 일이 일어났는지
+모르겠습니다. 너무 흥분했거나, 술에
+취했거나 둘 중 하나겠죠."라고 말했습니다.
+
+KASVISEURAN OSALLISTUJAMÄÄRÄ KASVOI
+Joukko kylänmiehiä osallistui
+paikallisen kasviseuran retkeen
+nostaen seuran osallistujamäärän
+ennätyssuureksi. Seuran johtaja
+kommentoi: "Ensin heillä oli hyvin
+hauskaa, kun kuulivat, että humala
+on kasvi. Harmi, että kaikki
+poistuivat, kun heille selvisi,
+että se humala todellakin on vain
+kasvi eikä lupaus tulevasta."
+=
+식물 동호회 참가자 수 증가 추세\n
+수많은 사람들이 지역 식물 동호회 모임에
+참가하며 동호회 참가자 수가 사상 최대를
+기록했습니다. 동호회 회장은 "처음에는 홉이
+식물이라는 사실에 모두가 즐거워했지만,
+홉이 정말로 식물일 뿐이고 취할 수 있는
+음료가 아니라는 사실에 모두가
+떠나버렸습니다."라고 말했습니다.
+
+MIES KATEISSA KÄNNELMÄESSÄ
+Kännelmäen Taikuriksi kutsuttu Aippe
+Laukonen kadotti firmansa rahat,
+avaimet, luottokortit ja toimiston
+ja on nyt kadonnut itsekin.
+Ystävä muistelee Laukosta:
+"Laukonen kadotteli milloin mitäkin.
+Jos virkamiesten täytyy joistain
+veronkiertotodisteista päästä eroon,
+niin antakaa ne Aippelle. Varmasti
+katoavat ja lopullisesti, heh heh!"
+=
+켄넬매키에서 실종된 남성\n
+'켄넬매키의 마술사'로 불리는 Aippe
+Laukonen이 회사의 공금, 열쇠, 신용카드,
+사무실을 잃어버린데 이어 이제는 자신마저
+행방불명되었습니다. 한 지인은 Laukonen을
+이렇게 회상했습니다. "그는 시도 때도 없이
+무언가를 잃어버리곤 했죠. 만약 공무원들이
+없애버려야 할 탈세 증거가 있다면 그에게
+맡기세요. 확실히, 그리고 영원히
+사라질테니까요, 허허!"
+
+TYÖTTÖMIÄ ENNÄTYSMÄÄRÄ
+Talouslama ja Neuvostoliiton kaupan
+romahtaminen ovat ajaneet kymmeniä
+tuhansia ihmisiä työttömyyspalvelujen
+piiriin. Hypoteesi-ajatuspajan turhuus-
+strategikko Marita von Schitte ymmärtää
+vaikean työllistymistilanteen, mutta
+neuvoo työttömiä: "Menkää töihin."
+=
+실업자 수 사상 최고\n
+경제 침체와 소련과의 무역 붕괴로 인해 
+수만 명의 사람들이 실업 상태에 빠졌습니다.
+싱크탱크 논술위원인 Marita von Schitte는
+어려운 고용 상황을 이해한다면서도
+실업자들에게 이렇게 조언합니다.
+"가서 일이나 하세요."
+
+[urheilu]
+KEIHÄÄN KÄRKITULOS KULEVAN KISOISSA
+Teppo Säty kiskaisi keihäässä hurjan
+ennätysheiton mitalla 99,99 metriä.  
+Kulevan kisojen katsojia hellittiin
+suorituksella, mutta Säty itse ei 
+ollut täysin vakuuttunut: "Sata
+metriä sentistä kiinni saatana."
+=
+창던지기 대회에서 최고 기록 경신돼\n
+Teppo Säty는 창던지기에서 99.99미터라는
+놀라운 기록을 세웠습니다. 대회 관중들은
+그의 기록에 환호했지만, 본인은 완전히
+만족하지는 못한 듯합니다.
+"100미터까지 단 1센티미터가 부족하다니,
+젠장."
+
+JAKOSTABIN TATUOINNISTA ONGELMA
+Suomen maakomitean saaman tiedonannon
+mukaan aituri Turi Jakostab ei voi
+osallistua 1996 kisoihin tatuointinsa 
+vuoksi. Jakostabin otsassa lukee 
+"Pernajan Maanrakennus". Sääntöjen 
+mukaan urheilijat eivät saa mainostaa 
+sponsoreitaan. Maakomitea miettii 
+tatuoinnin peittämistä meikillä.
+=
+Jakostabin 문신 때문에 대회 참가 불가\n
+핀란드 육상 위원회는 허들 선수인 Turi
+Jakostab가 문신 문제로 1996년 대회에
+출전할 수 없다고 발표했습니다. 
+그의 이마에는 "페르나얀 샷시"라는 문신이
+새겨져 있는 것으로 알려졌습니다. 대회
+규정에 따르면 선수들은 후원사를 광고할 수
+없으며, 이에 육상 위원회는 문신을 화장으로
+가릴 수 있는지를 검토 중에 있습니다.
+
+SUOMEN SUURIN URHEILIJA VALITTIIN
+Yleisöäänestys Suomen suurimmasta 
+urheilijasta on päättynyt. Entinen
+koripallo- ja painonnostolegenda 
+Kilosentti, eli Kauno Vitjakka
+päihitti Paavo Nurmen selvällä äänten
+enemmistöllä. Pituutta Vitjakalla on 
+yhtä paljon kuin painoakin, eli 218.
+=
+핀란드 최고의 운동선수로 Kilosentti 선정\n
+핀란드 최고의 운동선수를 뽑는 국민 투표가
+끝났습니다. 전 농구와 역도 선수인 
+Kilosentti, 본명 Kauno Vitjakka가
+Paavo Nurmi를 압도적인 표차로 제치고
+1위를 차지했습니다.
+Vitjakka의 키와 몸무게는 모두 218입니다.
+
+KISANNON VESAT EI PÄÄSARJAAN 
+Vastoin aikaisempaa tietoa, KiVes ei 
+osallistu jääkiekon Pääsarjaan alka-
+valla kaudella. KiVesin hallituksen
+pj Laiste Maukonen kommentoi että 
+osallistumisilmoitus meni vahingossa
+Pääsarjan organisaatioon, eikä 
+Koillismaan puulaakisarjan
+osoitteeseen.
+=
+KiVes, 아이스하키 시즌에 불참해\n
+이전에 알려진 것과 달리, KiVes는 다가오는 
+아이스하키 메이저리그에 참가하지 않는
+것으로 알려졌습니다. KiVes 이사회의장은
+참가 신청서가 실수로 북동부 직장인 리그가
+아닌, 메이저리그 조직에 제출되었다고
+설명했습니다.
+
+KIVES SITTENKIN PÄÄSARJAAN?
+Jääkiekon Pääsarjan tiedottaja kertoo
+että KiVesin ilmoittautuminen on
+sitova, eikä joukkue voi jättäytyä 
+sarjasta ilman sanktioita. KiVesin
+taloudellinen tilanne ei mahdollista
+sanktioiden maksua, joten KiVes 
+saattaa sittenkin pelata Pääsarjassa
+ainakin kaudella 95-96.
+=
+KiVes, 결국 메이저리그 참가?\n
+아이스하키 메이저리그 홍보 담당자는
+KiVes의 참가 신청이 구속력이 있으며, 팀이
+마음대로 경기를 포기할 수 없다고 전했습니다.
+KiVes의 재정 상황으로 보아 벌칙금을 내기
+어려운 만큼, KiVes는 적어도 95-96
+시즌에는 메이저리그에서 뛸 가능성이
+커졌습니다.
+
+KIVESTÄ EI HALUTA
+Maailmanmestari ja nelinkertainen
+Pääsarja-kultamitalisti Raitti Vakone
+tyrmää KiVesin osallistumisen: 
+"Suomalaisest jäkiksest on tullu
+herrapelii. Kovakaulukse päättä miel-
+valtasest kekä Pääsarjas pela. Koht 
+ykkösjoukkuee siirtyy ulkolaissi 
+sarjoihin ku Suomes pelata jottan 
+pihakiakkopaskaa."
+=
+KiVes의 출전을 원치 않는 선수들\n
+세계 챔피언이자 4회 연속 메이저리그 우승자
+Raitti Vakone는 KiVes의 참가를 강력히
+반대했습니다. "핀란드 아이스하키는 이제 
+귀족들의 스포츠가 되어버렸습니다. 
+화이트칼라 직업을 가진 사람들이 자기
+마음대로 메이저리그에 뛰네 마네를 결정하고
+있어요. 핀란드에서 이딴 동네 공놀이 수준의
+수준 낮은 경기를 계속한다면, 조만간 최고의
+팀들은 모두 핀란드를 떠나 해외 리그로
+가버리게 될 겁니다."
+
+KORI- JA LENTOPALLO YHTEISTYÖHÖN
+Pallolajien isäntäliitot aloittavat
+KoLeRa-kampanjan missä katsoja voi 
+saada ilmaislipun Pääsarjan kiekko-
+otteluun. Ehtona on että katsoja 
+käy katsomassa yhden koripallo 
+sekä lentopallo-ottelun. Tarkoi-
+tuksena on kasvattaa em. lajien
+katsojamääriä.
+=
+농구와 배구 협회, 공동 프로모션 시작\n
+두 구기 종목 협회는 KoLeRa 캠페인을 함께
+시작하기로 합의했습니다. 이 캠페인으로 인해
+농구 및 배구 관중은 메이저리그 아이스하키
+경기의 무료 입장권을 받을 수 있습니다.
+단, 관중이 농구 경기와 배구 경기를 각각
+한 번씩 관람해야 한다는 조건이 붙습니다.
+이 캠페인의 목적은 앞서 언급한 종목들의
+관중 수를 늘리는 데 있습니다.
+
+KRITIIKKIÄ KOLERA-KAMPANJALLE
+Jalkapallovaikuttaja Pita Kehab ei
+ymmärrä KoLeRa-kampanjaa: "Miksei
+meiltä kysytty? Olisimme mekin 
+voineet jakaa ilmaislippuja. Stadi-
+oneilla on tilaa. Kukkuu? Pitäisi
+olla niissä pöydissä missä päätöksiä 
+tehdään, mutta nekin ovat tyhjiä."
+=
+KoLeRa 캠페인에 대한 비판\n
+축구계 인사인 Pita Kehab는 KoLeRa
+캠페인을 이해할 수 없다고 말했습니다.
+"왜 저희한테는 그런 논의를 하지 않은거죠?
+우리도 무료 입장권을 나눠줄 수 있어요.
+경기장에는 자리가 차고 넘친단 말이에요.
+보고 있습니까? 그런 중대한 결정이 내려지는
+자리에는 우리도 있어야 하는데, 지금 그
+테이블마저도 비어있단 말입니다."
+
+TAKKINEN AJOI SEINÄÄN ITALIASSA
+Avo-ohjaamokuljettaja Mako Takkinen 
+ajoi seinään Italian aika-ajoissa. 
+Takkinen selvisi vammoitta, mutta 
+auto tuhoutui kokonaan.
+Seinä ei ollut siinä vielä eilen,
+eikä toistaiseksi tiedetä kuka sen
+siihen laittoi.
+=
+Takkinen, 이탈리아서 충돌 사고 겪어\n
+오픈탑 드라이버 Mako Takkinen은 최근
+이탈리아 예선 경기에서 벽에 충돌하는 사고를
+겪었습니다. 타키넨은 부상 없이 무사했지만,
+차량은 완전히 파손되었습니다. 벽은 어제까지만
+해도 그 자리에 없었으며, 누구의 소행인지는
+아직 알려지지 않았습니다.
+
+RALLISSA MENTIIN HILJEMPAA
+Vasta päättyneessä Caliman rallissa 
+ajettiin tänä vuonna hiljempaa kuin
+viime vuonna. Suomalainen rallilegenda
+Tamo Silonen ei lähde arvuuttelemaan 
+syytä, mutta kommentoi kuitenkin että 
+luultavasti painettiin vähemmän kaasua
+tai enemmän jarrua.
+=
+랠리 경기, 작년보다 느린 기록 나와\n
+최근 막을 내린 Caliman 랠리 경기에서는
+올해에 작년보다 느린 기록이 나왔습니다.
+핀란드의 랠리 레전드 Tamo Silonen은
+그 원인을 구태여 추측하지는 않았지만,
+아마도 가속 페달을 덜 밟았거나
+브레이크를 더 밟았기 때문일 것이라고
+말했습니다.
+
+SARPA VOITTI MESTARUUDEN
+Kyytänän Sarpa voitti Pellinkuran
+paikallisliigan pesäpallomestaruuden
+ensimmäistä kertaa sisähallissa
+käydyssä pesäpallo-ottelussa.
+Hävinneen Kutun Villien valmentaja
+Kallu Pikkainen kritisoi:
+"Ei pesäpalloa voi sisällä pelata.
+Emme suostu enää koskaan käyttämään
+Kuisevan hallia pelipaikkana."
+=
+Sarpa, 페살파로 지역 리그 우승\n
+Kyytänän Sarpa는 Pellinkura 지역 리그
+페살파로 챔피언십에서 우승을 차지했습니다.
+이번 경기는 실내 경기장에서 열린 
+첫 페살파로, 핀란드식 야구 경기였습니다.
+패배한 Kutun Villit의 감독 
+Kallu Pikkainen은 비판을 쏟아냈습니다.
+"페살파로는 실내에서 할 수 있는 경기가
+아닙니다. 우리는 다시는 이 경기장에서
+뛰지 않을 것입니다."
+
+PÄÄTUOMARILLE TERVEYSAPUA
+Jääkiekon mestaruusliigan päätuoma-
+rille on hankittu yhteisrahoituksella
+uusi puusilmä. Entinen putosi viime
+kaudella kesken ottelun kentälle
+vähentäen kiistanalaisten tuomioiden
+määrää merkittävästi. "Kyllä niistä
+tuomioista aina toinen joukkue
+tykkää", kommentoi päätuomari.
+=
+아이스하키 주심에게 새 눈이 제공돼\n
+아이스하키 메이저리그의 주심에게
+공동 모금으로 마련된 새로운 인공 눈이
+수여되었습니다. 그의 이전 눈은 지난 시즌
+경기 도중 떨어져 나갔으며, 이로 인해
+논란이 많았던 판정의 수가 크게
+줄어들었습니다. "어쨌든 한 쪽 팀은
+좋아하잖아."라고 주심은 말했습니다.
+
+ALIVIESKASSA AJETAAN TAAS SPRINTTIÄ
+Jo perinteeksi muodostunut Peräjärven
+Suvi-Sprint ajetaan taas tulevana vii-
+konloppuna. Kilpailussa ajetaan SM
+-ja amatööriluokissa. Tapahtumaa on 
+aiemmin kritisoitu puutteellisista 
+turvatoimista, mutta organisaattori 
+Leif Fleetari lupaa niiden olevan
+kunnossa: "Kun ajetaan niin ajetaan
+täysillä. Joskus tulee virheitä ja
+sitten mennään vähän hiljempaa."
+=
+Alivieska에서 다시 스프린트 대회 열려\n
+오랜 전통의 Peräjärven Suvi-Sprint
+대회가 다가오는 주말에 다시 열립니다.
+이 대회는 SM과 아마추어 부문으로 나뉘어
+진행됩니다. 이전에는 안전 조치가 부족하다는
+비판을 받았지만, 주최자 Leif Fleetari는
+"우리가 경기를 할 때는 전력을 다해서
+합니다. 때로는 실수가 나올 수도 있고,
+그럴 때는 조금 더 천천히 달리기도 합니다."
+라며 안전 조치가 잘 되어 있을 것이라고
+약속했습니다.
+
+[talous]
+PÖRSSISSÄ VILLI AAMUPÄIVÄ
+Helsingin pörssissä koettiin villi 
+aamu kun tuntemattomasta syystä pörs-
+siin oli päässyt sisälle sikoja ja
+lehmiä. Eläimet käyttivät tietokonei-
+ta ja puhelimia. Kurssit notkahtivat 
+mutta ne saatiin lopulta vakautettua 
+puoleenpäivään mennessä. Taloustut-
+kija Jaffan af Harjula uskoo että
+eläimillä ei kuitenkaan ollut 
+merkittävää vaikutusta notkahdukseen.
+=
+증권거래소에서 벌어진 광란의 아침\n
+헬싱키 증권거래소에서 알 수 없는 이유로
+돼지와 소들이 난입하는 소동이 벌어지며
+광란의 오전이 연출되었습니다. 동물들은
+컴퓨터와 전화를 사용했던 것으로 알려졌고,
+주가는 일시적으로 하락했으나 정오쯤 안정을
+되찾았습니다. 경제 연구원 Jaffan af
+Harjula는 이번 주가 하락에 동물들이
+끼친 영향은 미미하다고 말합니다.
+
+JÄÄKIEKKOMAAJOUKKUE LISTAUTUU?
+Jääkiekkopiireissä kiertää huhu että
+mestaruusjoukkue listautuisi pörs-
+siin. Nimettömänä pysyttelevä tun-
+nettu vaikuttaja kommentoi: "Nyt 
+mestaruushuumassa olisi hyvä sauma
+listautua. Uskon että varsinkin pien-
+sijoittajat olisivat innokkaasti 
+liikkeellä kännissä ja läpällä."
+=
+아이스하키 챔피언 팀, 증권 상장 추진?\n
+아이스하키계에서는 챔피언 팀이 증권거래소에
+상장할 것이라는 소문이 돌고 있습니다.
+익명을 요구한 한 유명 인사는 "챔피언의
+열기에 편승해 상장하는 것도 좋은 기회가
+될 것입니다. 특히 소액 투자자들이 술에
+취해서 농담 삼아서라도 적극적으로 투자할
+것이라고 믿습니다."라고 말했습니다.
+
+MYYNTIÄ ENEMMÄN KUIN OSTOA
+Tuore Talouslaitoksen tutkimus 
+osoittaa että suomalaiset myyvät
+enemmän kuin ostavat. Laskennallisia
+myyntiyrityksiä kohtaan on vain pieni
+murto-osa vastaavia ostotapahtumia.  
+Eroa kuitenkin tasaa se että suoma-
+lainen ostaessaan maksaa enemmän kuin
+mitä haluaisi. Tutkimus on osa
+valtion rahoittamia strategisia
+tutkimushankkeita.
+=
+쓰는 돈보다 번 돈이 많은 핀란드인들\n
+최근 경제 연구소의 조사에 따르면
+핀란드인들은 쓴 돈보다 번 돈이 더 많은
+것으로 나타났습니다. 실제로 소비가
+이루어지는 경우는 극히 일부에 불과하지만,
+핀란드인들이 물건을 살 때 정가보다 더 많은
+비용을 지불한다는 점이 이러한 격차를 어느
+정도 상쇄하고 있습니다. 이 연구는 국가가
+지원하는 전략적 연구 프로젝트의 일환으로
+진행되었습니다.
+
+BRUTTOKANSANTUOTE KASVUSSA
+Suomen bruttokansantuote on tasaisessa
+kasvussa 90-luvun alun laman jälkeen.
+Toisaalta nettokansantuotetta arvioi-
+taessa huomataan että himmeleillä ja
+kahvipakettikasseilla ei katsota
+olevan suurta arvoa. Bruttokansan-
+tuote on siksi merkittävä talouden
+mittari.
+=
+국내 총 생산 증가세\n
+핀란드의 국내 총 생산은 90년대 초의 경기
+침체 이후 꾸준히 증가세를 보이고 있습니다.
+한편, 국내 생산을 평가할 때는 천장 장식과
+커피 포장지가 큰 가치를 지니지 않는 것으로
+간주됩니다. 따라서 국내 총 생산은 경제를
+측정하는 중요한 지표라고 할 수 있겠습니다.
+
+DIESEL KALLIIMPAA KUIN BENSIINI?
+Joillakin paikkakunnilla on havaittu
+erikoinen ilmiö kun dieselin litra-
+hinta on kivunnut bensiiniä kalliim-
+maksi. H-ryhmän polttoainejakelun
+päällikkö Rauno Vesiraja myöntää
+ilmiön: "Dieselin hintaa on nostettu,
+koska ihmiset maksavat sen kuitenkin. 
+Harvalla on aidosti varaa poltto-
+öljyyn suurten veroseuraamusten
+pelossa."
+=
+디젤이 휘발유보다 비싼 현상 발생?\n
+일부 지역에서는 디젤 연료의 리터당 가격이
+휘발유보다 비싼 현상이 관찰되고 있습니다.
+H-그룹의 연료 유통 책임자는 이 현상을
+인정하면서 "사람들이 어차피 디젤을
+구매하기 때문에 가격이 올라간 것입니다.
+많은 사람들이 큰 세금 부담을 피하기 위해
+난방유를 구매할 여유가 없습니다." 라고
+설명했습니다.
+
+SOPIMUS KOMMUNISTIEN KANSSA
+Valtio on tekemässä sopimusta kommu-
+nistien kanssa, joka hyödyttäisi sekä
+kapitalisteja että kommunisteja. So-
+pimuksen mukaan kommunistit saisivat
+palkkaa, mutta maksaisivat palkois-
+taan 100% verojen muodossa takaisin
+valtiolle. Ainoa vastustava taho on
+verohallinto, jonka mukaan veron-
+perinnän hauskuus loppuu, jos sii-
+hen suostutaan näin helposti.
+=
+공산주의자들과의 계약\n
+국가는 자본가와 공산주의자 모두에게 이익이
+되는 계약을 체결하려고 합니다. 계약에
+따르면 공산주의자들은 급여를 받지만, 급여의
+100%를 세금으로 국가에 다시 납부해야
+합니다. 유일하게 반대하는 쪽은 국세청으로,
+이렇게 쉽게 계약에 동의하면 세금 징수의
+재미가 사라질 것이라고 말합니다.
+
+TALOUTTA PARANTAVA LAKIALOITE KAATUI
+Lakialoite, jonka mukaan yritysten
+olisi helpompi palkata työntekijöitä
+ja kasvaa kannattavammiksi ja sitä
+myötä parantaa Suomen taloutta on
+hylätty yksimielisesti.
+"Emme me täällä siksi ole, että asiat
+helpommiksi muuttuisi. Kyllä vaikeim-
+man kautta pitää tehdä. Niin on tehty
+aina", toteaa valtiovarainministeri
+Aina Samanlainen.
+=
+경제 개선을 위한 법안, 만장일치로 부결\n
+기업들이 직원을 고용하고 수익성을 높여
+핀란드 경제를 개선하기 쉽게 만드는 법안이
+만장일치로 부결되었습니다. "우리가 여기
+있는 이유는 쉽게 살기 좋은 세상을 만들기
+위해서가 아닙니다. 항상 그래왔듯 어려운
+길을 꿋꿋이 걸어나가야죠."라고 재무장관은
+말했습니다.
+
+GSM-TEKNIIKKA VALTAA SUOMEN
+GSM-matkapuhelin povataan löytyvän
+lähes jokaiselta suomalaiselta 2000-
+luvun alkuun mennessä. "20:n vuoden 
+kuluttua puhelimella luetaan uutis-
+ryhmät ja tehdään webbisivut", povaa
+Futufonin käytettävyyssuunnittelija 
+Raffe Koistinen. Puhelimien tekniikan
+kehityksestä odotetaan nopeaa.
+=
+GSM 기술, 핀란드 전역으로 확산될 전망\n
+GSM 휴대전화가 2000년대 초까지 거의 모든
+핀란드인에게 보급될 것으로 예상됩니다.
+"20년 후에는 휴대전화로 뉴스를 읽고
+웹사이트를 만들게 될 것입니다." 라고
+Futufon의 디자이너 Raffe Koistinen은
+예측했습니다. 휴대전화 기술의 발전이 빠르게
+이루어질 것으로 기대되고 있습니다.
+
+FUTUFON-TUOTANTOA MAAKUNTIIN?
+Tuoreessa elinkeinoministeriön
+mietinnässä nostetaan esille mahdol-
+lisuus painottaa elektroniikkateol-
+lisuuden valtiontukia laman
+seurauksista kärsiviin maakuntiin. 
+Tarkoituksena ei ole tukea yrityksiä
+suoraan, vaan kaupunkeja ja kuntia 
+jotka onnistuvat houkuttelemaan 
+alueelleen uutta elektroniikka-
+teollisuutta.
+=
+Futufon 생산, 지방으로 이전될까?\n
+최근 산업부 보고서에서는 경기 침체로
+어려움을 겪고 있는 지방에 전자 산업에 대한
+국가 지원을 집중할 가능성이 제기되었습니다. 직접적으로
+기업을 지원하는 것이 아니라, 새로운 전자
+산업을 유치하는 데 성공한 도시와 지방 자치
+단체를 지원하는 것이 주요 골자입니다.
+
+[ruoka]
+NOPEA JOULUNODOTUSHERKKULAATIKKO
+1. Pohjalle imelletty perunalaatikko
+2. Kuori nyrkillinen valkosipulin-
+kynsiä ja laita perunalaatikon päälle
+3. Asettele kynsien päälle noin 1 cm 
+paksuudelta kermajuustoa
+4. Lämmitä mikrossa kunnes juusto on
+sulanut
+=
+빠르게 완성하는 크리스마스 간식
+1. 용기에 감자를 담아서 전자레인지에
+   데운다
+2. 마늘 한 줌을 까서 감자 위에 올린다
+3. 마늘 위에 크림 치즈를 약 1cm 두께로
+   올린다
+4. 치즈가 녹을 때까지 전자레인지에
+   데운다
+
+TULINEN RUOKAPUURO ISOON NÄLKÄÄN
+1. Sekoita kattilassa vesi, chili,
+soijakastike sekä pasta-ateriapussi
+2. Kuumenna sisältö ja lisää grilli-
+makkaraa sekä omenoita paloina
+3. Lisää kaurahiutaleita hämmentäen
+4. Hauduta miedolla lämmöllä kunnes
+kaurahiutaleet ovat puuroutuneet
+=
+매콤한 파스타 죽으로 허기 달래기
+1. 냄비에 물, 고추, 간장, 
+   파스타 믹스를 넣고 섞는다
+2. 내용물을 끓인 후 그릴 소시지와 
+   사과 조각을 넣는다
+3. 귀리 플레이크를 넣고 저어준다
+4. 귀리 플레이크가 죽처럼 
+   걸쭉해질 때까지 약한 불에서 끓인다
+
+ITÄMAINEN EIHEKI-KEITTO
+1. Keitä kattilassa vettä sekä hie-
+nonnettuja sipuleita
+2. Lisää makaroni
+3. Keitä kunnes makaroni on valmis
+ja lisää muutama kananmuna
+4. Lisää vielä 100g kermajuustoa ja
+hauduta kunnes juusto on sulanut
+=
+동양풍 에이헤키 수프
+1. 냄비에 물과 다진 양파를 넣고 끓인다
+2. 마카로니를 넣는다
+3. 마카로니가 익을 때까지 끓인 후
+   계란 몇 개를 넣는다
+4. 크림 치즈 100g을 넣고
+   치즈가 녹을 때까지 끓인다
+
+TIISTAIN MAANANTAIPATA
+1. Ota muutama siivu ruisleipää ja 
+asettele päälle kermajuustosiivuja
+2. Keitä kattilassa vesi ja lisää 
+kaurahiutaleita ja mausteita
+3. Keitä kaurahiutaleet valmiiksi
+ja lisää sekaan ruisleipäsiivut
+4. Hauduta kunnes leipäsiivut ovat
+pehmenneet
+=
+화요일의 월요일 스튜
+1. 호밀빵 몇 조각을 꺼내어
+   크림 치즈 조각을 올린다
+2. 냄비에 물을 끓인 후
+   귀리 플레이크와 향신료를 넣는다
+3. 귀리 플레이크가 익을 때까지 끓인 후
+   호밀빵 조각을 넣는다
+4. 빵 조각이 부드러워질 때까지 끓인다
+
+[ajatus]
+Hopeinen kana,
+kultainen muna.
+-Ulun Yo
+= 
+은빛 닭,
+황금 알.
+-Ulun Yo
+
+Sokea kurkkaa maskin takaa.
+Kuuro höristää hatun alta.
+Kuka törmää peiliin?
+-Afel Paatinen
+= 
+장님은 가면 너머를 엿보고,
+귀머거리는 모자 밑을 기울인다.
+누가 거울에 부딪힐 것인가?
+-Afel Paatinen
+
+Kukka on kuin pieni lapsi,
+Siemenestä kaunistuu, 
+vanhana kuivistuu. 
+-Lauvo
+= 
+꽃은 마치 어린아이와 같아,
+씨앗에서 아름다워지고,
+나이 들어서는 시들어버린다.
+-Lauvo
+
+Tuntematon osti suuren tavaran.
+Hän ei nähnyt sen takaa.
+-Pertti Kaukolaita
+= 
+어떤 이가 큰 물건을 샀다.
+그는 그것의 이면을 보지 못했다.
+-Pertti Kaukolaita
+
+Kiviset portaat ovat raskaat,
+mutta puisissa kuulet
+matkaavasi. 
+-Gaul Badeul
+=
+돌계단은 무겁지만,
+나무계단에서는
+여행하는 기분이 든다.
+-Gaul Badeul
+
+Näkymätön junalippu jättää
+asemalle. Näkymätön on mielesi,
+mutta se ei jätä koskaan.
+-Kati Jafulsson
+=
+보이지 않는 기차표는 역에 남겨진다.
+보이지 않는 것은 네 마음이지만,
+그것은 결코 너를 떠나지 않는다.
+-Kati Jafulsson
+
+Those who calculate, 
+shall calculate forever. 
+-Jefton Croft
+= 
+계산하는 자는,
+영원히 계산할 것이다.
+-Jefton Croft
+
+Ihmiset ovat kuin vuoria.
+Pieni ei ole koskaan suuri.
+Ehkä ylösalaisin.
+-Santiago de Kazell
+=
+사람은 마치 산과 같다.
+작은 자는 결코 위대할 수 없다.
+어쩌면 거꾸로일지도 모른다.
+-Santiago de Kazell
+
+Nukkuva koira ei herätä
+nukkuvaa
+karhua.
+-Kung Yum Ping
+= 
+자는 개는
+자는 곰을 깨우지 않는다.
+-Kung Yum Ping
+
+Turhaa on julistaa sota
+sodassa.
+-Pavel Kur
+= 
+전쟁 중에 전쟁을 선포하는 것은
+쓸데없는 일이다.
+-Pavel Kur
+
+Liian pienet saappaat. 
+Liian suuret jalat.
+Pienentääkö ihminen?
+-Aate Kauninen
+= 
+작은 신발.
+큰 발.
+사람을 작게 만드는가?
+-Aate Kauninen
+
+[kulttuuri]
+REVYYPERINTEELLE TAKAPAKKIA
+Seuraava uudenvuoden revyy
+uhkaa peruuntua. Ministeritasolla
+revyyn peruuttaminen koetaan kesän
+tärkeimmäksi asiaksi.
+"On hyvä estää tällaiset hömpöttelyt
+ajoissa. Ei meistä ministereistä
+kukaan näistä tykkää. Tuskin tykkää
+kansakaan", sanoo kulttuuriministeri
+Seppo Ankea.
+=
+새해 연극, 취소 위기\n
+다가오는 새해 연극이 취소될 위기에 처했습니다.
+정부 고위층에서는 이 연극의 취소가 올 여름
+가장 중요한 일로 인식되고 있습니다. "이런
+어리석은 짓을 제때 막는 것이 좋습니다.
+우리 장관들 중 누구도 이런 걸 좋아하지 않아요.
+국민들도 아마 좋아하지 않을 겁니다." 라고
+문화부 장관 Seppo Ankea는 말했습니다.
+
+KULTTUURITUKEA KANSALAISILLE
+Suomen kirjallisuussäätiö on
+myöntänyt kulttuuritukea satunnai-
+sesti valituille kirjojen lukemista
+vältteleville kansalaisille kirja-
+lahjoitusten muodossa.
+Tuen ensimmäisenä saanut rekkakuski
+Eijo Vähä-Rästi kommentoi asiaa:
+"Roskiin menevät välittömästi."
+=
+시민들을 위한 문화 지원 예정\n
+핀란드 문학 재단은 책 읽기를 꺼리는 시민들을
+무작위로 선정하여 도서를 기증하는 문화 지원을
+시작했습니다. 이 지원을 처음 받은 트럭 운전사
+Eijo Vähä-Rästi는 다음과 같은 소감을
+밝혔습니다. "이건 바로 쓰레기통으로 직행합니다."
+
+BALETTI SAA VALTIOLTA TUKEA
+Valtakunnallinen balettiteatteri
+on kerännyt tänä vuonna -213 katsojaa
+mutta saa kulttuuritukea jatkossakin.
+"Jotenkin katsojaluku on saatu tänä
+vuonna menemään miinuksen puolelle,
+mutta totta kai me tätä jatkamme",
+toteaa baletin johtaja Vesa Leuhka.
+"Vaimon mukaan köyhiä pitää auttaa",
+kommentoi kulttuuriministeri Ankea.
+=
+"발레단, 정부 지원금 받기로 해\n
+국립 발레단은 올해 관객 수가 213명에 그쳤지만,
+문화 지원을 계속 받을 예정입니다. 발레단 감독
+Vesa Leuhka는 "올해 관객 수가 다소 줄었지만,
+그럼에도 불구하고 지원은 계속될 것입니다."
+라고 밝혔습니다. "아내 말로는 가난한 사람들을
+도와야 한다고 하더군요."라고 Ankea 문화부
+장관은 말했습니다."
+
+OOPPERASSA ERIKOINEN TILANNE
+Suositussa oopperassa toinen laula-
+jista lauloi niin korkealta, että
+kukaan ei kuullut ja toinen taas lau-
+loi, niin matalalta, että kukaan ei
+kuullut sitäkään. Oopperan ohjaaja
+kommentoi: "Kaupungin koirat kyllä
+kuulivat ja haukkuivat enemmän, kuin
+kaikki kriitikot yhteensä koskaan."
+=
+오페라에서 벌어진 이상한 상황\n
+인기 오페라에서 한 가수가 지나치게 높은 음으로
+노래를 불러 아무도 이를 듣지 못하고, 또 다른
+가수는 지나치게 낮은 음으로 노래를 불러
+마찬가지로 아무도 들을 수 없는 상황이
+벌어졌습니다. 오페라 감독은 이렇게 말했습니다.
+"적어도 도시의 개들은 모두 이를 들었고,
+관객 모두의 호응보다 더 크게 짖어댔습니다."
+
+TAITEILIJA-APURAHAT KELAN PIIRIIN?
+Kulttuuriministeriö esittää muutosta
+apurahajärjestelmään. Uudessa mallissa
+apurahat kytkettäisiin nykyiseen työ-
+markkinatukijärjestelmään. Sen sijaan 
+että työttömyysturvahakemukseen mer-
+kittäisiin "työtön", taiteilijat 
+käyttäisivät merkintää "taiteilija".
+=
+예술가 지원금, 실업 수당으로 이관되나?\n
+문화부는 예술가 지원금 제도의 변화를
+제안했습니다. 새로운 제도에서는 지원금이
+현재의 실업 수당 제도와 연계됩니다.
+실업 수당 신청서에 "실업자"라고 적는 대신,
+예술가들은 "예술가"라고 기재할 수 있게
+됩니다.
+
+UUSI TUNTEMATON SOTILAS TEKEILLÄ
+Ohjaaja Jake Aumakatto paljastaa
+tekeillä olevan uuden Tuntemattoman
+sotilaan. Aumakatto avaa että uudessa 
+versiossa tuntemattoman sotilaan 
+henkilöllisyys viimein paljastetaan. 
+Elokuvan on määrä siirtyä tuotanto-
+vaiheeseen kunhan sotilaan henki-
+löllisyys ensin selviää.
+=
+새로운 '무명 용사' 영화 제작 중\n
+감독 Jake Aumakatto는 새로운 '무명 용사'
+영화를 제작 중이라고 밝혔습니다.
+Aumakatto는 새로운 버전에서 무명 용사의
+정체가 마침내 밝혀질 것이라고 설명했습니다.
+영화는 용사의 정체가 밝혀지는대로 제작
+단계로 넘어갈 예정입니다.
+
+KOTIMAINEN ELOKUVA NOSTEESSA
+Kotimainen elokuva nostaa tasaisesti
+katsojamääriään. Kulttuuritutkija 
+Tauko-Riitta Iijoki selittää suosiota
+aihevalinnoilla: "Elokuvissa ryypätään
+ja kiroillaan nykyään enemmän." Tuot-
+taja Kari Elin ei niele selitystä:
+"Mielummin sitä itse ryyppää, kuin 
+katsoo muiden ryyppäämistä."
+=
+국내 영화, 관객 수 꾸준히 증가\n
+국내 영화의 관객 수가 꾸준히 증가세입니다.
+문화 평론가 Tauko-Riitta Iijoki는
+새 주제가 인기의 비결이라고 설명했습니다.
+"요즘 영화에서는 술을 더 많이 마시고
+더 많은 욕설을 날리곤 합니다."
+감독 Kari Elin은 이러한 설명에 동의하지
+않는 모습입니다. "다른 사람들이 술 마시는
+모습을 보고만 있느니 차라리 내가 직접
+마시는 게 낫지요."
+
+ARTISTI TEKI SINKKULISTAENNÄTYKSEN
+Kotimainen artisti teki uuden sinkku-
+listaennätyksen rekisteröidyttyään
+Suomen jokaiseen seuranhakupalveluun
+yhtäaikaisesti.
+=
+싱글 아티스트, 새로운 기록 세워\n
+국내 한 아티스트가 핀란드의 모든 소개팅 서비스에
+동시에 가입하면서 새로운 싱글 기록을 세웠습니다.
