@@ -10,13 +10,21 @@ End-user docs (translation file formats, position adjustment syntax, F8 reload w
 
 ## Build
 
-```
-dotnet build -c Release
+```powershell
+.\build.ps1                     # Release (default)
+.\build.ps1 -Configuration Debug
 ```
 
+- [build.ps1](build.ps1) locates `MSBuild.exe` via `vswhere` and invokes it on the csproj. `dotnet build` does **not** work — the project is a legacy (non-SDK-style) csproj targeting `.NET Framework 3.5`, and the .NET SDK doesn't ship the v3.5 reference assemblies (MSB3644). Visual Studio 2022 ships them, hence the dependency on VS's MSBuild. Building from the VS 2022 IDE directly also works.
 - Target framework: **.NET 3.5 / Unity Full v3.5** with `LangVersion 13` (newer C# syntax compiles down — but no BCL APIs added after .NET 3.5).
-- Assembly references in [MSC_Localization_Core.csproj](MSC_Localization_Core.csproj) are **hard-coded to `D:\SteamLibrary\steamapps\common\My Summer Car\mysummercar_Data\Managed\*.dll`**. Update the `<HintPath>` entries if the game lives elsewhere; the build fails otherwise.
-- The `PostBuildEvent` block copies the resulting DLL/PDB into the game's `Mods` folder (and optionally `MSCMODSFOLDER` / `MSCMODSFOLDER` if those MSBuild properties are set). It also invokes `debug.bat` in that folder when present — that's MSCLoader's auto-debug hook. Releases skip the PDB and the debug.bat call.
+- Assembly `HintPath` entries in [MSC_Localization_Core.csproj](MSC_Localization_Core.csproj) reference `$(GameDir)\*.dll`. `$(GameDir)` is resolved by [Directory.Build.props](Directory.Build.props), in this order:
+  1. `-p:GameDir=...` on the MSBuild command line (set by `build.ps1` after detection)
+  2. `%MSC_GAME_DIR%` environment variable
+  3. Steam install root from `HKCU\Software\Valve\Steam\SteamPath`, probed for `...\steamapps\common\My Summer Car\mysummercar_Data\Managed`
+  4. Hard-coded probes of `D:\SteamLibrary`, `E:\SteamLibrary`, `C:\SteamLibrary`
+  5. Final fallback (`D:\SteamLibrary\...`) so the resulting MSB3245 mentions a recognizable path
+  `build.ps1` does the richer detection: reads `steamapps\libraryfolders.vdf` for every Steam library root, then locates MSC by App ID **516750** (parses `installdir` from `appmanifest_516750.acf`). VS 2022 only sees the props-file fallbacks — set `MSC_GAME_DIR` in your user env vars if you have a non-default install and use VS directly.
+- The `PostBuildEvent` block copies the resulting DLL/PDB into `$(GameModsDir)` (derived from `$(GameDir)`) and optionally to `MSCMODSFOLDER` / `MSCMODSFOLDER` if those MSBuild properties are set. It also invokes `debug.bat` in that folder when present — that's MSCLoader's auto-debug hook. Releases skip the PDB and the debug.bat call.
 - No tests, no lint. CI is GitHub Actions only for releases — local verification = build + load into the game.
 
 ## Runtime architecture

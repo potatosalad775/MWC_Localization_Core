@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Resolves GameDir = <My Summer Car>\mysummercar_Data\Managed for HintPath
+    references and the post-build copy step. Resolution order:
+
+      1. -p:GameDir=... on the MSBuild command line
+         (build.ps1 sets this after detecting via libraryfolders.vdf)
+      2. %MSC_GAME_DIR% environment variable
+      3. Steam install root from registry (HKCU\Software\Valve\Steam\SteamPath)
+      4. Probe common library roots (D:\SteamLibrary, E:\SteamLibrary, ...)
+      5. Hard-coded fallback so the error message names a recognizable path
+  -->
+
+  <PropertyGroup>
+    <_MscManagedSubpath>steamapps\common\My Summer Car\mysummercar_Data\Managed</_MscManagedSubpath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GameDir)' == '' AND '$(MSC_GAME_DIR)' != ''">
+    <GameDir>$(MSC_GAME_DIR)</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GameDir)' == ''">
+    <_SteamRoot>$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Software\Valve\Steam', 'SteamPath'))</_SteamRoot>
+    <_Candidate>$(_SteamRoot)\$(_MscManagedSubpath)</_Candidate>
+    <GameDir Condition="'$(_SteamRoot)' != '' AND Exists('$(_Candidate)\Assembly-CSharp.dll')">$(_Candidate)</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GameDir)' == ''">
+    <_Candidate>D:\SteamLibrary\$(_MscManagedSubpath)</_Candidate>
+    <GameDir Condition="Exists('$(_Candidate)\Assembly-CSharp.dll')">$(_Candidate)</GameDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GameDir)' == ''">
+    <_Candidate>E:\SteamLibrary\$(_MscManagedSubpath)</_Candidate>
+    <GameDir Condition="Exists('$(_Candidate)\Assembly-CSharp.dll')">$(_Candidate)</GameDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GameDir)' == ''">
+    <_Candidate>C:\SteamLibrary\$(_MscManagedSubpath)</_Candidate>
+    <GameDir Condition="Exists('$(_Candidate)\Assembly-CSharp.dll')">$(_Candidate)</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GameDir)' == ''">
+    <GameDir>D:\SteamLibrary\$(_MscManagedSubpath)</GameDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GameRoot>$([System.IO.Path]::GetFullPath('$(GameDir)\..\..'))</GameRoot>
+    <GameModsDir>$(GameRoot)\Mods</GameModsDir>
+  </PropertyGroup>
+
+  <Target Name="_ValidateMscGameDir" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(GameDir)\Assembly-CSharp.dll')"
+           Text="My Summer Car was not found at GameDir='$(GameDir)'. Set the MSC_GAME_DIR environment variable to your '...\mysummercar_Data\Managed' folder, or pass -p:GameDir=... to MSBuild." />
+  </Target>
+</Project>
