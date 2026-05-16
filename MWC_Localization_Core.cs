@@ -24,6 +24,7 @@ namespace MWC_Localization_Core
 
         // Shared state
         private TranslationDictionary translations = new TranslationDictionary();
+        private TranslationDictionary magazineTranslations = new TranslationDictionary();
         private Dictionary<string, Font> customFonts = new Dictionary<string, Font>();
         private LocalizationConfig config;
         private TextMeshTranslator translator;
@@ -71,6 +72,7 @@ namespace MWC_Localization_Core
             ModConsole.Print($"[{Name}] Main Menu loaded - initializing localization core...");
 
             translations = new TranslationDictionary();
+            magazineTranslations = new TranslationDictionary();
             customFonts = new Dictionary<string, Font>();
 
             config = new LocalizationConfig();
@@ -90,6 +92,7 @@ namespace MWC_Localization_Core
 
             ctx = new TranslationContext(
                 translations,
+                magazineTranslations,
                 customFonts,
                 config,
                 translator,
@@ -252,9 +255,9 @@ namespace MWC_Localization_Core
             if (!loaded.TryGetValue("PHONE", out phoneLabel) || string.IsNullOrEmpty(phoneLabel))
                 phoneLabel = "PHONE";
 
-            translations.AddAll(loaded);
-            translations.Add("h.", string.Empty);
-            translations.Add(",- puh.", " MK, " + phoneLabel + " -");
+            magazineTranslations.AddAll(loaded);
+            magazineTranslations.Add("h.", string.Empty);
+            magazineTranslations.Add(",- puh.", " MK, " + phoneLabel + " -");
             hasLoadedTranslations = true;
 
             if (File.Exists(path))
@@ -326,6 +329,7 @@ namespace MWC_Localization_Core
 
             // Drop translation data
             translations.Clear();
+            magazineTranslations.Clear();
             translations.ResetPatterns();
             for (int i = 0; i < surfaces.Count; i++)
                 surfaces[i].ClearTranslations();

@@ -41,6 +41,7 @@ namespace MWC_Localization_Core
 
         private readonly List<FsmTarget> targets = new List<FsmTarget>();
         private TranslationDictionary translations;
+        private TranslationDictionary magazineTranslations;
         private readonly Dictionary<string, string> translationCache = new Dictionary<string, string>();
         private readonly Dictionary<string, List<PlayMakerFSM>> indexedFsmCache = new Dictionary<string, List<PlayMakerFSM>>();
         private readonly Dictionary<string, List<PlayMakerFSM>> fsmListCache = new Dictionary<string, List<PlayMakerFSM>>();
@@ -86,6 +87,7 @@ namespace MWC_Localization_Core
         public void Initialize(TranslationContext ctx)
         {
             this.translations = ctx.Translations;
+            this.magazineTranslations = ctx.MagazineTranslations;
             BuildTargets();
             ResetRuntimeState();
         }
@@ -134,11 +136,16 @@ namespace MWC_Localization_Core
 
         private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source)
         {
+            AddTargetRule(byKey, objectPath, fsmName, stateName, actionIndex, source, translations);
+        }
+
+        private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source, TranslationDictionary sourceTranslations)
+        {
             if (byKey == null || string.IsNullOrEmpty(objectPath) || string.IsNullOrEmpty(source))
                 return;
 
             string translation;
-            if (translations == null || !translations.TryGetExact(source, out translation))
+            if (sourceTranslations == null || !sourceTranslations.TryGetExact(source, out translation))
                 return;
 
             string key = BuildKey(objectPath, fsmName, stateName, actionIndex);

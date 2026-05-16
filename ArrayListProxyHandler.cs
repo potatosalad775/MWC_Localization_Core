@@ -20,6 +20,7 @@ namespace MWC_Localization_Core
 
         // Reference to main translation dictionary (from Plugin)
         private TranslationDictionary mainTranslations;
+        private TranslationDictionary magazineTranslations;
         private TextMeshTranslator translator;
         
         // Config: List of array paths to translate (path:index)
@@ -46,6 +47,7 @@ namespace MWC_Localization_Core
         public void Initialize(TranslationContext ctx)
         {
             mainTranslations = ctx.Translations;
+            magazineTranslations = ctx.MagazineTranslations;
             translator = ctx.Translator;
             InitializeArrayPaths();
         }
@@ -199,7 +201,7 @@ namespace MWC_Localization_Core
             // GameObject is inactive, so when PlayMaker prefills the runtime arrayList
             // on activation it copies already-translated strings instead of the
             // original text - removing the visible original-then-translated flip.
-            translatedCount += TranslatePreFillStringList(proxy);
+            translatedCount += TranslatePreFillStringList(proxy, arrayKey);
 
             ArrayList arrayList = proxy.arrayList;
 
@@ -216,7 +218,7 @@ namespace MWC_Localization_Core
                 if (string.IsNullOrEmpty(original))
                     continue;
 
-                string translation = FindTranslation(original);
+                string translation = FindTranslation(original, arrayKey);
                 if (translation != null)
                 {
                     arrayList[i] = translation;
@@ -270,7 +272,7 @@ namespace MWC_Localization_Core
         }
 
         // Translate a proxy's serialized prefill list in place. Returns count translated.
-        private int TranslatePreFillStringList(PlayMakerArrayListProxy proxy)
+        private int TranslatePreFillStringList(PlayMakerArrayListProxy proxy, string arrayKey)
         {
             List<string> preFill = proxy.preFillStringList;
             if (preFill == null || preFill.Count == 0)
@@ -283,7 +285,7 @@ namespace MWC_Localization_Core
                 if (string.IsNullOrEmpty(original))
                     continue;
 
-                string translation = FindTranslation(original);
+                string translation = FindTranslation(original, arrayKey);
                 if (translation != null)
                 {
                     preFill[i] = translation;
@@ -294,14 +296,26 @@ namespace MWC_Localization_Core
             return translatedCount;
         }
 
-        // Find translation from the shared dictionary. Magazine entries are loaded
-        // into it by the main class compatibility shim.
-        private string FindTranslation(string original)
+        private string FindTranslation(string original, string arrayKey)
         {
-            if (mainTranslations.TryGetExact(original, out string translation))
+            string translation;
+            if (IsMagazineArray(arrayKey)
+                && magazineTranslations != null
+                && magazineTranslations.TryGetExact(original, out translation))
+            {
+                return translation;
+            }
+
+            if (mainTranslations != null && mainTranslations.TryGetExact(original, out translation))
                 return translation;
 
             return null;
+        }
+
+        private static bool IsMagazineArray(string arrayKey)
+        {
+            return !string.IsNullOrEmpty(arrayKey)
+                && arrayKey.StartsWith("CARPARTS/PARTSYSTEM/PostSystem/", System.StringComparison.Ordinal);
         }
 
         // Apply localized fonts to TextMesh components displaying array data

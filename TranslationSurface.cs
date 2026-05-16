@@ -33,15 +33,18 @@ namespace MWC_Localization_Core
         public LocalizationConfig Config { get; private set; }
         public TextMeshTranslator Translator { get; private set; }
         public string AssetsFolder { get; private set; }
+        public TranslationDictionary MagazineTranslations { get; private set; }
 
         public TranslationContext(
             TranslationDictionary translations,
+            TranslationDictionary magazineTranslations,
             Dictionary<string, Font> customFonts,
             LocalizationConfig config,
             TextMeshTranslator translator,
             string assetsFolder)
         {
             Translations = translations;
+            MagazineTranslations = magazineTranslations;
             CustomFonts = customFonts;
             Config = config;
             Translator = translator;

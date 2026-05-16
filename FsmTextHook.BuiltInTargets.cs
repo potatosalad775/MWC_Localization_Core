@@ -12,8 +12,8 @@ namespace MWC_Localization_Core
     {
         private void AddMagazineFormatRules(Dictionary<string, FsmTarget> byKey, string objectPath)
         {
-            AddTargetRule(byKey, objectPath, "Generate", "Format", 2, "h.");
-            AddTargetRule(byKey, objectPath, "Generate", "Format", 2, ",- puh.");
+            AddTargetRule(byKey, objectPath, "Generate", "Format", 2, "h.", magazineTranslations);
+            AddTargetRule(byKey, objectPath, "Generate", "Format", 2, ",- puh.", magazineTranslations);
         }
 
         private void AddBuiltInTargets(Dictionary<string, FsmTarget> byKey)
