@@ -50,6 +50,19 @@ namespace MWC_Localization_Core
             Translator = translator;
             AssetsFolder = assetsFolder;
         }
+
+        public bool TryGetGlobal(string source, out string translation)
+        {
+            translation = null;
+            return Translations != null && Translations.TryGetExact(source, out translation);
+        }
+
+        public bool TryGetMagazine(string source, out string translation)
+        {
+            translation = null;
+            return MagazineTranslations != null && MagazineTranslations.TryGetExact(source, out translation);
+        }
+
     }
 
     /// <summary>

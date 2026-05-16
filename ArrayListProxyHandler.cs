@@ -19,8 +19,7 @@ namespace MWC_Localization_Core
         }
 
         // Reference to main translation dictionary (from Plugin)
-        private TranslationDictionary mainTranslations;
-        private TranslationDictionary magazineTranslations;
+        private TranslationContext translationContext;
         private TextMeshTranslator translator;
         
         // Config: List of array paths to translate (path:index)
@@ -46,8 +45,7 @@ namespace MWC_Localization_Core
 
         public void Initialize(TranslationContext ctx)
         {
-            mainTranslations = ctx.Translations;
-            magazineTranslations = ctx.MagazineTranslations;
+            translationContext = ctx;
             translator = ctx.Translator;
             InitializeArrayPaths();
         }
@@ -298,18 +296,20 @@ namespace MWC_Localization_Core
 
         private string FindTranslation(string original, string arrayKey)
         {
+            if (translationContext == null)
+                return null;
+
             string translation;
-            if (IsMagazineArray(arrayKey)
-                && magazineTranslations != null
-                && magazineTranslations.TryGetExact(original, out translation))
+            if (IsMagazineArray(arrayKey))
             {
-                return translation;
+                return translationContext.TryGetMagazine(original, out translation)
+                    ? translation
+                    : null;
             }
 
-            if (mainTranslations != null && mainTranslations.TryGetExact(original, out translation))
-                return translation;
-
-            return null;
+            return translationContext.TryGetGlobal(original, out translation)
+                ? translation
+                : null;
         }
 
         private static bool IsMagazineArray(string arrayKey)

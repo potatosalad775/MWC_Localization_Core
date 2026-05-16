@@ -16,8 +16,7 @@ namespace MWC_Localization_Core
         public bool IsComplete { get { return IsMonitoringComplete; } }
         public bool IsMonitoringComplete { get { return translatedPaths.Count >= targetPaths.Count; } }
 
-        private TranslationDictionary translations;
-        private TranslationDictionary magazineTranslations;
+        private TranslationContext translationContext;
         private readonly HashSet<string> targetPaths = new HashSet<string>();
         private readonly HashSet<string> translatedPaths = new HashSet<string>();
         private readonly Dictionary<string, PlayMakerHashTableProxy[]> proxyCache = new Dictionary<string, PlayMakerHashTableProxy[]>();
@@ -27,8 +26,7 @@ namespace MWC_Localization_Core
 
         public void Initialize(TranslationContext ctx)
         {
-            translations = ctx.Translations;
-            magazineTranslations = ctx.MagazineTranslations;
+            translationContext = ctx;
             InitializeTargetPaths();
         }
 
@@ -220,11 +218,11 @@ namespace MWC_Localization_Core
 
         private string FindTranslation(string original)
         {
-            string translated;
-            if (magazineTranslations != null && magazineTranslations.TryGetExact(original, out translated))
-                return translated;
+            if (translationContext == null)
+                return null;
 
-            return translations != null && translations.TryGetExact(original, out translated)
+            string translated;
+            return translationContext.TryGetMagazine(original, out translated)
                 ? translated
                 : null;
         }

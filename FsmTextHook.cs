@@ -40,8 +40,7 @@ namespace MWC_Localization_Core
         }
 
         private readonly List<FsmTarget> targets = new List<FsmTarget>();
-        private TranslationDictionary translations;
-        private TranslationDictionary magazineTranslations;
+        private TranslationContext translationContext;
         private readonly Dictionary<string, string> translationCache = new Dictionary<string, string>();
         private readonly Dictionary<string, List<PlayMakerFSM>> indexedFsmCache = new Dictionary<string, List<PlayMakerFSM>>();
         private readonly Dictionary<string, List<PlayMakerFSM>> fsmListCache = new Dictionary<string, List<PlayMakerFSM>>();
@@ -86,8 +85,7 @@ namespace MWC_Localization_Core
 
         public void Initialize(TranslationContext ctx)
         {
-            this.translations = ctx.Translations;
-            this.magazineTranslations = ctx.MagazineTranslations;
+            this.translationContext = ctx;
             BuildTargets();
             ResetRuntimeState();
         }
@@ -136,16 +134,21 @@ namespace MWC_Localization_Core
 
         private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source)
         {
-            AddTargetRule(byKey, objectPath, fsmName, stateName, actionIndex, source, translations);
+            AddTargetRule(byKey, objectPath, fsmName, stateName, actionIndex, source, false);
         }
 
-        private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source, TranslationDictionary sourceTranslations)
+        private void AddMagazineTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source)
+        {
+            AddTargetRule(byKey, objectPath, fsmName, stateName, actionIndex, source, true);
+        }
+
+        private void AddTargetRule(Dictionary<string, FsmTarget> byKey, string objectPath, string fsmName, string stateName, int actionIndex, string source, bool useMagazineTranslations)
         {
             if (byKey == null || string.IsNullOrEmpty(objectPath) || string.IsNullOrEmpty(source))
                 return;
 
             string translation;
-            if (sourceTranslations == null || !sourceTranslations.TryGetExact(source, out translation))
+            if (!TryGetRuleTranslation(source, useMagazineTranslations, out translation))
                 return;
 
             string key = BuildKey(objectPath, fsmName, stateName, actionIndex);
@@ -157,6 +160,18 @@ namespace MWC_Localization_Core
             }
 
             target.Rules.Add(new FsmRule(source, translation));
+        }
+
+        private bool TryGetRuleTranslation(string source, bool useMagazineTranslations, out string translation)
+        {
+            translation = null;
+            if (translationContext == null)
+                return false;
+
+            if (useMagazineTranslations)
+                return translationContext.TryGetMagazine(source, out translation);
+
+            return translationContext.TryGetGlobal(source, out translation);
         }
 
         private static string BuildKey(string objectPath, string fsmName, string stateName, int actionIndex)
