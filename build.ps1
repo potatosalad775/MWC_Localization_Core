@@ -77,4 +77,15 @@ if ($GameDir) {
 
 $project = Join-Path $PSScriptRoot 'MSC_Localization_Core.csproj'
 & $msbuild $project @properties @MSBuildArgs
-exit $LASTEXITCODE
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+$builtDll = Join-Path $PSScriptRoot "bin\$Configuration\MWC_Localization_Core.dll"
+$distDir = Join-Path $PSScriptRoot 'dist'
+if (Test-Path -LiteralPath $builtDll) {
+    Copy-Item -LiteralPath $builtDll -Destination $distDir -Force
+    Write-Host "Copied DLL into $distDir"
+} else {
+    Write-Warning "Built DLL not found at '$builtDll'; skipping dist copy."
+}
+
+exit 0
