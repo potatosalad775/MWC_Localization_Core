@@ -112,6 +112,7 @@ namespace MWC_Localization_Core
                 new ArrayListProxyHandler(),
                 new HashTableProxyHandler(),
                 new FsmTextHook(),
+                new TextureReplacementSurface(),
             };
 
             for (int i = 0; i < surfaces.Count; i++)
