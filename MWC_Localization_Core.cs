@@ -1,5 +1,6 @@
 using MSCLoader;
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
@@ -7,6 +8,13 @@ namespace MWC_Localization_Core
 {
     public class MWC_Localization_Core : Mod
     {
+        private enum ProgressBarMode
+        {
+            None,
+            Existing,
+            Created,
+        }
+
         // Mod metadata
         public override string ID => "MWC_Localization_Core";
         public override string Name => "MWC_Localization_Core";
@@ -48,6 +56,8 @@ namespace MWC_Localization_Core
         // LateUpdate driver
         private GameObject lateUpdateHandlerObject;
         private LateUpdateHandler lateUpdateHandler;
+        private GameObject reloadHandlerObject;
+        private bool isReloading;
 
         // Font bundle (static so it persists across MSCLoader instance recreation)
         private static AssetBundle fontBundle;
@@ -145,7 +155,7 @@ namespace MWC_Localization_Core
 
             if (reloadKey != null && reloadKey.GetKeybindDown())
             {
-                ReloadTranslations();
+                StartReloadTranslations();
                 return;
             }
 
@@ -195,6 +205,67 @@ namespace MWC_Localization_Core
                 RunSurfaceInitialPasses("Initial ");
                 config.ApplyGameObjectAdjustments();
             }
+        }
+
+        private ProgressBarMode BeginProgress(string title, int maxValue, string status)
+        {
+            try
+            {
+                if (ModUI.isProgressBarActive)
+                {
+                    ModUI.UpdateProgressBarSetup(title, maxValue);
+                    ModUI.UpdateProgressBar(0, status);
+                    return ProgressBarMode.Existing;
+                }
+
+                ModUI.CreateProgressBar(title, maxValue, status);
+                return ProgressBarMode.Created;
+            }
+            catch
+            {
+                return ProgressBarMode.None;
+            }
+        }
+
+        private void UpdateProgress(ProgressBarMode progressMode, int progress, string status)
+        {
+            if (progressMode == ProgressBarMode.None)
+                return;
+
+            try
+            {
+                ModUI.UpdateProgressBar(progress, status);
+            }
+            catch
+            {
+            }
+        }
+
+        private void CloseProgress(ProgressBarMode progressMode)
+        {
+            if (progressMode != ProgressBarMode.Created)
+                return;
+
+            try
+            {
+                ProgressBarCloseHandler.Schedule(1.5f);
+            }
+            catch
+            {
+            }
+        }
+
+        private void StartReloadTranslations()
+        {
+            if (isReloading)
+                return;
+
+            if (reloadHandlerObject != null)
+                Object.Destroy(reloadHandlerObject);
+
+            reloadHandlerObject = new GameObject("MWC_ReloadTranslationsHandler");
+            ReloadTranslationsHandler handler = reloadHandlerObject.AddComponent<ReloadTranslationsHandler>();
+            handler.Initialize(this);
         }
 
         // Scene tracking (formerly SceneTranslationManager). Leaving a known scene
@@ -330,66 +401,130 @@ namespace MWC_Localization_Core
             }
         }
 
-        void ReloadTranslations()
+        private sealed class ReloadTranslationsHandler : MonoBehaviour
         {
-            CoreConsole.Print($"[{Name}] [F8] Reloading translations...");
+            public void Initialize(MWC_Localization_Core owner)
+            {
+                Object.DontDestroyOnLoad(gameObject);
+                StartCoroutine(owner.ReloadTranslationsRoutine());
+            }
+        }
 
-            // Drop translation data
-            translations.Clear();
-            translations.ResetPatterns();
-            for (int i = 0; i < surfaces.Count; i++)
-                surfaces[i].ClearTranslations();
-
-            // Clear global + service caches; let surfaces reset their own runtime state.
-            LocalizationUtils.ClearCaches();
-            translator.ClearRuntimeCaches();
-            config.ClearTextAdjustmentCaches();
-            for (int i = 0; i < surfaces.Count; i++)
-                surfaces[i].Reset();
-
-            // Reload config + fonts + main translation files
-            config.LoadConfig(Path.Combine(ModLoader.GetModAssetsFolder(this), "config.txt"));
-            customFonts.Clear();
-            LoadCustomFonts();
-            LoadAllMainTranslationFiles();
-            LoadMagazineFormatTranslations();
-
-            // Re-init surfaces (each loads its own translation files in Initialize)
-            for (int i = 0; i < surfaces.Count; i++)
-                surfaces[i].Initialize(ctx);
-
-            translatedScenes.Clear();
-
-            // Reapply fonts to existing TextMeshes (re-translate happens via the per-scene initial pass)
-            TextMesh[] allTextMeshes = LocalizationUtils.GetAllTextMeshesIncludingInactive();
+        private IEnumerator ReloadTranslationsRoutine()
+        {
+            isReloading = true;
             int reappliedCount = 0;
-            foreach (TextMesh tm in allTextMeshes)
+            ProgressBarMode progressMode = BeginProgress("MWC Localization Core", 7, "Reloading translations...");
+            try
             {
-                if (tm == null || string.IsNullOrEmpty(tm.text))
-                    continue;
-                string path = LocalizationUtils.GetGameObjectPath(tm.gameObject);
-                translator.ApplyCustomFont(tm, path);
-                reappliedCount++;
-            }
+                CoreConsole.Print($"[{Name}] [F8] Reloading translations...");
+                yield return null;
 
-            // Force initial passes for the current scene if applicable
-            string sceneName = Application.loadedLevelName;
-            if (sceneName == "MainMenu" || sceneName == "GAME")
+                UpdateProgress(progressMode, 1, "Clearing caches...");
+                yield return null;
+
+                // Drop translation data
+                translations.Clear();
+                translations.ResetPatterns();
+                if (surfaces != null)
+                {
+                    for (int i = 0; i < surfaces.Count; i++)
+                        surfaces[i].ClearTranslations();
+                }
+
+                // Clear global + service caches; let surfaces reset their own runtime state.
+                LocalizationUtils.ClearCaches();
+                translator.ClearRuntimeCaches();
+                config.ClearTextAdjustmentCaches();
+                if (surfaces != null)
+                {
+                    for (int i = 0; i < surfaces.Count; i++)
+                        surfaces[i].Reset();
+                }
+
+                UpdateProgress(progressMode, 2, "Reloading config and fonts...");
+                yield return null;
+
+                // Reload config + fonts + main translation files
+                config.LoadConfig(Path.Combine(ModLoader.GetModAssetsFolder(this), "config.txt"));
+                customFonts.Clear();
+                LoadCustomFonts();
+
+                UpdateProgress(progressMode, 3, "Reloading translation files...");
+                yield return null;
+                LoadAllMainTranslationFiles();
+                LoadMagazineFormatTranslations();
+
+                UpdateProgress(progressMode, 4, "Reinitializing surfaces...");
+                yield return null;
+
+                // Re-init surfaces (each loads its own translation files in Initialize)
+                if (surfaces != null)
+                {
+                    for (int i = 0; i < surfaces.Count; i++)
+                        surfaces[i].Initialize(ctx);
+                }
+
+                translatedScenes.Clear();
+
+                UpdateProgress(progressMode, 5, "Reapplying fonts...");
+                yield return null;
+
+                // Reapply fonts to existing TextMeshes (re-translate happens via the per-scene initial pass)
+                TextMesh[] allTextMeshes = LocalizationUtils.GetAllTextMeshesIncludingInactive();
+                const int fontReapplyBatchSize = 64;
+                for (int i = 0; i < allTextMeshes.Length; i++)
+                {
+                    TextMesh tm = allTextMeshes[i];
+                    if (tm == null || string.IsNullOrEmpty(tm.text))
+                        continue;
+
+                    string path = LocalizationUtils.GetGameObjectPath(tm.gameObject);
+                    translator.ApplyCustomFont(tm, path);
+                    reappliedCount++;
+
+                    if (i > 0 && i % fontReapplyBatchSize == 0)
+                    {
+                        UpdateProgress(progressMode, 5, "Reapplying fonts... " + i + "/" + allTextMeshes.Length);
+                        yield return null;
+                    }
+                }
+
+                UpdateProgress(progressMode, 6, "Running initial passes...");
+                yield return null;
+
+                // Force initial passes for the current scene if applicable
+                string sceneName = Application.loadedLevelName;
+                if (sceneName == "MainMenu" || sceneName == "GAME")
+                {
+                    currentScene = sceneName;
+                    MarkSceneTranslated(sceneName);
+                    RunSurfaceInitialPasses("Reload ");
+                    config.ApplyGameObjectAdjustments();
+                }
+
+                // Restart LateUpdate driver with the new surface list (instance hasn't changed but its tick state has)
+                if (lateUpdateHandler != null)
+                {
+                    lateUpdateHandler.ClearCache();
+                    lateUpdateHandler.Initialize(surfaces, () => HasSceneBeenTranslated("GAME"));
+                }
+
+                UpdateProgress(progressMode, 7, "Reload complete.");
+                CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts/adjustments to {reappliedCount} TextMeshes.");
+                yield return null;
+            }
+            finally
             {
-                currentScene = sceneName;
-                MarkSceneTranslated(sceneName);
-                RunSurfaceInitialPasses("Reload ");
-                config.ApplyGameObjectAdjustments();
-            }
+                CloseProgress(progressMode);
+                isReloading = false;
 
-            // Restart LateUpdate driver with the new surface list (instance hasn't changed but its tick state has)
-            if (lateUpdateHandler != null)
-            {
-                lateUpdateHandler.ClearCache();
-                lateUpdateHandler.Initialize(surfaces, () => HasSceneBeenTranslated("GAME"));
+                if (reloadHandlerObject != null)
+                {
+                    Object.Destroy(reloadHandlerObject);
+                    reloadHandlerObject = null;
+                }
             }
-
-            CoreConsole.Print($"[{Name}] [F8] Reloaded {translations.Count} translations. Reapplied fonts/adjustments to {reappliedCount} TextMeshes.");
         }
 
         void TranslateScene()
@@ -417,6 +552,41 @@ namespace MWC_Localization_Core
             }
 
             CoreConsole.Print($"[{Name}] Scene translation complete: {translatedCount}/{allTextMeshes.Length} TextMesh objects translated, forced font pass: {forcedFontAppliedCount}");
+        }
+    }
+
+    internal sealed class ProgressBarCloseHandler : MonoBehaviour
+    {
+        private const string ObjectName = "MWC_Localization_Core_ProgressCloser";
+        private float closeTime;
+
+        public static void Schedule(float delaySeconds)
+        {
+            GameObject existing = GameObject.Find(ObjectName);
+            if (existing != null)
+                UnityEngine.Object.Destroy(existing);
+
+            GameObject go = new GameObject(ObjectName);
+            UnityEngine.Object.DontDestroyOnLoad(go);
+
+            ProgressBarCloseHandler handler = go.AddComponent<ProgressBarCloseHandler>();
+            handler.closeTime = Time.realtimeSinceStartup + delaySeconds;
+        }
+
+        private void Update()
+        {
+            if (Time.realtimeSinceStartup < closeTime)
+                return;
+
+            try
+            {
+                ModUI.CloseProgressBar();
+            }
+            catch
+            {
+            }
+
+            UnityEngine.Object.Destroy(gameObject);
         }
     }
 }
