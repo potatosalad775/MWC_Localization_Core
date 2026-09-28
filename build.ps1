@@ -79,7 +79,7 @@ $project = Join-Path $PSScriptRoot 'MSC_Localization_Core.csproj'
 & $msbuild $project @properties @MSBuildArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$builtDll = Join-Path $PSScriptRoot "bin\$Configuration\MWC_Localization_Core.dll"
+$builtDll = Join-Path $PSScriptRoot "bin\$Configuration\MSC_Localization_Core.dll"
 $distDir = Join-Path $PSScriptRoot 'dist'
 if (Test-Path -LiteralPath $builtDll) {
     Copy-Item -LiteralPath $builtDll -Destination $distDir -Force
