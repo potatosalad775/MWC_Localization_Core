@@ -46,6 +46,7 @@ namespace MSC_Localization_Core
         private SettingsKeybind reloadKey;
         private SettingsCheckBox showDebugLogs;
         private SettingsCheckBox showWarningLogs;
+        private SettingsCheckBox enableTextureReplacement;
 
         public override void ModSetup()
         {
@@ -59,6 +60,9 @@ namespace MSC_Localization_Core
         {
             Keybind.AddHeader("Localization Plugin Hotkeys");
             reloadKey = Keybind.Add("reloadKey", "Reload Translations", KeyCode.F8);
+
+            Settings.AddHeader("Features");
+            enableTextureReplacement = Settings.AddCheckBox("enableTextureReplacement", "Enable texture replacement (applies on reload / next scene)", true);
 
             Settings.AddHeader("Miscellaneous Options");
             showDebugLogs = Settings.AddCheckBox("showDebugLogs", "Show debug messages in console", false);
@@ -100,6 +104,7 @@ namespace MSC_Localization_Core
                 new ArrayListProxyHandler(),
                 new HashTableProxyHandler(),
                 new FsmTextHook(),
+                new TextureReplacementSurface(() => enableTextureReplacement?.GetValue() ?? true),
             };
 
             for (int i = 0; i < surfaces.Count; i++)

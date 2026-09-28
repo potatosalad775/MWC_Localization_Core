@@ -66,7 +66,7 @@ Each surface declares a `SurfaceCadence` so the scheduler knows how often to tic
 | `PerFrame` | every LateUpdate | `GuiTextMonitor` — HUD primary→shadow mirroring needs to keep up with per-frame text changes |
 | `Fast` | `FSM_SOURCE_POLL_INTERVAL` (0.2s) | `FsmTextHook` — small dynamic FSM sources the game rebuilds per screen open |
 | `Slow` | `ARRAY_MONITOR_INTERVAL` (2s), staggered | `FsmArrayTranslator`, `ArrayListProxyHandler`, `HashTableProxyHandler` |
-| `OncePerScene` | never (only InitialPass) | reserved; no current surfaces |
+| `OncePerScene` | never (only InitialPass) | `TextureReplacementSurface` |
 
 `LateUpdateHandler.Initialize` offsets the first tick time of consecutive `Slow` surfaces by `ARRAY_MONITOR_STEP_INTERVAL` (0.5s) so they don't all fire on the same frame.
 
@@ -91,6 +91,7 @@ Each row below is one `ITranslationSurface` implementation. The "Component" colu
 | [ArrayListProxyHandler.cs](ArrayListProxyHandler.cs) | `PlayMakerArrayListProxy._arrayList` for hardcoded paths (HUD days, magazine keyword pools, tire pics). Also applies fonts to TextMeshes under known parent paths. | Slow |
 | [HashTableProxyHandler.cs](HashTableProxyHandler.cs) | `PlayMakerHashTableProxy` (`KeywordsFI`/`KeywordsEN`): live hashtable + snapshot + `preFillStringList` via reflection | Slow |
 | [FsmTextHook.cs](FsmTextHook.cs) + [FsmTextHook.BuiltInTargets.cs](FsmTextHook.BuiltInTargets.cs) | FSM action fields, `FsmString` variables, `BuildString` parts, `SetProperty` `StringParameter`. Each target is `(objectPath, fsmName, stateName, actionIndex)` or `WholeFsm`. | Fast |
+| [TextureReplacementSurface.cs](TextureReplacementSurface.cs) | Material texture slots (`_MainTex` etc.) and camera `ScreenOverlay` textures, matched by texture name against PNGs in any `*.zip` under `<assets>/texture/`. Gated by the `enableTextureReplacement` mod setting (read lazily in `InitialPass`). Backs up originals for F8 restore. Injects one hook into `RallyRegistration/Setup/Init` (tracked per FSM instance so F8 doesn't stack duplicates) because that FSM swaps card textures at runtime. | OncePerScene |
 
 `TextMeshTranslator` ([TextMeshTranslator.cs](TextMeshTranslator.cs)) is a **service**, not a surface. Surfaces and the main-class scene scan call it to translate one TextMesh + apply the mapped font + adjustment. Its caches are reset alongside the surfaces on scene change.
 
