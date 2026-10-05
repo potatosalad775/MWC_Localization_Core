@@ -204,7 +204,7 @@ namespace MWC_Localization_Core
             AddTargetRule(byKey, "JOBS/HouseShit3/LOD/ShitNPC/Man/skeleton/pelvis/RotationPivot/spine_middle/spine_upper/collar_left/shoulder_left/arm_left/hand_left/finger_left/PayMoney", "", "", -1, "TAKE MONEY");
             AddTargetRule(byKey, "JOBS/HouseShit4/LOD/ShitNPC/Man/skeleton/pelvis/RotationPivot/spine_middle/spine_upper/collar_left/shoulder_left/arm_left/hand_left/finger_left/PayMoney", "", "", -1, "TAKE MONEY");
             AddTargetRule(byKey, "JOBS/HouseShit5/LOD/ShitNPC/Man/skeleton/pelvis/RotationPivot/spine_middle/spine_upper/collar_left/shoulder_left/arm_left/hand_left/finger_left/PayMoney", "", "", -1, "TAKE MONEY");
-            AddTargetRule(byKey, "JOBS/HouseWood1/LOD/CarPos/NPCWood/WoodCaller1/skeleton/pelvis/spine_middle/spine_upper/collar_right/shoulder_right/arm_right/hand_right/PayMoney", "", "", -1, "TAKE MONEY");
+            AddTargetRule(byKey, "JOBS/HouseWood1/LOD/WoodPos/NPCWood/WoodCaller1/skeleton/pelvis/spine_middle/spine_upper/collar_right/shoulder_right/arm_right/hand_right/PayMoney", "", "", -1, "TAKE MONEY");
             AddTargetRule(byKey, "JOBS/HouseWood2/LOD/NPCWood/WoodCaller2/skeleton/pelvis/spine_middle/spine_upper/collar_right/shoulder_right/arm_right/hand_right/PayMoney", "", "", -1, "TAKE MONEY");
             AddTargetRule(byKey, "JOBS/HouseWood3/LOD/NPCWood/WoodCaller3/skeleton/pelvis/spine_middle/spine_upper/collar_right/shoulder_right/arm_right/hand_right/PayMoney", "", "", -1, "TAKE MONEY");
             AddTargetRule(byKey, "JOBS/HouseWood4/LOD/NPCWood/WoodCaller4/skeleton/pelvis/spine_middle/spine_upper/collar_right/shoulder_right/arm_right/hand_right/PayMoney", "", "", -1, "TAKE MONEY");
